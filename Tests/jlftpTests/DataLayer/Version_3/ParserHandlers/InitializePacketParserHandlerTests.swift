@@ -2,7 +2,7 @@ import XCTest
 @testable import jlftp
 
 final class InitializePacketParserHandlerTests: XCTestCase {
-	
+
 	func testValid() {
 		let handler = InitializePacketParserHandler()
 		let dataPayload = Data([
@@ -10,9 +10,9 @@ final class InitializePacketParserHandlerTests: XCTestCase {
 			0x03, 0x00, 0x00, 0x00,
 			// Extensions (nil)
 		])
-		
+
 		let result = handler.parse(fromPayload: dataPayload)
-		
+
 		guard case let .success(packet) = result else {
 			XCTFail("Expected success. got '\(result)'")
 			return
@@ -21,7 +21,7 @@ final class InitializePacketParserHandlerTests: XCTestCase {
 			XCTFail("Expected InitializePacket. Got '\(packet.self)'")
 			return
 		}
-		
+
 		XCTAssertEqual(jlftp.DataLayer.SftpVersion.v3, initPacket.version)
 	}
 
@@ -49,11 +49,11 @@ final class InitializePacketParserHandlerTests: XCTestCase {
 		let dataPayloads = [
 			Data([
 				// Version (UInt32: 0)
-				0x00, 0x00, 0x00, 0x00
+				0x00, 0x00, 0x00, 0x00,
 			]),
 			Data([
 				// Version (UInt32: 255)
-				0xff, 0x00, 0x00, 0x00
+				0xFF, 0x00, 0x00, 0x00,
 			]),
 		]
 
@@ -66,7 +66,7 @@ final class InitializePacketParserHandlerTests: XCTestCase {
 			}
 		}
 	}
-	
+
 	static var allTests = [
 		("testValid", testValid),
 		("testNotEnoughData", testNotEnoughData),

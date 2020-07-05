@@ -27,5 +27,5 @@ let package = Package(
 				"jlftp",
 			]
 		),
-    ]
+	]
 )

@@ -26,7 +26,7 @@ final class VersionPacketParserHandlerTests: XCTestCase {
 	}
 
 	func testNotEnoughData() {
-		let handler = InitializePacketParserHandler()
+		let handler = VersionPacketParserHandler()
 		let dataPayloads = [
 			Data([]),
 			Data([0x03]),
@@ -45,15 +45,15 @@ final class VersionPacketParserHandlerTests: XCTestCase {
 	}
 
 	func testInvalidVersion() {
-		let handler = InitializePacketParserHandler()
+		let handler = VersionPacketParserHandler()
 		let dataPayloads = [
 			Data([
 				// Version (UInt32: 0)
-				0x00, 0x00, 0x00, 0x00
+				0x00, 0x00, 0x00, 0x00,
 			]),
 			Data([
 				// Version (UInt32: 255)
-				0xff, 0x00, 0x00, 0x00
+				0xFF, 0x00, 0x00, 0x00,
 			]),
 		]
 

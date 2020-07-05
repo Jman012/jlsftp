@@ -1,0 +1,12 @@
+--rules indent, anyObjectProtocol, blankLinesAroundMark, blankLinesAtEndOfScope, blankLinesBetweenScopes, braces, consecutiveBlankLines, consecutiveSpaces, duplicateImports, elseOnSameLine, emptyBraces, hoistPatternLet, isEmpty, linebreakAtEndOfFile, linebreaks, numberFormatting, redundantBackticks, redundantBreak, redundantGet, redundantInit, redundantLet, redundantLetError, redundantNilInit, redundantObjc, redundantParens, redundantPattern, redundantVoidReturnType, semicolons, spaceAroundBraces, spaceAroundBrackets, spaceAroundGenerics, spaceAroundOperators, spaceAroundParens, spaceInsideBraces, spaceInsideBrackets, spaceInsideGenerics, spaceInsideParens, specifiers, todos, trailingCommas, trailingSpace, typeSugar, unusedArguments
+
+--indent tab
+--tabwidth 4
+--indentcase false
+--ifdef no-indent
+
+--linebreaks lf
+
+--nospaceoperators ..<, ...
+
+--trimwhitespace always

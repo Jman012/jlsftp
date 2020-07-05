@@ -16,16 +16,16 @@ final class DataExtensionsTests: XCTestCase {
 			([0x00], nil),
 			([], nil),
 		]
-		
+
 		for (input, expected) in testValues {
 			let data = Data(input)
-			
+
 			let result = data.to(type: UInt32.self)
-			
+
 			XCTAssertEqual(expected, result, "(input = \(input))")
 		}
 	}
-	
+
 	func testToUInt8() {
 		let testValues: [([UInt8], UInt8?)] = [
 			// Valid
@@ -37,16 +37,16 @@ final class DataExtensionsTests: XCTestCase {
 			// Invalid: too few bytes
 			([], nil),
 		]
-		
+
 		for (input, expected) in testValues {
 			let data = Data(input)
-			
+
 			let result = data.to(type: UInt8.self)
-			
+
 			XCTAssertEqual(expected, result, "(input = \(input))")
 		}
 	}
-	
+
 	static var allTests = [
 		("testToUInt32", testToUInt32),
 		("testToUInt8", testToUInt8),
