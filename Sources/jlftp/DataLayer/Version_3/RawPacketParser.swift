@@ -17,6 +17,12 @@ extension jlftp.DataLayer.Version_3 {
 			case lengthMismatch
 		}
 
+		/**
+		 Parses a data packet from the network stream into a `RawPacket`.
+
+		 - Parameter data: The data to parse from the network stream, in Network
+		 Byte Order.
+		 */
 		public func parseData(from data: Data) -> Result<RawPacket, ParsingError> {
 			if data.isEmpty {
 				return .failure(.noData)
@@ -34,7 +40,7 @@ extension jlftp.DataLayer.Version_3 {
 			}
 
 			// Parse length
-			let length: UInt32 = data.subdata(in: 0..<4).to(type: UInt32.self)!
+			let length: UInt32 = data.subdata(in: 0..<4).to(UInt32.self, from: .networkOrder)!
 			if length == 0 || length == 1 {
 				return .failure(.noDataPayload)
 			}

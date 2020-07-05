@@ -1,6 +1,12 @@
 import Foundation
 
 public protocol SftpVersion3PacketParserHandler {
+	/**
+	 Parses the data payload of an sftp packet into the correct packet structure.
+
+	 - Parameter data: The data payload from a `RawPacket`m in Network Byte
+	 Order.
+	 */
 	func parse(fromPayload data: Data) -> Result<Packet, jlftp.DataLayer.Version_3.PacketParser.ParseError>
 }
 

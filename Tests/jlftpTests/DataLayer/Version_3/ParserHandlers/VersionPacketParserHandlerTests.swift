@@ -6,8 +6,8 @@ final class VersionPacketParserHandlerTests: XCTestCase {
 	func testValid() {
 		let handler = VersionPacketParserHandler()
 		let dataPayload = Data([
-			// Version (UInt32: 3)
-			0x03, 0x00, 0x00, 0x00,
+			// Version (UInt32 Network Order: 3)
+			0x00, 0x00, 0x00, 0x03,
 			// Extensions (nil)
 		])
 
@@ -48,12 +48,12 @@ final class VersionPacketParserHandlerTests: XCTestCase {
 		let handler = VersionPacketParserHandler()
 		let dataPayloads = [
 			Data([
-				// Version (UInt32: 0)
+				// Version (UInt32 Network Order: 0)
 				0x00, 0x00, 0x00, 0x00,
 			]),
 			Data([
-				// Version (UInt32: 255)
-				0xFF, 0x00, 0x00, 0x00,
+				// Version (UInt32 Network Order: 255)
+				0x00, 0x00, 0x00, 0xFF,
 			]),
 		]
 

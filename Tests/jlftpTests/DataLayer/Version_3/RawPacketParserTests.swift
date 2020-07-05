@@ -12,7 +12,7 @@ final class RawPacketParserTests: XCTestCase {
 	}
 
 	func testParseDataNoLength() {
-		// Any packet that is not 5 bytes (length + type) or more is empty.
+		// Any packet that is not 4 bytes (length) or more is empty.
 		let testcases = [
 			Data([0x00]),
 			Data([0x00, 0x00]),
@@ -53,8 +53,8 @@ final class RawPacketParserTests: XCTestCase {
 
 	func testParseDataValidOneByte() {
 		let data = Data([
-			// Length (2 (1 byte type, one byte payload)
-			0x02, 0x00, 0x00, 0x00,
+			// Length (UInt32 Network order: 2 (1 byte type, one byte payload))
+			0x00, 0x00, 0x00, 0x02,
 			// Type (2)
 			0x02,
 			// Data Payload (1 byte: 3)
@@ -76,8 +76,8 @@ final class RawPacketParserTests: XCTestCase {
 
 	func testParseDataValidLarge() {
 		let header: [UInt8] = [
-			// Length (101 (1 byte type, 100 bytes payload))
-			101, 0x00, 0x00, 0x00,
+			// Length (UInt32 Network Order: 101 (1 byte type, 100 bytes payload))
+			0x00, 0x00, 0x00, 101,
 			// Type (2)
 			0x02,
 		]
@@ -102,8 +102,8 @@ final class RawPacketParserTests: XCTestCase {
 
 	func testParseDataLengthMismatchLow() {
 		let data = Data([
-			// Length (10 (1 byte type, 9 bytes payload))
-			0x0A, 0x00, 0x00, 0x00,
+			// Length (UInt32 Network Order: 10 (1 byte type, 9 bytes payload))
+			0x00, 0x00, 0x00, 0x0A,
 			// Type
 			0x00,
 			// Payload (10 bytes)
@@ -118,8 +118,8 @@ final class RawPacketParserTests: XCTestCase {
 
 	func testParseDataLengthMismatchLHigh() {
 		let data = Data([
-			// Length (10 (1 byte type, 9 bytes payload))
-			0x0A, 0x00, 0x00, 0x00,
+			// Length (UInt32 Network Order: 10 (1 byte type, 9 bytes payload))
+			0x00, 0x00, 0x00, 0x0A,
 			// Type
 			0x00,
 			// Payload (8 bytes)
