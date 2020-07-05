@@ -3,10 +3,14 @@ import XCTest
 
 final class RawPacketParserTests: XCTestCase {
 
+	private func getParser() -> jlftp.DataLayer.Version_3.RawPacketParser {
+		return jlftp.DataLayer.Version_3.RawPacketParser(sshProtocolParser: SSHProtocolParserDraft9())
+	}
+
 	func testParseDataNoData() {
 		let data = Data([])
 
-		let result = jlftp.DataLayer.Version_3.RawPacketParser().parseData(from: data)
+		let result = getParser().parseData(from: data)
 
 		XCTAssertEqual(Result<jlftp.DataLayer.Version_3.RawPacket, jlftp.DataLayer.Version_3.RawPacketParser.ParsingError>.failure(.noData), result)
 	}
@@ -20,7 +24,7 @@ final class RawPacketParserTests: XCTestCase {
 		]
 
 		for testcaseData in testcases {
-			let result = jlftp.DataLayer.Version_3.RawPacketParser().parseData(from: testcaseData)
+			let result = getParser().parseData(from: testcaseData)
 
 			XCTAssertEqual(Result<jlftp.DataLayer.Version_3.RawPacket, jlftp.DataLayer.Version_3.RawPacketParser.ParsingError>.failure(.noLength), result)
 		}
@@ -33,20 +37,20 @@ final class RawPacketParserTests: XCTestCase {
 			// Type (nothing)
 		])
 
-		let result = jlftp.DataLayer.Version_3.RawPacketParser().parseData(from: data)
+		let result = getParser().parseData(from: data)
 
 		XCTAssertEqual(Result<jlftp.DataLayer.Version_3.RawPacket, jlftp.DataLayer.Version_3.RawPacketParser.ParsingError>.failure(.noType), result)
 	}
 
 	func testParseDataNoDataPayload() {
 		let data = Data([
-			// Length (0)
-			0x00, 0x00, 0x00, 0x00,
+			// Length (UInt32 Network Byte Order: 1)
+			0x00, 0x00, 0x00, 0x01,
 			// Type (0)
 			0x00,
 		])
 
-		let result = jlftp.DataLayer.Version_3.RawPacketParser().parseData(from: data)
+		let result = getParser().parseData(from: data)
 
 		XCTAssertEqual(Result<jlftp.DataLayer.Version_3.RawPacket, jlftp.DataLayer.Version_3.RawPacketParser.ParsingError>.failure(.noDataPayload), result)
 	}
@@ -61,7 +65,7 @@ final class RawPacketParserTests: XCTestCase {
 			0x03,
 		])
 
-		let result = jlftp.DataLayer.Version_3.RawPacketParser().parseData(from: data)
+		let result = getParser().parseData(from: data)
 
 		guard case let .success(rawPacket) = result else {
 			XCTFail("Expected success. Received failure: \(result)")
@@ -71,7 +75,7 @@ final class RawPacketParserTests: XCTestCase {
 		XCTAssertEqual(0x02, rawPacket.length)
 		XCTAssertEqual(0x02, rawPacket.type)
 		XCTAssertEqual(1, rawPacket.dataPayload.count)
-		XCTAssertEqual(0x03, rawPacket.dataPayload[0])
+		XCTAssertEqual(0x03, rawPacket.dataPayload.first)
 	}
 
 	func testParseDataValidLarge() {
@@ -86,7 +90,7 @@ final class RawPacketParserTests: XCTestCase {
 		data.append(contentsOf: header)
 		data.append(contentsOf: payload)
 
-		let result = jlftp.DataLayer.Version_3.RawPacketParser().parseData(from: data)
+		let result = getParser().parseData(from: data)
 
 		guard let rawPacket = try? result.get() else {
 			XCTFail("Expected success. Received failure.")
@@ -96,8 +100,8 @@ final class RawPacketParserTests: XCTestCase {
 		XCTAssertEqual(101, rawPacket.length)
 		XCTAssertEqual(0x02, rawPacket.type)
 		XCTAssertEqual(100, rawPacket.dataPayload.count)
-		XCTAssertEqual(0x03, rawPacket.dataPayload[0])
-		XCTAssertEqual(0x03, rawPacket.dataPayload[98])
+		XCTAssertEqual(0x03, rawPacket.dataPayload.first)
+		XCTAssertEqual(0x03, rawPacket.dataPayload.last)
 	}
 
 	func testParseDataLengthMismatchLow() {
@@ -111,7 +115,7 @@ final class RawPacketParserTests: XCTestCase {
 			0x00, 0x00, 0x00, 0x00, 0x00,
 		])
 
-		let result = jlftp.DataLayer.Version_3.RawPacketParser().parseData(from: data)
+		let result = getParser().parseData(from: data)
 
 		XCTAssertEqual(Result<jlftp.DataLayer.Version_3.RawPacket, jlftp.DataLayer.Version_3.RawPacketParser.ParsingError>.failure(.lengthMismatch), result)
 	}
@@ -127,7 +131,7 @@ final class RawPacketParserTests: XCTestCase {
 			0x00, 0x00, 0x00, 0x00, 0x00,
 		])
 
-		let result = jlftp.DataLayer.Version_3.RawPacketParser().parseData(from: data)
+		let result = getParser().parseData(from: data)
 
 		XCTAssertEqual(Result<jlftp.DataLayer.Version_3.RawPacket, jlftp.DataLayer.Version_3.RawPacketParser.ParsingError>.failure(.lengthMismatch), result)
 	}

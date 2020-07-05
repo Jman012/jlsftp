@@ -24,4 +24,14 @@ extension Data {
 
 		return value
 	}
+
+	/**
+	 Splits the Data sequences into a prefix and suffix based on the maxLength.
+	 */
+	func split(maxLength: Int) -> (prefix: Data.SubSequence, suffix: Data.SubSequence) {
+		let prefix = self.prefix(maxLength)
+		let suffix = self.suffix(Swift.max(0, self.count - maxLength))
+
+		return (prefix, suffix)
+	}
 }

@@ -17,6 +17,12 @@ extension jlftp.DataLayer.Version_3 {
 			case lengthMismatch
 		}
 
+		let sshProtocolParser: SSHProtocolParser
+
+		init(sshProtocolParser: SSHProtocolParser) {
+			self.sshProtocolParser = sshProtocolParser
+		}
+
 		/**
 		 Parses a data packet from the network stream into a `RawPacket`.
 
@@ -24,38 +30,34 @@ extension jlftp.DataLayer.Version_3 {
 		 Byte Order.
 		 */
 		public func parseData(from data: Data) -> Result<RawPacket, ParsingError> {
+			// Can not parse empty data
 			if data.isEmpty {
 				return .failure(.noData)
 			}
 
-			// Requires at least 4 bytes to read the `length`.
-			if data.count < 4 {
-				return .failure(.noLength)
-			}
-
-			// Requires at least 4 bytes to read the `length`.
-			// Requires 1 more byte to read the `type`.
-			if data.count < 5 {
-				return .failure(.noType)
-			}
-
 			// Parse length
-			let length: UInt32 = data.subdata(in: 0..<4).to(UInt32.self, from: .networkOrder)!
-			if length == 0 || length == 1 {
-				return .failure(.noDataPayload)
+			let (optLength, remainingDataAfterLength) = sshProtocolParser.parseUInt32(from: data)
+			guard let length = optLength else {
+				return .failure(.noLength)
 			}
 
 			// Do not parse outside the bounds of the inputted data, nor if
 			// more data was supplied.
-			if (length + 4) != data.count {
+			if length != remainingDataAfterLength.count {
 				return .failure(.lengthMismatch)
 			}
 
 			// Parse type
-			let type: UInt8 = data[4]
+			let (optType, remainingDataAfterType) = sshProtocolParser.parseByte(from: remainingDataAfterLength)
+			guard let type = optType else {
+				return .failure(.noType)
+			}
 
-			// Retrieve data payload
-			let dataPayload = data.subdata(in: 5..<data.count)
+			// Data Payload
+			let dataPayload = remainingDataAfterType
+			guard !dataPayload.isEmpty else {
+				return .failure(.noDataPayload)
+			}
 
 			return .success(RawPacket(length: length, type: type, dataPayload: dataPayload))
 		}
