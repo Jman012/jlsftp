@@ -17,10 +17,10 @@ extension jlftp.DataLayer.Version_3 {
 			case lengthMismatch
 		}
 
-		let sshProtocolParser: SSHProtocolParser
+		let sshProtocolSerialization: SSHProtocolSerialization
 
-		init(sshProtocolParser: SSHProtocolParser) {
-			self.sshProtocolParser = sshProtocolParser
+		init(sshProtocolSerialization: SSHProtocolSerialization) {
+			self.sshProtocolSerialization = sshProtocolSerialization
 		}
 
 		/**
@@ -36,7 +36,7 @@ extension jlftp.DataLayer.Version_3 {
 			}
 
 			// Parse length
-			let (optLength, remainingDataAfterLength) = sshProtocolParser.parseUInt32(from: data)
+			let (optLength, remainingDataAfterLength) = sshProtocolSerialization.deserializeUInt32(from: data)
 			guard let length = optLength else {
 				return .failure(.noLength)
 			}
@@ -48,7 +48,7 @@ extension jlftp.DataLayer.Version_3 {
 			}
 
 			// Parse type
-			let (optType, remainingDataAfterType) = sshProtocolParser.parseByte(from: remainingDataAfterLength)
+			let (optType, remainingDataAfterType) = sshProtocolSerialization.deserializeByte(from: remainingDataAfterLength)
 			guard let type = optType else {
 				return .failure(.noType)
 			}

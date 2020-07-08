@@ -4,7 +4,7 @@ import XCTest
 final class RawPacketParserTests: XCTestCase {
 
 	private func getParser() -> jlftp.DataLayer.Version_3.RawPacketParser {
-		return jlftp.DataLayer.Version_3.RawPacketParser(sshProtocolParser: SSHProtocolParserDraft9())
+		return jlftp.DataLayer.Version_3.RawPacketParser(sshProtocolSerialization: SSHProtocolSerializationDraft9())
 	}
 
 	func testParseDataNoData() {

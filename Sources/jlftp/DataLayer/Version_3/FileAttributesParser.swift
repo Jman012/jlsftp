@@ -22,14 +22,14 @@ extension jlftp.DataLayer.Version_3 {
 
 	public class FileAttributesParser {
 
-		let sshProtocolParser: SSHProtocolParser
+		let sshProtocolSerialization: SSHProtocolSerialization
 
-		init(sshProtocolParser: SSHProtocolParser) {
-			self.sshProtocolParser = sshProtocolParser
+		init(sshProtocolSerialization: SSHProtocolSerialization) {
+			self.sshProtocolSerialization = sshProtocolSerialization
 		}
 
 		func parse(from data: Data) -> Result<(fileAttributes: FileAttributes?, remainingData: Data), FileAttributesParserError> {
-			let (optFlags, remainingDataAfterFlags) = sshProtocolParser.parseUInt32(from: data)
+			let (optFlags, remainingDataAfterFlags) = sshProtocolSerialization.deserializeUInt32(from: data)
 			guard let flagsInt = optFlags else {
 				return .failure(.couldNotParse("Could not parse file attribute flags"))
 			}
@@ -39,7 +39,7 @@ extension jlftp.DataLayer.Version_3 {
 
 			var size: UInt64?
 			if flags.contains(.size) {
-				(size, remainingData) = sshProtocolParser.parseUInt64(from: remainingData)
+				(size, remainingData) = sshProtocolSerialization.deserializeUInt64(from: remainingData)
 				if size == nil {
 					return .failure(.couldNotParse("Could not parse file attribute file size"))
 				}
@@ -47,11 +47,11 @@ extension jlftp.DataLayer.Version_3 {
 
 			var userId, groupId: UInt32?
 			if flags.contains(.userAndGroupIds) {
-				(userId, remainingData) = sshProtocolParser.parseUInt32(from: remainingData)
+				(userId, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				if userId == nil {
 					return .failure(.couldNotParse("Could not parse file attribute user id"))
 				}
-				(groupId, remainingData) = sshProtocolParser.parseUInt32(from: remainingData)
+				(groupId, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				if groupId == nil {
 					return .failure(.couldNotParse("Could not parse file attribute group id"))
 				}
@@ -60,7 +60,7 @@ extension jlftp.DataLayer.Version_3 {
 			var permissions: Permissions?
 			if flags.contains(.permissions) {
 				var optPermissionsInt: UInt32?
-				(optPermissionsInt, remainingData) = sshProtocolParser.parseUInt32(from: remainingData)
+				(optPermissionsInt, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				guard let permissionsInt = optPermissionsInt else {
 					return .failure(.couldNotParse("Could not parse file attribute permissions"))
 				}
@@ -70,11 +70,11 @@ extension jlftp.DataLayer.Version_3 {
 			var accessDate, modifyDate: Date?
 			if flags.contains(.accessAndModificationTimes) {
 				var optAccessTime, optModifyTime: UInt32?
-				(optAccessTime, remainingData) = sshProtocolParser.parseUInt32(from: remainingData)
+				(optAccessTime, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				guard let accessTime = optAccessTime else {
 					return .failure(.couldNotParse("Could not parse file attribute access time"))
 				}
-				(optModifyTime, remainingData) = sshProtocolParser.parseUInt32(from: remainingData)
+				(optModifyTime, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				guard let modifyTime = optModifyTime else {
 					return .failure(.couldNotParse("Could not parse file attribute modify time"))
 				}
@@ -85,17 +85,17 @@ extension jlftp.DataLayer.Version_3 {
 			var extensionData: [ExtensionData] = []
 			if flags.contains(.extendedAttributes) {
 				var optExtensionCount: UInt32?
-				(optExtensionCount, remainingData) = sshProtocolParser.parseUInt32(from: remainingData)
+				(optExtensionCount, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				guard let extensionCount = optExtensionCount else {
 					return .failure(.couldNotParse("Could not parse file attribute extended attribute count"))
 				}
 				for index in 0..<extensionCount {
 					var optStringName, optStringData: String?
-					(optStringName, remainingData) = sshProtocolParser.parseString(from: remainingData)
+					(optStringName, remainingData) = sshProtocolSerialization.deserializeString(from: remainingData)
 					guard let stringName = optStringName else {
 						return .failure(.couldNotParse("Could not parse file attribute extended attribute name at index \(index)"))
 					}
-					(optStringData, remainingData) = sshProtocolParser.parseString(from: remainingData)
+					(optStringData, remainingData) = sshProtocolSerialization.deserializeString(from: remainingData)
 					guard let stringData = optStringData else {
 						return .failure(.couldNotParse("Could not parse file attribute extended attribute data at index \(index)"))
 					}

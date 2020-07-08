@@ -4,7 +4,7 @@ import XCTest
 final class InitializePacketParserHandlerTests: XCTestCase {
 
 	private func getHandler() -> jlftp.DataLayer.Version_3.InitializePacketParserHandler {
-		return jlftp.DataLayer.Version_3.InitializePacketParserHandler(sshProtocolParser: SSHProtocolParserDraft9())
+		return jlftp.DataLayer.Version_3.InitializePacketParserHandler(sshProtocolSerialization: SSHProtocolSerializationDraft9())
 	}
 
 	func testValid() {

@@ -4,15 +4,15 @@ extension jlftp.DataLayer.Version_3 {
 
 	public class VersionPacketParserHandler: SftpVersion3PacketParserHandler {
 
-		let sshProtocolParser: SSHProtocolParser
+		let sshProtocolSerialization: SSHProtocolSerialization
 
-		init(sshProtocolParser: SSHProtocolParser) {
-			self.sshProtocolParser = sshProtocolParser
+		init(sshProtocolSerialization: SSHProtocolSerialization) {
+			self.sshProtocolSerialization = sshProtocolSerialization
 		}
 
 		public func parse(fromPayload data: Data) -> Result<Packet, jlftp.DataLayer.Version_3.PacketParser.ParseError> {
 			// Version
-			let (optVersion, remainingDataAfterVersion) = sshProtocolParser.parseUInt32(from: data)
+			let (optVersion, remainingDataAfterVersion) = sshProtocolSerialization.deserializeUInt32(from: data)
 			guard let versionByte = optVersion else {
 				return .failure(.payloadTooShort)
 			}
@@ -26,12 +26,12 @@ extension jlftp.DataLayer.Version_3 {
 			var remainingData = remainingDataAfterVersion
 			var extensionDataResults: [ExtensionData] = []
 			while !remainingData.isEmpty {
-				let (optExtensionName, remainingDataAfterExtensionName) = sshProtocolParser.parseString(from: remainingData)
+				let (optExtensionName, remainingDataAfterExtensionName) = sshProtocolSerialization.deserializeString(from: remainingData)
 				guard let extensionName = optExtensionName else {
 					break
 				}
 
-				let (optExtensionData, remainingDataAfterExtensionData) = sshProtocolParser.parseString(from: remainingDataAfterExtensionName)
+				let (optExtensionData, remainingDataAfterExtensionData) = sshProtocolSerialization.deserializeString(from: remainingDataAfterExtensionName)
 				guard let extensionData = optExtensionData else {
 					break
 				}

@@ -1,9 +1,9 @@
 import XCTest
 @testable import jlftp
 
-final class SSHProtocolParserDraft9Tests: XCTestCase {
+final class SSHProtocolSerializationDraft9Tests: XCTestCase {
 
-	func testParseByte() {
+	func testDeserializeByte() {
 		let testCases: [(data: Data, expectedByte: UInt8?, expectedRemainingData: Data.SubSequence)] = [
 			// Invalid
 			(Data(), nil, Data()),
@@ -16,16 +16,16 @@ final class SSHProtocolParserDraft9Tests: XCTestCase {
 			(Data([4, 5, 6]), 4, Data([5, 6])),
 		]
 
-		let parser = SSHProtocolParserDraft9()
+		let serialization = SSHProtocolSerializationDraft9()
 		for (data, expectedByte, expectedRemainingData) in testCases {
-			let (actualByte, actualRemainingData) = parser.parseByte(from: data)
+			let (actualByte, actualRemainingData) = serialization.deserializeByte(from: data)
 
 			XCTAssertEqual(expectedByte, actualByte)
 			XCTAssertEqual(expectedRemainingData, actualRemainingData)
 		}
 	}
 
-	func testParseUInt32() {
+	func testDeserializeUInt32() {
 		let testCases: [(data: Data, expectedInt: UInt32?, expectedRemainingData: Data.SubSequence)] = [
 			// Invalid
 			(Data(), nil, Data()),
@@ -48,16 +48,16 @@ final class SSHProtocolParserDraft9Tests: XCTestCase {
 			(Data([0xFF, 0xFF, 0xFF, 0xFF, 0xFF]), 4_294_967_295, Data([255])),
 		]
 
-		let parser = SSHProtocolParserDraft9()
+		let serialization = SSHProtocolSerializationDraft9()
 		for (data, expectedInt, expectedRemainingData) in testCases {
-			let (actualInt, actualRemainingData) = parser.parseUInt32(from: data)
+			let (actualInt, actualRemainingData) = serialization.deserializeUInt32(from: data)
 
 			XCTAssertEqual(expectedInt, actualInt)
 			XCTAssertEqual(expectedRemainingData, actualRemainingData)
 		}
 	}
 
-	func testParseUInt64() {
+	func testDeserializeUInt64() {
 		let testCases: [(data: Data, expectedInt: UInt64?, expectedRemainingData: Data.SubSequence)] = [
 			// Invalid
 			(Data(), nil, Data()),
@@ -84,16 +84,16 @@ final class SSHProtocolParserDraft9Tests: XCTestCase {
 			(Data([0, 0, 0, 0, 0, 0, 0, 1, 101]), 1, Data([101])),
 		]
 
-		let parser = SSHProtocolParserDraft9()
+		let serialization = SSHProtocolSerializationDraft9()
 		for (data, expectedInt, expectedRemainingData) in testCases {
-			let (actualInt, actualRemainingData) = parser.parseUInt64(from: data)
+			let (actualInt, actualRemainingData) = serialization.deserializeUInt64(from: data)
 
 			XCTAssertEqual(expectedInt, actualInt)
 			XCTAssertEqual(expectedRemainingData, actualRemainingData)
 		}
 	}
 
-	func testParseString() {
+	func testDeserializeString() {
 		let testCases: [(data: Data, expectedString: String?, expectedRemainingData: Data.SubSequence)] = [
 			// Invalid
 			(Data(), nil, Data()),
@@ -114,34 +114,34 @@ final class SSHProtocolParserDraft9Tests: XCTestCase {
 			(Data([0, 0, 0, 1, 65, 66]), "A", Data([66])),
 		]
 
-		let parser = SSHProtocolParserDraft9()
+		let serialization = SSHProtocolSerializationDraft9()
 		for (data, expectedString, expectedRemainingData) in testCases {
-			let (actualString, actualRemainingData) = parser.parseString(from: data)
+			let (actualString, actualRemainingData) = serialization.deserializeString(from: data)
 
 			XCTAssertEqual(expectedString, actualString)
 			XCTAssertEqual(expectedRemainingData, actualRemainingData)
 		}
 	}
 
-	func testParseStringUnicode() {
+	func testDeserializeStringUnicode() {
 		let expectedString = "😊"
 		let stringData = expectedString.data(using: .utf8)!
 		let stringLength = stringData.count
 
 		let data = Data([0x00, 0x00, 0x00, UInt8(stringLength)] + stringData + [0x01])
 
-		let parser = SSHProtocolParserDraft9()
-		let (actualString, actualRemainingData) = parser.parseString(from: data)
+		let serialization = SSHProtocolSerializationDraft9()
+		let (actualString, actualRemainingData) = serialization.deserializeString(from: data)
 
 		XCTAssertEqual(expectedString, actualString)
 		XCTAssertEqual(Data([0x01]), actualRemainingData)
 	}
 
 	static var allTests = [
-		("testParseByte", testParseByte),
-		("testParseUInt32", testParseUInt32),
-		("testParseUInt64", testParseUInt64),
-		("testParseString", testParseString),
-		("testParseStringUnicode", testParseStringUnicode),
+		("testDeserializeByte", testDeserializeByte),
+		("testDeserializeUInt32", testDeserializeUInt32),
+		("testDeserializeUInt64", testDeserializeUInt64),
+		("testDeserializeString", testDeserializeString),
+		("testDeserializeStringUnicode", testDeserializeStringUnicode),
 	]
 }
