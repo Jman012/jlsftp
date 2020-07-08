@@ -22,7 +22,7 @@ public class InitializePacketParserHandler: SftpVersion3PacketParserHandler {
 
 		// Rest of the data: extension data of the form of pairs of strings
 		var remainingData = remainingDataAfterVersion
-		var extensionDataResults: [jlftp.DataLayer.ExtensionData] = []
+		var extensionDataResults: [ExtensionData] = []
 		while !remainingData.isEmpty {
 			let (optExtensionName, remainingDataAfterExtensionName) = sshProtocolParser.parseString(from: remainingData)
 			guard let extensionName = optExtensionName else {
@@ -34,7 +34,7 @@ public class InitializePacketParserHandler: SftpVersion3PacketParserHandler {
 				break
 			}
 
-			extensionDataResults.append(jlftp.DataLayer.ExtensionData(name: extensionName, data: extensionData))
+			extensionDataResults.append(ExtensionData(name: extensionName, data: extensionData))
 			remainingData = remainingDataAfterExtensionData
 		}
 

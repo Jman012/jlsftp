@@ -7,7 +7,9 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(VersionPacketParserHandlerTests),
 		testCase(PacketParserTests),
 		testCase(RawPacketParserTests.allTests),
+		testCase(FileAttributesTests),
 		testCase(DataExtensions.allTests),
+		testCase(SSHProtocolParserDraft9Tests),
 		testCase(jlftpTests.allTests),
 	]
 }

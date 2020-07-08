@@ -124,7 +124,6 @@ final class SSHProtocolParserDraft9Tests: XCTestCase {
 	}
 
 	func testParseStringUnicode() {
-
 		let expectedString = "😊"
 		let stringData = expectedString.data(using: .utf8)!
 		let stringLength = stringData.count
