@@ -32,7 +32,7 @@ final class FileAttributesTests: XCTestCase {
 		(0o600, [.read, .write], [], []),
 		(0o700, [.read, .write, .execute], [], []),
 		// Test mixed
-		(0o754, [.read, .write, .execute], [.read, .execute], [.read])
+		(0o754, [.read, .write, .execute], [.read, .execute], [.read]),
 	]
 
 	func testInitFromBinary() {

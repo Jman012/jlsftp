@@ -24,7 +24,7 @@ extension jlftp.DataLayer.Version_3 {
 
 		let sshProtocolParser: SSHProtocolParser
 
-		init (sshProtocolParser: SSHProtocolParser) {
+		init(sshProtocolParser: SSHProtocolParser) {
 			self.sshProtocolParser = sshProtocolParser
 		}
 
@@ -37,7 +37,7 @@ extension jlftp.DataLayer.Version_3 {
 
 			var remainingData: Data.SubSequence = remainingDataAfterFlags
 
-			var size: UInt64? = nil
+			var size: UInt64?
 			if flags.contains(.size) {
 				(size, remainingData) = sshProtocolParser.parseUInt64(from: remainingData)
 				if size == nil {
@@ -104,7 +104,7 @@ extension jlftp.DataLayer.Version_3 {
 			}
 
 			let fileAttributes = FileAttributes(sizeBytes: size, userId: userId, groupId: groupId, permissions: permissions, accessDate: accessDate, modifyDate: modifyDate, extensionData: extensionData)
-			return.success((fileAttributes, remainingData))
+			return .success((fileAttributes, remainingData))
 		}
 	}
 }

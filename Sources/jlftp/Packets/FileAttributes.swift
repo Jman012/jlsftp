@@ -1,10 +1,3 @@
-//
-//  File.swift
-//  
-//
-//  Created by James Linnell on 7/5/20.
-//
-
 import Foundation
 
 public struct Permission: OptionSet {
@@ -31,7 +24,7 @@ public struct Permissions {
 	}
 
 	public init(user: Permission, group: Permission, other: Permission) {
-		self.user = user;
+		self.user = user
 		self.group = group
 		self.other = other
 	}

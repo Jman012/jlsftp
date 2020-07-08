@@ -3,8 +3,8 @@ import XCTest
 
 final class InitializePacketParserHandlerTests: XCTestCase {
 
-	private func getHandler() -> InitializePacketParserHandler {
-		return InitializePacketParserHandler(sshProtocolParser: SSHProtocolParserDraft9())
+	private func getHandler() -> jlftp.DataLayer.Version_3.InitializePacketParserHandler {
+		return jlftp.DataLayer.Version_3.InitializePacketParserHandler(sshProtocolParser: SSHProtocolParserDraft9())
 	}
 
 	func testValid() {
@@ -21,8 +21,8 @@ final class InitializePacketParserHandlerTests: XCTestCase {
 			XCTFail("Expected success. got '\(result)'")
 			return
 		}
-		XCTAssert(packet is jlftp.Packets.InitializePacket)
-		let initPacket = packet as! jlftp.Packets.InitializePacket
+		XCTAssert(packet is InitializePacket)
+		let initPacket = packet as! InitializePacket
 
 		XCTAssertEqual(jlftp.DataLayer.SftpVersion.v3, initPacket.version)
 		XCTAssertEqual(0, initPacket.extensionData.count)
@@ -91,8 +91,8 @@ final class InitializePacketParserHandlerTests: XCTestCase {
 			XCTFail("Expected success. got '\(result)'")
 			return
 		}
-		XCTAssert(packet is jlftp.Packets.InitializePacket)
-		let initPacket = packet as! jlftp.Packets.InitializePacket
+		XCTAssert(packet is InitializePacket)
+		let initPacket = packet as! InitializePacket
 
 		XCTAssertEqual(jlftp.DataLayer.SftpVersion.v3, initPacket.version)
 		XCTAssertEqual(1, initPacket.extensionData.count)
@@ -129,8 +129,8 @@ final class InitializePacketParserHandlerTests: XCTestCase {
 			XCTFail("Expected success. got '\(result)'")
 			return
 		}
-		XCTAssert(packet is jlftp.Packets.InitializePacket)
-		let initPacket = packet as! jlftp.Packets.InitializePacket
+		XCTAssert(packet is InitializePacket)
+		let initPacket = packet as! InitializePacket
 
 		XCTAssertEqual(jlftp.DataLayer.SftpVersion.v3, initPacket.version)
 		XCTAssertEqual(2, initPacket.extensionData.count)

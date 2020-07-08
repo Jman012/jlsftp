@@ -1,15 +1,12 @@
 import Foundation
 
-extension jlftp.Packets {
+public class InitializePacket: Packet {
 
-	public class InitializePacket: Packet {
+	public let version: jlftp.DataLayer.SftpVersion
+	public let extensionData: [ExtensionData]
 
-		public let version: jlftp.DataLayer.SftpVersion
-		public let extensionData: [ExtensionData]
-
-		public init(version: jlftp.DataLayer.SftpVersion, extensionData: [ExtensionData]) {
-			self.version = version
-			self.extensionData = extensionData
-		}
+	public init(version: jlftp.DataLayer.SftpVersion, extensionData: [ExtensionData]) {
+		self.version = version
+		self.extensionData = extensionData
 	}
 }

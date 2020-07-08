@@ -4,6 +4,4 @@ public struct jlftp {
 
 		public struct Version_3 {}
 	}
-
-	public struct Packets {}
 }
