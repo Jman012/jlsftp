@@ -2,7 +2,7 @@ import Foundation
 
 extension jlftp.DataLayer.Version_3 {
 
-	public class InitializePacketParserHandler: SftpVersion3PacketParserHandler {
+	public class VersionPacketSerializationHandler: SftpVersion3PacketSerializationHandler {
 
 		let sshProtocolSerialization: SSHProtocolSerialization
 
@@ -10,7 +10,7 @@ extension jlftp.DataLayer.Version_3 {
 			self.sshProtocolSerialization = sshProtocolSerialization
 		}
 
-		public func parse(fromPayload data: Data) -> Result<Packet, jlftp.DataLayer.Version_3.PacketParser.ParseError> {
+		public func deserialize(fromPayload data: Data) -> Result<Packet, DeserializationError> {
 			// Version
 			let (optVersion, remainingDataAfterVersion) = sshProtocolSerialization.deserializeUInt32(from: data)
 			guard let versionByte = optVersion else {
@@ -40,7 +40,7 @@ extension jlftp.DataLayer.Version_3 {
 				remainingData = remainingDataAfterExtensionData
 			}
 
-			return .success(InitializePacket(version: sftpVersion, extensionData: extensionDataResults))
+			return .success(VersionPacket(version: sftpVersion, extensionData: extensionDataResults))
 		}
 	}
 }

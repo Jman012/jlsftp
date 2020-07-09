@@ -1,10 +1,10 @@
 import XCTest
 @testable import jlftp
 
-final class VersionPacketParserHandlerTests: XCTestCase {
+final class InitializePacketSerializationHandlerTests: XCTestCase {
 
-	private func getHandler() -> jlftp.DataLayer.Version_3.VersionPacketParserHandler {
-		return jlftp.DataLayer.Version_3.VersionPacketParserHandler(sshProtocolSerialization: SSHProtocolSerializationDraft9())
+	private func getHandler() -> jlftp.DataLayer.Version_3.InitializePacketSerializationHandler {
+		return jlftp.DataLayer.Version_3.InitializePacketSerializationHandler(sshProtocolSerialization: SSHProtocolSerializationDraft9())
 	}
 
 	func testValid() {
@@ -15,17 +15,17 @@ final class VersionPacketParserHandlerTests: XCTestCase {
 			// Extensions (nil)
 		])
 
-		let result = handler.parse(fromPayload: dataPayload)
+		let result = handler.deserialize(fromPayload: dataPayload)
 
 		guard case let .success(packet) = result else {
 			XCTFail("Expected success. got '\(result)'")
 			return
 		}
-		XCTAssert(packet is VersionPacket)
-		let versionPacket = packet as! VersionPacket
+		XCTAssert(packet is InitializePacket)
+		let initPacket = packet as! InitializePacket
 
-		XCTAssertEqual(jlftp.DataLayer.SftpVersion.v3, versionPacket.version)
-		XCTAssertEqual(0, versionPacket.extensionData.count)
+		XCTAssertEqual(jlftp.DataLayer.SftpVersion.v3, initPacket.version)
+		XCTAssertEqual(0, initPacket.extensionData.count)
 	}
 
 	func testNotEnoughData() {
@@ -38,7 +38,7 @@ final class VersionPacketParserHandlerTests: XCTestCase {
 		]
 
 		for dataPayload in dataPayloads {
-			let result = handler.parse(fromPayload: dataPayload)
+			let result = handler.deserialize(fromPayload: dataPayload)
 
 			guard case .failure(.payloadTooShort) = result else {
 				XCTFail("Expected failure. got '\(result)'")
@@ -61,7 +61,7 @@ final class VersionPacketParserHandlerTests: XCTestCase {
 		]
 
 		for dataPayload in dataPayloads {
-			let result = handler.parse(fromPayload: dataPayload)
+			let result = handler.deserialize(fromPayload: dataPayload)
 
 			guard case .failure(.invalidDataPayload(reason: _)) = result else {
 				XCTFail("Expected failure. got '\(result)'")
@@ -85,19 +85,19 @@ final class VersionPacketParserHandlerTests: XCTestCase {
 			66,
 		])
 
-		let result = handler.parse(fromPayload: dataPayload)
+		let result = handler.deserialize(fromPayload: dataPayload)
 
 		guard case let .success(packet) = result else {
 			XCTFail("Expected success. got '\(result)'")
 			return
 		}
-		XCTAssert(packet is VersionPacket)
-		let versionPacket = packet as! VersionPacket
+		XCTAssert(packet is InitializePacket)
+		let initPacket = packet as! InitializePacket
 
-		XCTAssertEqual(jlftp.DataLayer.SftpVersion.v3, versionPacket.version)
-		XCTAssertEqual(1, versionPacket.extensionData.count)
-		XCTAssertEqual("A", versionPacket.extensionData.first!.name)
-		XCTAssertEqual("B", versionPacket.extensionData.first!.data)
+		XCTAssertEqual(jlftp.DataLayer.SftpVersion.v3, initPacket.version)
+		XCTAssertEqual(1, initPacket.extensionData.count)
+		XCTAssertEqual("A", initPacket.extensionData.first!.name)
+		XCTAssertEqual("B", initPacket.extensionData.first!.data)
 	}
 
 	func testExtensionMultiple() {
@@ -123,21 +123,21 @@ final class VersionPacketParserHandlerTests: XCTestCase {
 			67,
 		])
 
-		let result = handler.parse(fromPayload: dataPayload)
+		let result = handler.deserialize(fromPayload: dataPayload)
 
 		guard case let .success(packet) = result else {
 			XCTFail("Expected success. got '\(result)'")
 			return
 		}
-		XCTAssert(packet is VersionPacket)
-		let versionPacket = packet as! VersionPacket
+		XCTAssert(packet is InitializePacket)
+		let initPacket = packet as! InitializePacket
 
-		XCTAssertEqual(jlftp.DataLayer.SftpVersion.v3, versionPacket.version)
-		XCTAssertEqual(2, versionPacket.extensionData.count)
-		XCTAssertEqual("A@a.com", versionPacket.extensionData.first!.name)
-		XCTAssertEqual("B", versionPacket.extensionData.first!.data)
-		XCTAssertEqual("B@b.com", versionPacket.extensionData[1].name)
-		XCTAssertEqual("C", versionPacket.extensionData[1].data)
+		XCTAssertEqual(jlftp.DataLayer.SftpVersion.v3, initPacket.version)
+		XCTAssertEqual(2, initPacket.extensionData.count)
+		XCTAssertEqual("A@a.com", initPacket.extensionData.first!.name)
+		XCTAssertEqual("B", initPacket.extensionData.first!.data)
+		XCTAssertEqual("B@b.com", initPacket.extensionData[1].name)
+		XCTAssertEqual("C", initPacket.extensionData[1].data)
 	}
 
 	static var allTests = [

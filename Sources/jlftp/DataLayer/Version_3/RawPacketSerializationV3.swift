@@ -2,20 +2,7 @@ import Foundation
 
 extension jlftp.DataLayer.Version_3 {
 
-	public class RawPacketParser {
-
-		public enum ParsingError: Error {
-			/// Input data is empty.
-			case noData
-			/// There is not enough data to parse the length field.
-			case noLength
-			/// There is not enough data to parse the type field.
-			case noType
-			/// There is no payload associated with the packet (length is 0).
-			case noDataPayload
-			/// The overall size of the given data does not match the reported length of the payload.
-			case lengthMismatch
-		}
+	public class RawPacketSerializationV3: RawPacketSerialization {
 
 		let sshProtocolSerialization: SSHProtocolSerialization
 
@@ -24,12 +11,12 @@ extension jlftp.DataLayer.Version_3 {
 		}
 
 		/**
-		 Parses a data packet from the network stream into a `RawPacket`.
+		 Deserializes a data packet from the network stream into a `RawPacket`.
 
-		 - Parameter data: The data to parse from the network stream, in Network
+		 - Parameter data: The data to deserialize from the network stream, in Network
 		 Byte Order.
 		 */
-		public func parseData(from data: Data) -> Result<RawPacket, ParsingError> {
+		public func deserialize(from data: Data) -> Result<RawPacket, ParsingError> {
 			// Can not parse empty data
 			if data.isEmpty {
 				return .failure(.noData)

@@ -1,25 +1,25 @@
 import XCTest
 @testable import jlftp
 
-final class PacketParserTests: XCTestCase {
+final class PacketSerializationV3Tests: XCTestCase {
 
-	class MockParserHandler: SftpVersion3PacketParserHandler {
+	class MockSerializationHandler: SftpVersion3PacketSerializationHandler {
 		var timesCalled = 0
-		func parse(fromPayload _: Data) -> Result<Packet, jlftp.DataLayer.Version_3.PacketParser.ParseError> {
+		func deserialize(fromPayload _: Data) -> Result<Packet, DeserializationError> {
 			timesCalled += 1
 			return .failure(.invalidDataPayload(reason: "test"))
 		}
 	}
 
 	func testInvalidTypeZero() {
-		let mockOther = MockParserHandler()
-		let packetParser = jlftp.DataLayer.Version_3.PacketParser(
-			initializePacketParser: mockOther,
-			versionPacketParser: mockOther
+		let mockOther = MockSerializationHandler()
+		let packetSerialization = jlftp.DataLayer.Version_3.PacketSerializationV3(
+			initializePacketSerialization: mockOther,
+			versionPacketSerialization: mockOther
 		)
 
-		let result = packetParser.parseRawPacket(
-			from: jlftp.DataLayer.Version_3.RawPacket(length: 0, type: 0, dataPayload: Data())
+		let result = packetSerialization.deserialize(
+			rawPacket: RawPacket(length: 0, type: 0, dataPayload: Data())
 		)
 
 		guard case .failure(.invalidType) = result else {
@@ -31,14 +31,14 @@ final class PacketParserTests: XCTestCase {
 	}
 
 	func testInvalidTypeUnhandled() {
-		let mockOther = MockParserHandler()
-		let packetParser = jlftp.DataLayer.Version_3.PacketParser(
-			initializePacketParser: mockOther,
-			versionPacketParser: mockOther
+		let mockOther = MockSerializationHandler()
+		let packetSerialization = jlftp.DataLayer.Version_3.PacketSerializationV3(
+			initializePacketSerialization: mockOther,
+			versionPacketSerialization: mockOther
 		)
 
-		let result = packetParser.parseRawPacket(
-			from: jlftp.DataLayer.Version_3.RawPacket(
+		let result = packetSerialization.deserialize(
+			rawPacket: RawPacket(
 				length: 0,
 				type: jlftp.DataLayer.Version_3.PacketType.extended.rawValue,
 				dataPayload: Data()
@@ -55,15 +55,15 @@ final class PacketParserTests: XCTestCase {
 
 	func testInitialize() {
 
-		let mockInitilize = MockParserHandler()
-		let mockOther = MockParserHandler()
-		let packetParser = jlftp.DataLayer.Version_3.PacketParser(
-			initializePacketParser: mockInitilize,
-			versionPacketParser: mockOther
+		let mockInitialize = MockSerializationHandler()
+		let mockOther = MockSerializationHandler()
+		let packetSerialization = jlftp.DataLayer.Version_3.PacketSerializationV3(
+			initializePacketSerialization: mockInitialize,
+			versionPacketSerialization: mockOther
 		)
 
-		let result = packetParser.parseRawPacket(
-			from: jlftp.DataLayer.Version_3.RawPacket(
+		let result = packetSerialization.deserialize(
+			rawPacket: RawPacket(
 				length: 0,
 				type: jlftp.DataLayer.Version_3.PacketType.initialize.rawValue,
 				dataPayload: Data([0x03])
@@ -75,21 +75,21 @@ final class PacketParserTests: XCTestCase {
 			return
 		}
 
-		XCTAssertEqual(1, mockInitilize.timesCalled)
+		XCTAssertEqual(1, mockInitialize.timesCalled)
 		XCTAssertEqual(0, mockOther.timesCalled)
 	}
 
 	func testVersion() {
 
-		let mockVersion = MockParserHandler()
-		let mockOther = MockParserHandler()
-		let packetParser = jlftp.DataLayer.Version_3.PacketParser(
-			initializePacketParser: mockOther,
-			versionPacketParser: mockVersion
+		let mockVersion = MockSerializationHandler()
+		let mockOther = MockSerializationHandler()
+		let packetSerialization = jlftp.DataLayer.Version_3.PacketSerializationV3(
+			initializePacketSerialization: mockOther,
+			versionPacketSerialization: mockVersion
 		)
 
-		let result = packetParser.parseRawPacket(
-			from: jlftp.DataLayer.Version_3.RawPacket(
+		let result = packetSerialization.deserialize(
+			rawPacket: RawPacket(
 				length: 0,
 				type: jlftp.DataLayer.Version_3.PacketType.version.rawValue,
 				dataPayload: Data([0x03])

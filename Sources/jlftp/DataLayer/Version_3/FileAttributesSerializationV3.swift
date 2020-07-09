@@ -16,11 +16,11 @@ extension jlftp.DataLayer.Version_3 {
 		public static let extendedAttributes = FileAttributesFlags(rawValue: 1 << 4)
 	}
 
-	public enum FileAttributesParserError: Error {
-		case couldNotParse(String)
-	}
+	public class FileAttributesSerializationV3 {
 
-	public class FileAttributesParser {
+		public enum DeserializationError: Error {
+			case couldNotDeserialize(String)
+		}
 
 		let sshProtocolSerialization: SSHProtocolSerialization
 
@@ -28,10 +28,10 @@ extension jlftp.DataLayer.Version_3 {
 			self.sshProtocolSerialization = sshProtocolSerialization
 		}
 
-		func parse(from data: Data) -> Result<(fileAttributes: FileAttributes?, remainingData: Data), FileAttributesParserError> {
+		func deserialize(from data: Data) -> Result<(fileAttributes: FileAttributes?, remainingData: Data), DeserializationError> {
 			let (optFlags, remainingDataAfterFlags) = sshProtocolSerialization.deserializeUInt32(from: data)
 			guard let flagsInt = optFlags else {
-				return .failure(.couldNotParse("Could not parse file attribute flags"))
+				return .failure(.couldNotDeserialize("Could not deserialize file attribute flags"))
 			}
 			let flags = FileAttributesFlags(rawValue: flagsInt)
 
@@ -41,7 +41,7 @@ extension jlftp.DataLayer.Version_3 {
 			if flags.contains(.size) {
 				(size, remainingData) = sshProtocolSerialization.deserializeUInt64(from: remainingData)
 				if size == nil {
-					return .failure(.couldNotParse("Could not parse file attribute file size"))
+					return .failure(.couldNotDeserialize("Could not deserialize file attribute file size"))
 				}
 			}
 
@@ -49,11 +49,11 @@ extension jlftp.DataLayer.Version_3 {
 			if flags.contains(.userAndGroupIds) {
 				(userId, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				if userId == nil {
-					return .failure(.couldNotParse("Could not parse file attribute user id"))
+					return .failure(.couldNotDeserialize("Could not deserialize file attribute user id"))
 				}
 				(groupId, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				if groupId == nil {
-					return .failure(.couldNotParse("Could not parse file attribute group id"))
+					return .failure(.couldNotDeserialize("Could not deserialize file attribute group id"))
 				}
 			}
 
@@ -62,7 +62,7 @@ extension jlftp.DataLayer.Version_3 {
 				var optPermissionsInt: UInt32?
 				(optPermissionsInt, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				guard let permissionsInt = optPermissionsInt else {
-					return .failure(.couldNotParse("Could not parse file attribute permissions"))
+					return .failure(.couldNotDeserialize("Could not deserialize file attribute permissions"))
 				}
 				permissions = Permissions(fromBinary: UInt16(truncatingIfNeeded: permissionsInt))
 			}
@@ -72,11 +72,11 @@ extension jlftp.DataLayer.Version_3 {
 				var optAccessTime, optModifyTime: UInt32?
 				(optAccessTime, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				guard let accessTime = optAccessTime else {
-					return .failure(.couldNotParse("Could not parse file attribute access time"))
+					return .failure(.couldNotDeserialize("Could not deserialize file attribute access time"))
 				}
 				(optModifyTime, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				guard let modifyTime = optModifyTime else {
-					return .failure(.couldNotParse("Could not parse file attribute modify time"))
+					return .failure(.couldNotDeserialize("Could not deserialize file attribute modify time"))
 				}
 				accessDate = Date(timeIntervalSince1970: TimeInterval(accessTime))
 				modifyDate = Date(timeIntervalSince1970: TimeInterval(modifyTime))
@@ -87,17 +87,17 @@ extension jlftp.DataLayer.Version_3 {
 				var optExtensionCount: UInt32?
 				(optExtensionCount, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				guard let extensionCount = optExtensionCount else {
-					return .failure(.couldNotParse("Could not parse file attribute extended attribute count"))
+					return .failure(.couldNotDeserialize("Could not deserialize file attribute extended attribute count"))
 				}
 				for index in 0..<extensionCount {
 					var optStringName, optStringData: String?
 					(optStringName, remainingData) = sshProtocolSerialization.deserializeString(from: remainingData)
 					guard let stringName = optStringName else {
-						return .failure(.couldNotParse("Could not parse file attribute extended attribute name at index \(index)"))
+						return .failure(.couldNotDeserialize("Could not deserialize file attribute extended attribute name at index \(index)"))
 					}
 					(optStringData, remainingData) = sshProtocolSerialization.deserializeString(from: remainingData)
 					guard let stringData = optStringData else {
-						return .failure(.couldNotParse("Could not parse file attribute extended attribute data at index \(index)"))
+						return .failure(.couldNotDeserialize("Could not deserialize file attribute extended attribute data at index \(index)"))
 					}
 					extensionData.append(ExtensionData(name: stringName, data: stringData))
 				}
