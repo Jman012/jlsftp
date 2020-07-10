@@ -25,4 +25,10 @@ public class CreateSymbolicLinkPacket: BasePacket {
 	  - Since: sftp v3
 	 */
 	public let targetPath: String
+
+	public init(id: PacketId, linkPath: String, targetPath: String) {
+		self.id = id
+		self.linkPath = linkPath
+		self.targetPath = targetPath
+	}
 }

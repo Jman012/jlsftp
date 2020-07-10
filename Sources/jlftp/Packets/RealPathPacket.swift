@@ -19,4 +19,9 @@ public class RealPathPacket: BasePacket {
 	  - Since: sftp v3
 	 */
 	public let path: String
+
+	public init(id: PacketId, path: String) {
+		self.id = id
+		self.path = path
+	}
 }
