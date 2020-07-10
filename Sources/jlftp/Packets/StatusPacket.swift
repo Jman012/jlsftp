@@ -1,11 +1,11 @@
 import Foundation
 
 /**
-  Removes a remote directory.
+ Retrieves the file attributes of a remote resource.
 
  - Since: sftp v3
  */
-public class RemoveDirectoryPacket: BasePacket {
+public class StatusPacket: BasePacket {
 
 	/**
 	 Request identifier.
@@ -14,9 +14,9 @@ public class RemoveDirectoryPacket: BasePacket {
 	 */
 	public let id: PacketId
 	/**
-	  Path of the remote directory to remove.
+	  Path of the remote resource to pull the status.
 
-	  - Since: sftp v3
+	 - Since: sftp v3
 	 */
 	public let path: String
 

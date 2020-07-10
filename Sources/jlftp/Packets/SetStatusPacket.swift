@@ -1,11 +1,11 @@
 import Foundation
 
 /**
- Creates a remote directory.
+ Sets the file attributes of a remote resource.
 
  - Since: sftp v3
  */
-public class MakeDirectoryPacket: BasePacket {
+public class SetStatusPacket: BasePacket {
 
 	/**
 	 Request identifier.
@@ -14,15 +14,15 @@ public class MakeDirectoryPacket: BasePacket {
 	 */
 	public let id: PacketId
 	/**
-	  Path of the new remote directory.
+	  Path of the remote resource to set the status.
 
-	  - Since: sftp v3
+	 - Since: sftp v3
 	 */
 	public let path: String
 	/**
-	  Desired file attributes of the new remote directory.
+	  New file attributes to be set on the remote resource at the `path`.
 
-	  - Since: sftp v3
+	 - Since: sftp v3
 	 */
 	public let fileAttributes: FileAttributes
 

@@ -1,11 +1,11 @@
 import Foundation
 
 /**
-  Removes a remote directory.
+ Opens a remote directory.
 
  - Since: sftp v3
  */
-public class RemoveDirectoryPacket: BasePacket {
+public class OpenDirectoryPacket: BasePacket {
 
 	/**
 	 Request identifier.
@@ -14,7 +14,7 @@ public class RemoveDirectoryPacket: BasePacket {
 	 */
 	public let id: PacketId
 	/**
-	  Path of the remote directory to remove.
+	  Path of the remote directory on the server to open.
 
 	  - Since: sftp v3
 	 */

@@ -56,33 +56,46 @@ extension jlftp.DataLayer.Version_3 {
 		case write = 6
 
 		/**
+		 Retrieves the file attribute status of a path on the server. This is
+		 similar to `.status`, except that for symbolically linked paths, this
+		 returns the file attributes of the link itself.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_LSTAT`
 		  */
-		case lState = 7
+		case linkStatus = 7
 
 		/**
+		 Retrieves the file attribute status of a handle on the server,
+		 previously opened via `.openDirectory` or `.open`.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_FSTAT`
 		  */
-		case fStat = 8
+		case handleStatus = 8
 
 		/**
+		 Sets file attributes on a path on the server. This is used for
+		 operations such as changing the ownership, permissions or access times,
+		 as well as for truncating a file.
+
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_SETSTAT`
 		  */
-		case setStat = 9
+		case setStatus = 9
 
 		/**
+		 Sets file attributes on an opened handle on the server. This is used
+		 for operations such as changing the ownership, permissions or access
+		 times, as well as for truncating a file.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_FSETSTAT`
 		  */
-		case fSetStat = 10
+		case setHandleStatus = 10
 
 		/**
+		 Opens a directory on the server for reading. See `.readDirectory`.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_OPENDIR`
@@ -90,6 +103,9 @@ extension jlftp.DataLayer.Version_3 {
 		case openDirectory = 11
 
 		/**
+		 Reads the contents of the directory. May be called multiple times to
+		 get a complete listing. Directory should be closed after client is done
+		 reading, using `.close`.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_READDIR`
@@ -106,6 +122,7 @@ extension jlftp.DataLayer.Version_3 {
 		case remove = 13
 
 		/**
+		 Creates new a directory on the server.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_MKDIR`
@@ -113,6 +130,7 @@ extension jlftp.DataLayer.Version_3 {
 		case makeDirectory = 14
 
 		/**
+		 Removes a directory on the server.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_RMDIR`
@@ -120,6 +138,7 @@ extension jlftp.DataLayer.Version_3 {
 		case removeDirectory = 15
 
 		/**
+		 Retrieves the canonical path of a remote resource.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_REALPATH`
@@ -127,13 +146,18 @@ extension jlftp.DataLayer.Version_3 {
 		case realPath = 16
 
 		/**
+		 Retrieves the file attribute status of a path on the server. This is
+		 similar to `.linkStatus`, except that for symbolically linked paths,
+		 this returns the file attributes of the linked file, and not the link
+		 itself.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_STAT`
 		  */
-		case stat = 17
+		case status = 17
 
 		/**
+		 Renames a path on the server.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_RENAME`
@@ -141,6 +165,7 @@ extension jlftp.DataLayer.Version_3 {
 		case rename = 18
 
 		/**
+		 Reads the target of a symbolic link on the server.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_READLINK`
@@ -148,46 +173,47 @@ extension jlftp.DataLayer.Version_3 {
 		case readLink = 19
 
 		/**
+		 Creates a symbolic link to a target on the server.
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_SYMLINK`
 		  */
-		case symbolicLink = 20
+		case createSymbolicLink = 20
 
 		/**
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_STATUS`
 		  */
-		case status = 101
+		case statusReply = 101
 
 		/**
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_HANDLE`
 		  */
-		case handle = 102
+		case handleReply = 102
 
 		/**
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_DATA`
 		  */
-		case data = 103
+		case dataReply = 103
 
 		/**
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_NAME`
 		  */
-		case name = 104
+		case nameReply = 104
 
 		/**
 
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_ATTRS`
 		  */
-		case attributes = 105
+		case attributesReply = 105
 
 		/**
 
@@ -201,6 +227,6 @@ extension jlftp.DataLayer.Version_3 {
 		 - Since: sftp v3
 		 - Remark: sftp reference: `SSH_FXP_EXTENDED_REPLY`
 		  */
-		case extendedApply = 201
+		case extendedReply = 201
 	}
 }

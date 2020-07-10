@@ -1,11 +1,11 @@
 import Foundation
 
 /**
-  Removes a remote directory.
+  Retrieves the file attributes of a remote symbolic link.
 
  - Since: sftp v3
  */
-public class RemoveDirectoryPacket: BasePacket {
+public class LinkStatusPacket: BasePacket {
 
 	/**
 	 Request identifier.
@@ -14,7 +14,7 @@ public class RemoveDirectoryPacket: BasePacket {
 	 */
 	public let id: PacketId
 	/**
-	  Path of the remote directory to remove.
+	  Path of a remote resource.
 
 	  - Since: sftp v3
 	 */
