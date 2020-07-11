@@ -4,6 +4,9 @@ import Foundation
  Retrieves the file attributes of a remote resource.
 
  - Since: sftp v3
+ - Note: Expected Response Packet:
+   * Success => [FileAttributesReplyPacket](x-source-tag://FileAttributesReplyPacket)
+   * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
 public class StatusPacket: BasePacket {
 

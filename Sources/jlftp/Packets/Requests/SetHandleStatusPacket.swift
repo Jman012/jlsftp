@@ -4,6 +4,9 @@ import Foundation
   Sets the file attributes of an opened handle.
 
  - Since: sftp v3
+ - Note: Expected Response Packet:
+   * Success => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
+   * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
 public class SetHandleStatusPacket: BasePacket {
 

@@ -4,6 +4,9 @@ import Foundation
   Renames a remote resource.
 
  - Since: sftp v3
+ - Note: Expected Response Packet:
+   * Success => [FileAttributesReplyPacket](x-source-tag://FileAttributesReplyPacket)
+   * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
 public class RenamePacket: BasePacket {
 

@@ -4,6 +4,9 @@ import Foundation
   Initializes an sftp session with the sever.
 
  - Since: sftp v3
+ - Note: Expected Response Packet:
+   * Success => [VersionPacket](x-source-tag://VersionPacket)
+   * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
 public class InitializePacket: Packet {
 

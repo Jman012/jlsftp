@@ -4,6 +4,9 @@ import Foundation
   Retrieves the contents of a remote directory.
 
  - Since: sftp v3
+ - Note: Expected Response Packet:
+   * Success => [NameReplyPacket](x-source-tag://NameReplyPacket)
+   * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
 public class ReadDirectoryPacket: BasePacket {
 

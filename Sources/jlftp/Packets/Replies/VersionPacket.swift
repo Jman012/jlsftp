@@ -3,6 +3,7 @@ import Foundation
 /**
   Server response to an initialization request.
 
+ - Tag: VersionPacket
  - Since: sftp v3
  */
 public class VersionPacket: Packet {

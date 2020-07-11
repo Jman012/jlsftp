@@ -4,6 +4,9 @@ import Foundation
   Reads the contents of a remote file.
 
  - Since: sftp v3
+ - Note: Expected Response Packet:
+   * Success => [DataReplyPacket](x-source-tag://DataReplyPacket)
+   * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
 public class ReadPacket: BasePacket {
 

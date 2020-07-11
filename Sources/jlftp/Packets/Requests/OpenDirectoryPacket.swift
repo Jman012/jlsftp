@@ -4,6 +4,9 @@ import Foundation
  Opens a remote directory.
 
  - Since: sftp v3
+ - Note: Expected Response Packet:
+   * Success => [HandleReplyPacket](x-source-tag://HandleReplyPacket)
+   * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
 public class OpenDirectoryPacket: BasePacket {
 

@@ -4,6 +4,9 @@ import Foundation
   Removes a remote directory.
 
  - Since: sftp v3
+ - Note: Expected Response Packet:
+   * Success => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
+   * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
 public class RemoveDirectoryPacket: BasePacket {
 
