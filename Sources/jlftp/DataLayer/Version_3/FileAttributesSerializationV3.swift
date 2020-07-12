@@ -2,6 +2,7 @@ import Foundation
 
 extension jlftp.DataLayer.Version_3 {
 
+	/// - Remark: See [https://tools.ietf.org/html/draft-ietf-secsh-filexfer-02#section-5]()
 	public struct FileAttributesFlags: OptionSet {
 		public let rawValue: UInt32
 
@@ -9,11 +10,11 @@ extension jlftp.DataLayer.Version_3 {
 			self.rawValue = rawValue
 		}
 
-		public static let size = FileAttributesFlags(rawValue: 1 << 0)
-		public static let userAndGroupIds = FileAttributesFlags(rawValue: 1 << 1)
-		public static let permissions = FileAttributesFlags(rawValue: 1 << 2)
-		public static let accessAndModificationTimes = FileAttributesFlags(rawValue: 1 << 3)
-		public static let extendedAttributes = FileAttributesFlags(rawValue: 1 << 4)
+		public static let size = FileAttributesFlags(rawValue: 0x0000_0001)
+		public static let userAndGroupIds = FileAttributesFlags(rawValue: 0x0000_0002)
+		public static let permissions = FileAttributesFlags(rawValue: 0x0000_0004)
+		public static let accessAndModificationTimes = FileAttributesFlags(rawValue: 0x0000_0008)
+		public static let extendedAttributes = FileAttributesFlags(rawValue: 0x8000_0000)
 	}
 
 	public class FileAttributesSerializationV3 {
@@ -57,14 +58,14 @@ extension jlftp.DataLayer.Version_3 {
 				}
 			}
 
-			var permissions: Permissions?
+			var permissions: PermissionsV3?
 			if flags.contains(.permissions) {
 				var optPermissionsInt: UInt32?
 				(optPermissionsInt, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
 				guard let permissionsInt = optPermissionsInt else {
 					return .failure(.couldNotDeserialize("Could not deserialize file attribute permissions"))
 				}
-				permissions = Permissions(fromBinary: UInt16(truncatingIfNeeded: permissionsInt))
+				permissions = PermissionsV3(fromBinary: UInt16(truncatingIfNeeded: permissionsInt))
 			}
 
 			var accessDate, modifyDate: Date?
@@ -103,7 +104,7 @@ extension jlftp.DataLayer.Version_3 {
 				}
 			}
 
-			let fileAttributes = FileAttributes(sizeBytes: size, userId: userId, groupId: groupId, permissions: permissions, accessDate: accessDate, modifyDate: modifyDate, extensionData: extensionData)
+			let fileAttributes = FileAttributes(sizeBytes: size, userId: userId, groupId: groupId, permissions: permissions?.permission, accessDate: accessDate, modifyDate: modifyDate, extensionData: extensionData)
 			return .success((fileAttributes, remainingData))
 		}
 	}

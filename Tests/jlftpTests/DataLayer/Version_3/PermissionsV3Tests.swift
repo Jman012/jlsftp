@@ -1,9 +1,9 @@
 import XCTest
 @testable import jlftp
 
-final class FileAttributesTests: XCTestCase {
+final class PermissionsV3Tests: XCTestCase {
 
-	let testCases: [(binary: UInt16, expUser: Permission, expGroup: Permission, expOther: Permission)] = [
+	let testCases: [(binary: UInt16, expUser: jlftp.DataLayer.Version_3.PermissionV3, expGroup: jlftp.DataLayer.Version_3.PermissionV3, expOther: jlftp.DataLayer.Version_3.PermissionV3)] = [
 		// Test Other
 		(0o000, [], [], []),
 		(0o001, [], [], [.execute]),
@@ -37,7 +37,7 @@ final class FileAttributesTests: XCTestCase {
 
 	func testInitFromBinary() {
 		for (binary, expUser, expGroup, expOther) in testCases {
-			let perm = Permissions(fromBinary: binary)
+			let perm = jlftp.DataLayer.Version_3.PermissionsV3(fromBinary: binary)
 
 			XCTAssertEqual(expUser, perm.user)
 			XCTAssertEqual(expGroup, perm.group)
@@ -47,7 +47,7 @@ final class FileAttributesTests: XCTestCase {
 
 	func testBinaryRepresentation() {
 		for (expBinary, user, group, other) in testCases {
-			let perm = Permissions(user: user, group: group, other: other)
+			let perm = jlftp.DataLayer.Version_3.PermissionsV3(user: user, group: group, other: other)
 
 			XCTAssertEqual(expBinary, perm.binaryRepresentation)
 		}

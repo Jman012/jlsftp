@@ -1,37 +1,19 @@
 import Foundation
 
-public struct Permission: OptionSet {
-	public let rawValue: UInt8
-
-	public init(rawValue: UInt8) {
-		self.rawValue = rawValue
-	}
-
-	static let execute = Permission(rawValue: 1 << 0) // 0b001, 0o1
-	static let write = Permission(rawValue: 1 << 1) // 0b010, 0o2
-	static let read = Permission(rawValue: 1 << 2) // 0b100, 0o4
+public enum Permission {
+	case read
+	case write
+	case execute
 }
 
 public struct Permissions {
-	let user: Permission
-	let group: Permission
-	let other: Permission
+	let user: Set<Permission>
+	let group: Set<Permission>
+	let other: Set<Permission>
 
-	var binaryRepresentation: UInt16 {
-		return (UInt16(user.rawValue) << 6)
-			| (UInt16(group.rawValue) << 3)
-			| (UInt16(other.rawValue) << 0)
-	}
-
-	public init(user: Permission, group: Permission, other: Permission) {
+	public init(user: Set<Permission>, group: Set<Permission>, other: Set<Permission>) {
 		self.user = user
 		self.group = group
 		self.other = other
-	}
-
-	public init(fromBinary binary: UInt16) {
-		user = Permission(rawValue: UInt8((binary & 0o700) >> 6))
-		group = Permission(rawValue: UInt8((binary & 0o070) >> 3))
-		other = Permission(rawValue: UInt8((binary & 0o007) >> 0))
 	}
 }

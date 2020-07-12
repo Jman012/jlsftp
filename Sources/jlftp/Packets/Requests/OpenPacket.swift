@@ -27,7 +27,7 @@ public class OpenPacket: BasePacket {
 
 	  - Since: sftp v3
 	 */
-	public let pflags: PFlags
+	public let pflags: OpenFlags
 	/**
 	  Initial file attributes for the remote file, if it is being created.
 
@@ -37,7 +37,7 @@ public class OpenPacket: BasePacket {
 
 	public init(id: PacketId,
 				filename: String,
-				pflags: PFlags,
+				pflags: OpenFlags,
 				fileAttributes: FileAttributes) {
 		self.id = id
 		self.filename = filename
