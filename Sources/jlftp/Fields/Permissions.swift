@@ -17,3 +17,5 @@ public struct Permissions {
 		self.other = other
 	}
 }
+
+extension Permissions: Equatable {}

@@ -9,3 +9,5 @@ public struct FileAttributes {
 	let modifyDate: Date?
 	let extensionData: [ExtensionData]
 }
+
+extension FileAttributes: Equatable {}

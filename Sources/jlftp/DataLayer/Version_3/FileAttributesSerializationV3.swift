@@ -29,7 +29,7 @@ extension jlftp.DataLayer.Version_3 {
 			self.sshProtocolSerialization = sshProtocolSerialization
 		}
 
-		func deserialize(from data: Data) -> Result<(fileAttributes: FileAttributes?, remainingData: Data), DeserializationError> {
+		func deserialize(from data: Data) -> Result<(fileAttributes: FileAttributes, remainingData: Data), DeserializationError> {
 			let (optFlags, remainingDataAfterFlags) = sshProtocolSerialization.deserializeUInt32(from: data)
 			guard let flagsInt = optFlags else {
 				return .failure(.couldNotDeserialize("Could not deserialize file attribute flags"))
