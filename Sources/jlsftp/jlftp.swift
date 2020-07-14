@@ -1,4 +1,4 @@
-public struct jlftp {
+public struct jlsftp {
 
 	public struct DataLayer {
 
