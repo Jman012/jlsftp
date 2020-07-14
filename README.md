@@ -1,3 +1,3 @@
-# jlftp
+# jlsftp
 
 A description of this package.

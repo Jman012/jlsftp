@@ -1,7 +1,7 @@
 import XCTest
 
-import jlftpTests
+import jlsftpTests
 
 var tests = [XCTestCaseEntry]()
-tests += jlftpTests.allTests()
+tests += jlsftpTests.allTests()
 XCTMain(tests)
