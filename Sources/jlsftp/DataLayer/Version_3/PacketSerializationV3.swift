@@ -4,7 +4,7 @@ public protocol SftpVersion3PacketSerializationHandler {
 	/**
 	 Deserializes the data payload of an sftp packet into the correct packet structure.
 
-	 - Parameter data: The data payload from a `RawPacket`m in Network Byte
+	 - Parameter data: The data payload from a `RawPacket` in Network Byte
 	 Order.
 	 */
 	func deserialize(fromPayload data: Data) -> Result<Packet, DeserializationError>

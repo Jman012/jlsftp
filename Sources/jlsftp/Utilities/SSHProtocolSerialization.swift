@@ -9,6 +9,7 @@ public protocol SSHProtocolSerialization {
 	func deserializeUInt32(from data: Data) -> (int: UInt32?, remainingData: Data.SubSequence)
 	func deserializeUInt64(from data: Data) -> (int: UInt64?, remainingData: Data.SubSequence)
 	func deserializeString(from data: Data) -> (string: String?, remainingData: Data.SubSequence)
+	func deserializeData(from data: Data) -> (data: Data?, remainingData: Data.SubSequence)
 }
 
 /**
@@ -46,21 +47,30 @@ public class SSHProtocolSerializationDraft9: SSHProtocolSerialization {
 	}
 
 	public func deserializeString(from data: Data) -> (string: String?, remainingData: Data.SubSequence) {
+		let (optData, remainingData) = deserializeData(from: data)
+		guard let stringFieldData = optData else {
+			return (nil, data)
+		}
+
+		let stringContents = String(bytes: stringFieldData, encoding: .utf8)
+		return (stringContents, remainingData)
+	}
+
+	public func deserializeData(from data: Data) -> (data: Data?, remainingData: Data.SubSequence) {
 		let (stringLengthOpt, remainingData) = self.deserializeUInt32(from: data)
 		guard let stringLength = stringLengthOpt else {
 			return (nil, data)
 		}
 
 		if stringLength == 0 {
-			return ("", remainingData)
+			return (Data(), remainingData)
 		}
 
-		let (stringFieldData, remainingData2) = remainingData.split(maxLength: Int(stringLength))
-		guard stringFieldData.count == stringLength else {
+		let (resultData, remainingData2) = remainingData.split(maxLength: Int(stringLength))
+		guard resultData.count == stringLength else {
 			return (nil, data)
 		}
 
-		let stringContents = String(bytes: stringFieldData, encoding: .utf8)
-		return (stringContents, remainingData2)
+		return (resultData, remainingData2)
 	}
 }
