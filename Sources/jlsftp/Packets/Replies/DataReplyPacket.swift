@@ -14,15 +14,8 @@ public class DataReplyPacket: BasePacket {
 	  - Since: sftp v3
 	 */
 	public let id: PacketId
-	/**
-	  Arbitrary byte sequence containing the requested data.
 
-	  - Since: sftp v3
-	 */
-	public let data: Data
-
-	public init(id: PacketId, data: Data) {
+	public init(id: PacketId) {
 		self.id = id
-		self.data = data
 	}
 }

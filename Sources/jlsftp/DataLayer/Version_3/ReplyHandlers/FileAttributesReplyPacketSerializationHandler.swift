@@ -1,31 +1,25 @@
 import Foundation
+import NIO
 
 extension jlsftp.DataLayer.Version_3 {
 
-	public class FileAttributesReplyPacketSerializationHandler: SftpVersion3PacketSerializationHandler {
+	public class FileAttributesReplyPacketSerializationHandler: PacketSerializationHandler {
 
-		let sshProtocolSerialization: SSHProtocolSerialization
-
-		init(sshProtocolSerialization: SSHProtocolSerialization) {
-			self.sshProtocolSerialization = sshProtocolSerialization
-		}
-
-		public func deserialize(fromPayload data: Data) -> Result<Packet, DeserializationError> {
+		public func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			// Id
-			let (optId, remainingDataAfterId) = sshProtocolSerialization.deserializeUInt32(from: data)
-			guard let id = optId else {
-				return .failure(.payloadTooShort)
+			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+				return .failure(.needMoreData)
 			}
 
 			// File Attributes
-			let fileAttrSerializationV3 = FileAttributesSerializationV3(sshProtocolSerialization: sshProtocolSerialization)
-			let fileAttrResult = fileAttrSerializationV3.deserialize(from: remainingDataAfterId)
-			switch fileAttrResult {
-			case let .failure(.couldNotDeserialize(errorMsg)):
-				return .failure(.invalidDataPayload(reason: "Could not parse file attributes: \(errorMsg)"))
-			case let .success((fileAttrs, _)):
-				return .success(FileAttributesReplyPacket(id: id, fileAttributes: fileAttrs))
+			let fileAttrSerializationV3 = FileAttributesSerializationV3()
+			let fileAttrResult = fileAttrSerializationV3.deserialize(from: &buffer)
+
+			guard case let .success(fileAttrs) = fileAttrResult else {
+				return .failure(fileAttrResult.error!)
 			}
+
+			return .success(FileAttributesReplyPacket(id: id, fileAttributes: fileAttrs))
 		}
 	}
 }

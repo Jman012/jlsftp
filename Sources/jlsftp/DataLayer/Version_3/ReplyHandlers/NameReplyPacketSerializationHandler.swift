@@ -1,52 +1,40 @@
 import Foundation
+import NIO
 
 extension jlsftp.DataLayer.Version_3 {
 
-	public class NameReplyPacketSerializationHandler: SftpVersion3PacketSerializationHandler {
+	public class NameReplyPacketSerializationHandler: PacketSerializationHandler {
 
-		let sshProtocolSerialization: SSHProtocolSerialization
-
-		init(sshProtocolSerialization: SSHProtocolSerialization) {
-			self.sshProtocolSerialization = sshProtocolSerialization
-		}
-
-		public func deserialize(fromPayload data: Data) -> Result<Packet, DeserializationError> {
+		public func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			// Id
-			let (optId, remainingDataAfterId) = sshProtocolSerialization.deserializeUInt32(from: data)
-			guard let id = optId else {
-				return .failure(.payloadTooShort)
+			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+				return .failure(.needMoreData)
 			}
 
 			// Count
-			let (optCount, remainingDataAfterCount) = sshProtocolSerialization.deserializeUInt32(from: remainingDataAfterId)
-			guard let count = optCount else {
-				return .failure(.payloadTooShort)
+			guard let count = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+				return .failure(.needMoreData)
 			}
 
-			let fileAttrSerializationV3 = FileAttributesSerializationV3(sshProtocolSerialization: sshProtocolSerialization)
-			var remainingData: Data = remainingDataAfterCount
+			let fileAttrSerializationV3 = FileAttributesSerializationV3()
 			var names: [NameReplyPacket.Name] = []
 			for index in 0..<count {
-				var optFilename, optLongName: String?
-
-				(optFilename, remainingData) = sshProtocolSerialization.deserializeString(from: remainingData)
-				guard let filename = optFilename else {
-					return .failure(.payloadTooShort)
+				let filenameResult = buffer.readSftpString()
+				guard case let .success(filename) = filenameResult else {
+					return .failure(.invalidData(reason: "Failed to deserialize filename at index \(index): \(filenameResult.error!)"))
 				}
 
-				(optLongName, remainingData) = sshProtocolSerialization.deserializeString(from: remainingData)
-				guard let longName = optLongName else {
-					return .failure(.payloadTooShort)
+				let longNameResult = buffer.readSftpString()
+				guard case let .success(longName) = longNameResult else {
+					return .failure(.invalidData(reason: "Failed to deserialize longName at index \(index): \(longNameResult.error!)"))
 				}
 
-				let fileAttrsResult = fileAttrSerializationV3.deserialize(from: remainingData)
-				switch fileAttrsResult {
-				case let .failure(.couldNotDeserialize(errorMsg)):
-					return .failure(.invalidDataPayload(reason: "Could not parse file attributes at index '\(index)': \(errorMsg)"))
-				case let .success((fileAttrs, remainingDataAfterFileAttrs)):
-					remainingData = remainingDataAfterFileAttrs
-					names.append(NameReplyPacket.Name(filename: filename, longName: longName, fileAttributes: fileAttrs))
+				let fileAttrsResult = fileAttrSerializationV3.deserialize(from: &buffer)
+				guard case let .success(fileAttrs) = fileAttrsResult else {
+					return .failure(.invalidData(reason: "Failed to deserialize file attributes at index \(index): \(fileAttrsResult.error!)"))
 				}
+
+				names.append(NameReplyPacket.Name(filename: filename, longName: longName, fileAttributes: fileAttrs))
 			}
 
 			return .success(NameReplyPacket(id: id, names: names))

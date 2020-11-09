@@ -1,26 +1,20 @@
 import Foundation
+import NIO
 
 extension jlsftp.DataLayer.Version_3 {
 
-	public class HandleReplyPacketSerializationHandler: SftpVersion3PacketSerializationHandler {
+	public class HandleReplyPacketSerializationHandler: PacketSerializationHandler {
 
-		let sshProtocolSerialization: SSHProtocolSerialization
-
-		init(sshProtocolSerialization: SSHProtocolSerialization) {
-			self.sshProtocolSerialization = sshProtocolSerialization
-		}
-
-		public func deserialize(fromPayload data: Data) -> Result<Packet, DeserializationError> {
+		public func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			// Id
-			let (optId, remainingDataAfterId) = sshProtocolSerialization.deserializeUInt32(from: data)
-			guard let id = optId else {
-				return .failure(.payloadTooShort)
+			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+				return .failure(.needMoreData)
 			}
 
 			// Handle
-			let (optHandle, _) = sshProtocolSerialization.deserializeString(from: remainingDataAfterId)
-			guard let handle = optHandle else {
-				return .failure(.payloadTooShort)
+			let handleResult = buffer.readSftpString()
+			guard case let .success(handle) = handleResult else {
+				return .failure(.invalidData(reason: "Failed to deserialize handle: \(handleResult.error!)"))
 			}
 
 			return .success(HandleReplyPacket(id: id, handle: handle))

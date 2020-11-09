@@ -3,10 +3,21 @@ import Foundation
 public class DataReadStream {
 
 	public enum ReadError: Error {
-		case endOfStream
+		case endOfStream(Stream.Status)
+
+		public var description: String {
+			switch self {
+			case .endOfStream:
+				return "Could not read any more data from the stream"
+			}
+		}
 	}
 
 	internal let inputStream: InputStream
+
+	public var hasBytesAvailable: Bool {
+		return self.inputStream.hasBytesAvailable
+	}
 
 	public init(from inputStream: InputStream) {
 		self.inputStream = inputStream
@@ -19,7 +30,7 @@ public class DataReadStream {
 
 		var buffer = [UInt8](repeating: 0, count: count)
 		if self.inputStream.read(&buffer, maxLength: count) != count {
-			return .failure(.endOfStream)
+			return .failure(.endOfStream(self.inputStream.streamStatus))
 		}
 		return .success(Data(bytes: buffer, count: buffer.count))
 	}

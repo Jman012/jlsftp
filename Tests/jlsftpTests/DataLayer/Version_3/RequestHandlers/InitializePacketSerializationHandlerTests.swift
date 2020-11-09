@@ -1,28 +1,29 @@
+import NIO
 import XCTest
 @testable import jlsftp
 
 final class InitializePacketSerializationHandlerTests: XCTestCase {
 
 	private func getHandler() -> jlsftp.DataLayer.Version_3.InitializePacketSerializationHandler {
-		return jlsftp.DataLayer.Version_3.InitializePacketSerializationHandler(sshProtocolSerialization: SSHProtocolSerializationDraft9())
+		return jlsftp.DataLayer.Version_3.InitializePacketSerializationHandler()
 	}
 
 	func testValid() {
 		let handler = getHandler()
-		let dataPayload = Data([
+		var buffer = ByteBuffer(bytes: [
 			// Version (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
 			// Extensions (nil)
 		])
 
-		let result = handler.deserialize(fromPayload: dataPayload)
+		let result = handler.deserialize(buffer: &buffer)
 
 		guard case let .success(packet) = result else {
-			XCTFail("Expected success. got '\(result)'")
+			XCTFail("Expected success. Instead, got '\(result)'")
 			return
 		}
-		XCTAssert(packet is InitializePacket)
-		let initPacket = packet as! InitializePacket
+		XCTAssert(packet is InitializePacketV3)
+		let initPacket = packet as! InitializePacketV3
 
 		XCTAssertEqual(jlsftp.DataLayer.SftpVersion.v3, initPacket.version)
 		XCTAssertEqual(0, initPacket.extensionData.count)
@@ -30,18 +31,18 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 
 	func testNotEnoughData() {
 		let handler = getHandler()
-		let dataPayloads = [
-			Data([]),
-			Data([0x03]),
-			Data([0x03, 0x00]),
-			Data([0x03, 0x00, 0x00]),
+		let buffers = [
+			ByteBuffer(bytes: []),
+			ByteBuffer(bytes: [0x03]),
+			ByteBuffer(bytes: [0x03, 0x00]),
+			ByteBuffer(bytes: [0x03, 0x00, 0x00]),
 		]
 
-		for dataPayload in dataPayloads {
-			let result = handler.deserialize(fromPayload: dataPayload)
+		for var buffer in buffers {
+			let result = handler.deserialize(buffer: &buffer)
 
-			guard case .failure(.payloadTooShort) = result else {
-				XCTFail("Expected failure. got '\(result)'")
+			guard case .failure(.needMoreData) = result else {
+				XCTFail("Expected failure. Instead, got '\(result)'")
 				return
 			}
 		}
@@ -49,22 +50,22 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 
 	func testInvalidVersion() {
 		let handler = getHandler()
-		let dataPayloads = [
-			Data([
+		let buffers = [
+			ByteBuffer(bytes: [
 				// Version (UInt32 Network Order: 0)
 				0x00, 0x00, 0x00, 0x00,
 			]),
-			Data([
+			ByteBuffer(bytes: [
 				// Version (UInt32 Network Order: 255)
 				0x00, 0x00, 0x00, 0xFF,
 			]),
 		]
 
-		for dataPayload in dataPayloads {
-			let result = handler.deserialize(fromPayload: dataPayload)
+		for var buffer in buffers {
+			let result = handler.deserialize(buffer: &buffer)
 
-			guard case .failure(.invalidDataPayload(reason: _)) = result else {
-				XCTFail("Expected failure. got '\(result)'")
+			guard case .failure(.invalidData(reason: _)) = result else {
+				XCTFail("Expected failure. Instead, got '\(result)'")
 				return
 			}
 		}
@@ -72,7 +73,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 
 	func testExtension() {
 		let handler = getHandler()
-		let dataPayload = Data([
+		var buffer = ByteBuffer(bytes: [
 			// Version (UInt32 Network Byte Order: 3)
 			0x00, 0x00, 0x00, 0x03,
 			// Extension Name Length (UInt32 Network Byte Order: 1)
@@ -85,14 +86,14 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 			66,
 		])
 
-		let result = handler.deserialize(fromPayload: dataPayload)
+		let result = handler.deserialize(buffer: &buffer)
 
 		guard case let .success(packet) = result else {
-			XCTFail("Expected success. got '\(result)'")
+			XCTFail("Expected success. Instead, got '\(result)'")
 			return
 		}
-		XCTAssert(packet is InitializePacket)
-		let initPacket = packet as! InitializePacket
+		XCTAssert(packet is InitializePacketV3)
+		let initPacket = packet as! InitializePacketV3
 
 		XCTAssertEqual(jlsftp.DataLayer.SftpVersion.v3, initPacket.version)
 		XCTAssertEqual(1, initPacket.extensionData.count)
@@ -102,7 +103,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 
 	func testExtensionMultiple() {
 		let handler = getHandler()
-		let dataPayload = Data([
+		var buffer = ByteBuffer(bytes: [
 			// Version (UInt32 Network Byte Order: 3)
 			0x00, 0x00, 0x00, 0x03,
 			// Extension Name Length (UInt32 Network Byte Order: 7)
@@ -123,14 +124,14 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 			67,
 		])
 
-		let result = handler.deserialize(fromPayload: dataPayload)
+		let result = handler.deserialize(buffer: &buffer)
 
 		guard case let .success(packet) = result else {
-			XCTFail("Expected success. got '\(result)'")
+			XCTFail("Expected success. Instead, got '\(result)'")
 			return
 		}
-		XCTAssert(packet is InitializePacket)
-		let initPacket = packet as! InitializePacket
+		XCTAssert(packet is InitializePacketV3)
+		let initPacket = packet as! InitializePacketV3
 
 		XCTAssertEqual(jlsftp.DataLayer.SftpVersion.v3, initPacket.version)
 		XCTAssertEqual(2, initPacket.extensionData.count)

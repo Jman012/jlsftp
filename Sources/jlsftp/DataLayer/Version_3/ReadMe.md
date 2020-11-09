@@ -2,7 +2,7 @@ The implementation of IETF sftp Version 3 as outlined in
 https://tools.ietf.org/html/draft-ietf-secsh-filexfer-02
 
 Versions 0, 1, and 2 pre-date the official IETF specification and will not be
-implemented.
+implemented in their isolated form.
 
 Parsing begins with the RawPacketSerialization, which takes in the initial data stream
 and deserializes a RawPacket, which just has the `length`, `type`, and `payload`.

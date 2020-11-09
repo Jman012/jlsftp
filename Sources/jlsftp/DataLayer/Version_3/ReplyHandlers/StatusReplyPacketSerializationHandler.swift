@@ -1,41 +1,34 @@
 import Foundation
+import NIO
 
 extension jlsftp.DataLayer.Version_3 {
 
-	public class StatusReplyPacketSerializationHandler: SftpVersion3PacketSerializationHandler {
+	public class StatusReplyPacketSerializationHandler: PacketSerializationHandler {
 
-		let sshProtocolSerialization: SSHProtocolSerialization
-
-		init(sshProtocolSerialization: SSHProtocolSerialization) {
-			self.sshProtocolSerialization = sshProtocolSerialization
-		}
-
-		public func deserialize(fromPayload data: Data) -> Result<Packet, DeserializationError> {
+		public func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			// Id
-			let (optId, remainingDataAfterId) = sshProtocolSerialization.deserializeUInt32(from: data)
-			guard let id = optId else {
-				return .failure(.payloadTooShort)
+			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+				return .failure(.needMoreData)
 			}
 
 			// Code
-			let (optCode, remainingDataAfterCode) = sshProtocolSerialization.deserializeUInt32(from: remainingDataAfterId)
-			guard let code = optCode else {
-				return .failure(.payloadTooShort)
+			guard let codeInt = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+				return .failure(.needMoreData)
 			}
-			guard let errorStatusCode = ErrorStatusCodeV3(rawValue: code) else {
-				return .failure(.invalidDataPayload(reason: "Could not parse the error status code with value '\(code)'"))
+			guard let errorStatusCode = ErrorStatusCodeV3(rawValue: codeInt) else {
+				return .failure(.invalidData(reason: "Failed to parse error status code with value '\(codeInt)'"))
 			}
 
 			// Error Message
-			let (optErrorMessage, remainingDataAfterMessage) = sshProtocolSerialization.deserializeString(from: remainingDataAfterCode)
-			guard let errorMessage = optErrorMessage else {
-				return .failure(.payloadTooShort)
+			let errorMessageResult = buffer.readSftpString()
+			guard case let .success(errorMessage) = errorMessageResult else {
+				return .failure(.invalidData(reason: "Failed to deserialize error message: \(errorMessageResult.error!)"))
 			}
 
 			// Language Tag
-			let (optLangTag, _) = sshProtocolSerialization.deserializeString(from: remainingDataAfterMessage)
-			guard let langTag = optLangTag else {
-				return .failure(.payloadTooShort)
+			let langTagResult = buffer.readSftpString()
+			guard case let .success(langTag) = langTagResult else {
+				return .failure(.invalidData(reason: "Failed to deserialize language tag: \(langTagResult.error!)"))
 			}
 
 			return .success(StatusReplyPacket(id: id, errorStatusCode: errorStatusCode.errorStatusCode, errorMessage: errorMessage, languageTag: langTag))

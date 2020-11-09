@@ -1,29 +1,17 @@
 import Foundation
+import NIO
 
 extension jlsftp.DataLayer.Version_3 {
 
-	public class DataReplyPacketSerializationHandler: SftpVersion3PacketSerializationHandler {
+	public class DataReplyPacketSerializationHandler: PacketSerializationHandler {
 
-		let sshProtocolSerialization: SSHProtocolSerialization
-
-		init(sshProtocolSerialization: SSHProtocolSerialization) {
-			self.sshProtocolSerialization = sshProtocolSerialization
-		}
-
-		public func deserialize(fromPayload data: Data) -> Result<Packet, DeserializationError> {
+		public func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			// Id
-			let (optId, remainingDataAfterId) = sshProtocolSerialization.deserializeUInt32(from: data)
-			guard let id = optId else {
-				return .failure(.payloadTooShort)
+			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+				return .failure(.needMoreData)
 			}
 
-			// Data
-			let (optResultData, _) = sshProtocolSerialization.deserializeData(from: remainingDataAfterId)
-			guard let resultData = optResultData else {
-				return .failure(.payloadTooShort)
-			}
-
-			return .success(DataReplyPacket(id: id, data: resultData))
+			return .success(DataReplyPacket(id: id))
 		}
 	}
 }

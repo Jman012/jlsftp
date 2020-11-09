@@ -1,3 +1,4 @@
+import NIO
 import XCTest
 @testable import jlsftp
 
@@ -23,16 +24,16 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 	}
 
 	func testMinimal() {
-		let data = Data([
+		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32)
 			0x00, 0x00, 0x00, 0x00,
 		])
 
-		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3(sshProtocolSerialization: SSHProtocolSerializationDraft9())
-		let result = serialization.deserialize(from: data)
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let result = serialization.deserialize(from: &buffer)
 
 		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success, got '\(result)'")
+			XCTFail("Expected success. Instead, got '\(result)'")
 			return
 		}
 
@@ -43,22 +44,22 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   accessDate: nil,
 											   modifyDate: nil,
 											   extensionData: [])
-		XCTAssertEqual(expectedFileAttrs, fileAttrs.fileAttributes)
+		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
 	func testSize() {
-		let data = Data([
+		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ATTR_SIZE)
 			0x00, 0x00, 0x00, 0x01,
 			// Size (UInt64 Network Byte Order: 2)
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
 		])
 
-		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3(sshProtocolSerialization: SSHProtocolSerializationDraft9())
-		let result = serialization.deserialize(from: data)
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let result = serialization.deserialize(from: &buffer)
 
 		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success, got '\(result)'")
+			XCTFail("Expected success. Instead, got '\(result)'")
 			return
 		}
 
@@ -69,11 +70,11 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   accessDate: nil,
 											   modifyDate: nil,
 											   extensionData: [])
-		XCTAssertEqual(expectedFileAttrs, fileAttrs.fileAttributes)
+		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
 	func testUserGroupIds() {
-		let data = Data([
+		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ATTR_UIDGID)
 			0x00, 0x00, 0x00, 0x02,
 			// uid (UInt32 Network Byte Order: 2)
@@ -82,11 +83,11 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 			0x00, 0x00, 0x00, 0x03,
 		])
 
-		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3(sshProtocolSerialization: SSHProtocolSerializationDraft9())
-		let result = serialization.deserialize(from: data)
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let result = serialization.deserialize(from: &buffer)
 
 		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success, got '\(result)'")
+			XCTFail("Expected success. Instead, got '\(result)'")
 			return
 		}
 
@@ -97,22 +98,22 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   accessDate: nil,
 											   modifyDate: nil,
 											   extensionData: [])
-		XCTAssertEqual(expectedFileAttrs, fileAttrs.fileAttributes)
+		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
 	func testPermissions() {
-		let data = Data([
+		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ATTR_PERMISSIONS)
 			0x00, 0x00, 0x00, 0x04,
 			// uid (UInt32 Network Byte Order: 0o752)
 			0b0000_0000, 0b0000_0000, 0b0000_0001, 0b1110_1010,
 		])
 
-		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3(sshProtocolSerialization: SSHProtocolSerializationDraft9())
-		let result = serialization.deserialize(from: data)
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let result = serialization.deserialize(from: &buffer)
 
 		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success, got '\(result)'")
+			XCTFail("Expected success. Instead, got '\(result)'")
 			return
 		}
 
@@ -123,11 +124,11 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   accessDate: nil,
 											   modifyDate: nil,
 											   extensionData: [])
-		XCTAssertEqual(expectedFileAttrs, fileAttrs.fileAttributes)
+		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
 	func testACModTime() {
-		let data = Data([
+		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ACMODTIME)
 			0x00, 0x00, 0x00, 0x08,
 			// atime (UInt32 Network Byte Order: 1)
@@ -136,11 +137,11 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 			0x00, 0x00, 0x00, 0x02,
 		])
 
-		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3(sshProtocolSerialization: SSHProtocolSerializationDraft9())
-		let result = serialization.deserialize(from: data)
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let result = serialization.deserialize(from: &buffer)
 
 		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success, got '\(result)'")
+			XCTFail("Expected success. Instead, got '\(result)'")
 			return
 		}
 
@@ -151,11 +152,11 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   accessDate: Date(timeIntervalSince1970: 1),
 											   modifyDate: Date(timeIntervalSince1970: 2),
 											   extensionData: [])
-		XCTAssertEqual(expectedFileAttrs, fileAttrs.fileAttributes)
+		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
 	func testExtended() {
-		let data = Data([
+		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ATTR_EXTENDED)
 			0x80, 0x00, 0x00, 0x00,
 			// Extended Count (UInt32 Network Byte Order: 1)
@@ -170,11 +171,11 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 			99, 68, 101,
 		])
 
-		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3(sshProtocolSerialization: SSHProtocolSerializationDraft9())
-		let result = serialization.deserialize(from: data)
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let result = serialization.deserialize(from: &buffer)
 
 		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success, got '\(result)'")
+			XCTFail("Expected success. Instead, got '\(result)'")
 			return
 		}
 
@@ -185,7 +186,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   accessDate: nil,
 											   modifyDate: nil,
 											   extensionData: [ExtensionData(name: "Ab", data: "cDe")])
-		XCTAssertEqual(expectedFileAttrs, fileAttrs.fileAttributes)
+		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
 	static var allTests = [

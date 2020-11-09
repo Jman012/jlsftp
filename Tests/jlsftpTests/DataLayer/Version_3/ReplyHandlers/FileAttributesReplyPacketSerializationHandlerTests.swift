@@ -2,10 +2,10 @@ import NIO
 import XCTest
 @testable import jlsftp
 
-final class VersionPacketSerializationHandlerTests: XCTestCase {
+final class FileAttributesReplyPacketSerializationHandlerTests: XCTestCase {
 
-	private func getHandler() -> jlsftp.DataLayer.Version_3.VersionPacketSerializationHandler {
-		return jlsftp.DataLayer.Version_3.VersionPacketSerializationHandler()
+	private func getHandler() -> jlsftp.DataLayer.Version_3.FileAttributesReplyPacketSerializationHandler {
+		return jlsftp.DataLayer.Version_3.FileAttributesReplyPacketSerializationHandler()
 	}
 
 	func testValid() {

@@ -1,4 +1,5 @@
 import Foundation
+import NIO
 
 extension jlsftp.DataLayer.Version_3 {
 
@@ -19,93 +20,73 @@ extension jlsftp.DataLayer.Version_3 {
 
 	public class FileAttributesSerializationV3 {
 
-		public enum DeserializationError: Error {
-			case couldNotDeserialize(String)
-		}
-
-		let sshProtocolSerialization: SSHProtocolSerialization
-
-		init(sshProtocolSerialization: SSHProtocolSerialization) {
-			self.sshProtocolSerialization = sshProtocolSerialization
-		}
-
-		func deserialize(from data: Data) -> Result<(fileAttributes: FileAttributes, remainingData: Data), DeserializationError> {
-			let (optFlags, remainingDataAfterFlags) = sshProtocolSerialization.deserializeUInt32(from: data)
-			guard let flagsInt = optFlags else {
-				return .failure(.couldNotDeserialize("Could not deserialize file attribute flags"))
+		func deserialize(from buffer: inout ByteBuffer) -> Result<FileAttributes, PacketSerializationHandlerError> {
+			guard let flagsInt = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+				return .failure(.needMoreData)
 			}
 			let flags = FileAttributesFlags(rawValue: flagsInt)
 
-			var remainingData: Data.SubSequence = remainingDataAfterFlags
-
 			var size: UInt64?
 			if flags.contains(.size) {
-				(size, remainingData) = sshProtocolSerialization.deserializeUInt64(from: remainingData)
-				if size == nil {
-					return .failure(.couldNotDeserialize("Could not deserialize file attribute file size"))
+				size = buffer.readInteger(endianness: .big, as: UInt64.self)
+				guard size != nil else {
+					return .failure(.needMoreData)
 				}
 			}
 
 			var userId, groupId: UInt32?
 			if flags.contains(.userAndGroupIds) {
-				(userId, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
-				if userId == nil {
-					return .failure(.couldNotDeserialize("Could not deserialize file attribute user id"))
+				userId = buffer.readInteger(endianness: .big, as: UInt32.self)
+				guard userId != nil else {
+					return .failure(.needMoreData)
 				}
-				(groupId, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
-				if groupId == nil {
-					return .failure(.couldNotDeserialize("Could not deserialize file attribute group id"))
+				groupId = buffer.readInteger(endianness: .big, as: UInt32.self)
+				guard groupId != nil else {
+					return .failure(.needMoreData)
 				}
 			}
 
 			var permissions: PermissionsV3?
 			if flags.contains(.permissions) {
-				var optPermissionsInt: UInt32?
-				(optPermissionsInt, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
-				guard let permissionsInt = optPermissionsInt else {
-					return .failure(.couldNotDeserialize("Could not deserialize file attribute permissions"))
+				guard let permissionsInt = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+					return .failure(.needMoreData)
 				}
 				permissions = PermissionsV3(fromBinary: UInt16(truncatingIfNeeded: permissionsInt))
 			}
 
 			var accessDate, modifyDate: Date?
 			if flags.contains(.accessAndModificationTimes) {
-				var optAccessTime, optModifyTime: UInt32?
-				(optAccessTime, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
-				guard let accessTime = optAccessTime else {
-					return .failure(.couldNotDeserialize("Could not deserialize file attribute access time"))
-				}
-				(optModifyTime, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
-				guard let modifyTime = optModifyTime else {
-					return .failure(.couldNotDeserialize("Could not deserialize file attribute modify time"))
+				guard let accessTime = buffer.readInteger(endianness: .big, as: UInt32.self),
+					let modifyTime = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+					return .failure(.needMoreData)
 				}
 				accessDate = Date(timeIntervalSince1970: TimeInterval(accessTime))
 				modifyDate = Date(timeIntervalSince1970: TimeInterval(modifyTime))
 			}
 
-			var extensionData: [ExtensionData] = []
+			var extensionDataResults: [ExtensionData] = []
 			if flags.contains(.extendedAttributes) {
-				var optExtensionCount: UInt32?
-				(optExtensionCount, remainingData) = sshProtocolSerialization.deserializeUInt32(from: remainingData)
-				guard let extensionCount = optExtensionCount else {
-					return .failure(.couldNotDeserialize("Could not deserialize file attribute extended attribute count"))
+				guard let extensionCount = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+					return .failure(.needMoreData)
 				}
+
 				for index in 0..<extensionCount {
-					var optStringName, optStringData: String?
-					(optStringName, remainingData) = sshProtocolSerialization.deserializeString(from: remainingData)
-					guard let stringName = optStringName else {
-						return .failure(.couldNotDeserialize("Could not deserialize file attribute extended attribute name at index \(index)"))
+					let extensionNameResult = buffer.readSftpString()
+					guard case let .success(extensionName) = extensionNameResult else {
+						return .failure(.invalidData(reason: "Failed to deserialize extension name at index \(index): \(extensionNameResult.error!)"))
 					}
-					(optStringData, remainingData) = sshProtocolSerialization.deserializeString(from: remainingData)
-					guard let stringData = optStringData else {
-						return .failure(.couldNotDeserialize("Could not deserialize file attribute extended attribute data at index \(index)"))
+
+					let extensionDataResult = buffer.readSftpString()
+					guard case let .success(extensionData) = extensionDataResult else {
+						return .failure(.invalidData(reason: "Failed to deserialize extension data at index \(index): \(extensionDataResult.error!)"))
 					}
-					extensionData.append(ExtensionData(name: stringName, data: stringData))
+
+					extensionDataResults.append(ExtensionData(name: extensionName, data: extensionData))
 				}
 			}
 
-			let fileAttributes = FileAttributes(sizeBytes: size, userId: userId, groupId: groupId, permissions: permissions?.permission, accessDate: accessDate, modifyDate: modifyDate, extensionData: extensionData)
-			return .success((fileAttributes, remainingData))
+			let fileAttributes = FileAttributes(sizeBytes: size, userId: userId, groupId: groupId, permissions: permissions?.permission, accessDate: accessDate, modifyDate: modifyDate, extensionData: extensionDataResults)
+			return .success(fileAttributes)
 		}
 	}
 }

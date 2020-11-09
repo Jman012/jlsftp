@@ -1,6 +1,6 @@
 import Foundation
 
-extension jlsftp.DataLayer.Version_3 {
+extension jlsftp.DataLayer {
 
 	public enum PacketType: UInt8 {
 
@@ -228,5 +228,46 @@ extension jlsftp.DataLayer.Version_3 {
 		 - Remark: sftp reference: `SSH_FXP_EXTENDED_REPLY`
 		  */
 		case extendedReply = 201
+
+		public static func allPacketTypes(for sftpVersion: SftpVersion) -> Set<PacketType> {
+			switch sftpVersion {
+			case .v3:
+				return [
+					.initialize,
+					.version,
+					.open,
+					.close,
+					.read,
+					.write,
+					.linkStatus,
+					.handleStatus,
+					.setStatus,
+					.setHandleStatus,
+					.openDirectory,
+					.readDirectory,
+					.remove,
+					.makeDirectory,
+					.removeDirectory,
+					.realPath,
+					.status,
+					.rename,
+					.readLink,
+					.createSymbolicLink,
+					.statusReply,
+					.handleReply,
+					.dataReply,
+					.nameReply,
+					.attributesReply,
+					.extended,
+					.extendedReply,
+				]
+			case .v4:
+				return PacketType.allPacketTypes(for: .v3).union([])
+			case .v5:
+				return PacketType.allPacketTypes(for: .v4).union([])
+			case .v6:
+				return PacketType.allPacketTypes(for: .v5).union([])
+			}
+		}
 	}
 }

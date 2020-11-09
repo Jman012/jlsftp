@@ -2,10 +2,10 @@ import NIO
 import XCTest
 @testable import jlsftp
 
-final class VersionPacketSerializationHandlerTests: XCTestCase {
+final class HandleReplyPacketSerializationHandlerTests: XCTestCase {
 
-	private func getHandler() -> jlsftp.DataLayer.Version_3.VersionPacketSerializationHandler {
-		return jlsftp.DataLayer.Version_3.VersionPacketSerializationHandler()
+	private func getHandler() -> jlsftp.DataLayer.Version_3.HandleReplyPacketSerializationHandler {
+		return jlsftp.DataLayer.Version_3.HandleReplyPacketSerializationHandler()
 	}
 
 	func testValid() {
@@ -40,7 +40,6 @@ final class VersionPacketSerializationHandlerTests: XCTestCase {
 
 		for var buffer in buffers {
 			let result = handler.deserialize(buffer: &buffer)
-
 			guard case .failure(.needMoreData) = result else {
 				XCTFail("Expected failure. Instead, got '\(result)'")
 				return

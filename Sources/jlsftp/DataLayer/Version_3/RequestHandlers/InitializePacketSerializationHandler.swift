@@ -1,46 +1,39 @@
 import Foundation
+import NIO
 
 extension jlsftp.DataLayer.Version_3 {
 
-	public class InitializePacketSerializationHandler: SftpVersion3PacketSerializationHandler {
+	public class InitializePacketSerializationHandler: PacketSerializationHandler {
 
-		let sshProtocolSerialization: SSHProtocolSerialization
-
-		init(sshProtocolSerialization: SSHProtocolSerialization) {
-			self.sshProtocolSerialization = sshProtocolSerialization
-		}
-
-		public func deserialize(fromPayload data: Data) -> Result<Packet, DeserializationError> {
+		public func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			// Version
-			let (optVersion, remainingDataAfterVersion) = sshProtocolSerialization.deserializeUInt32(from: data)
-			guard let versionByte = optVersion else {
-				return .failure(.payloadTooShort)
+			guard let versionByte = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+				return .failure(.needMoreData)
 			}
 
-			let optSftpVersion = jlsftp.DataLayer.SftpVersion(rawValue: versionByte)
-			guard let sftpVersion = optSftpVersion else {
-				return .failure(.invalidDataPayload(reason: "Version field \(versionByte) is not supported."))
+			guard let sftpVersion = jlsftp.DataLayer.SftpVersion(rawValue: versionByte) else {
+				return .failure(.invalidData(reason: "Version field \(versionByte) is not supported."))
 			}
 
 			// Rest of the data: extension data of the form of pairs of strings
-			var remainingData = remainingDataAfterVersion
 			var extensionDataResults: [ExtensionData] = []
-			while !remainingData.isEmpty {
-				let (optExtensionName, remainingDataAfterExtensionName) = sshProtocolSerialization.deserializeString(from: remainingData)
-				guard let extensionName = optExtensionName else {
-					break
+			var index = 0
+			while buffer.readableBytes > 0 {
+				let extensionNameResult = buffer.readSftpString()
+				guard case let .success(extensionName) = extensionNameResult else {
+					return .failure(.invalidData(reason: "Failed to deserialize extension name at index \(index): \(extensionNameResult.error!)"))
 				}
 
-				let (optExtensionData, remainingDataAfterExtensionData) = sshProtocolSerialization.deserializeString(from: remainingDataAfterExtensionName)
-				guard let extensionData = optExtensionData else {
-					break
+				let extensionDataResult = buffer.readSftpString()
+				guard case let .success(extensionData) = extensionDataResult else {
+					return .failure(.invalidData(reason: "Failed to deserialize extension data at index \(index): \(extensionDataResult.error!)"))
 				}
 
 				extensionDataResults.append(ExtensionData(name: extensionName, data: extensionData))
-				remainingData = remainingDataAfterExtensionData
+				index += 1
 			}
 
-			return .success(InitializePacket(version: sftpVersion, extensionData: extensionDataResults))
+			return .success(InitializePacketV3(version: sftpVersion, extensionData: extensionDataResults))
 		}
 	}
 }
