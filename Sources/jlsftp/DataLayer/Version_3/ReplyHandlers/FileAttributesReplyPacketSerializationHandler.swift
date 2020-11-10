@@ -14,7 +14,6 @@ extension jlsftp.DataLayer.Version_3 {
 			// File Attributes
 			let fileAttrSerializationV3 = FileAttributesSerializationV3()
 			let fileAttrResult = fileAttrSerializationV3.deserialize(from: &buffer)
-
 			guard case let .success(fileAttrs) = fileAttrResult else {
 				return .failure(fileAttrResult.error!)
 			}

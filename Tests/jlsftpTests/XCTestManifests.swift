@@ -3,20 +3,24 @@ import XCTest
 #if !canImport(ObjectiveC)
 public func allTests() -> [XCTestCaseEntry] {
 	return [
-		// DataLayer > Version_3 > Handlers
-		testCase(InitializePacketSerializationHandlerTests),
-		// DataLayer > Version_3
+		// DataLayer > Version_3 > Reply Handlers
+		testCase(DataReplyPacketSerializationHandlerTests),
+		testCase(FileAttributesSerializationV3Tests),
+		testCase(HandleReplyPacketSerializationHandlerTests),
+		testCase(NameReplyPacketSerializationHandlerTests),
+		testCase(StatusReplyPacketSerializationHandlerTests),
 		testCase(VersionPacketSerializationHandlerTests),
+		// DataLayer > Version_3 > Request Handlers
+		testCase(InitializePacketSerializationHandlerTests),
+		testCase(OpenPacketSerializationHandlerTests),
+		// DataLayer > Version_3
 		testCase(FileAttributesSerializationV3Tests),
 		testCase(OpenFlagsV3Tests),
-		testCase(PacketSerializationV3Tests),
 		testCase(PermissionsV3Tests),
-		testCase(RawPacketSerializationV3Tests.allTests),
 		// Fields
 		// Packets
 		// Utilities
 		testCase(DataExtensions.allTests),
-		testCase(SSHProtocolSerializationDraft9Tests),
 		//
 		testCase(jlsftpTests.allTests),
 	]

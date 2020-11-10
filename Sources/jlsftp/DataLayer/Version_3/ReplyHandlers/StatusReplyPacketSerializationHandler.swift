@@ -15,7 +15,7 @@ extension jlsftp.DataLayer.Version_3 {
 			guard let codeInt = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
 			}
-			guard let statusCode = StatusCodeV3(rawValue: codeInt) else {
+			guard let statusCodeV3 = StatusCodeV3(rawValue: codeInt) else {
 				return .failure(.invalidData(reason: "Failed to parse status code with value '\(codeInt)'"))
 			}
 
@@ -31,7 +31,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(langTagResult.error!.customMapError(wrapper: "Failed to deserialize language tag"))
 			}
 
-			return .success(StatusReplyPacket(id: id, statusCode: statusCode.errorStatusCode, errorMessage: errorMessage, languageTag: langTag))
+			return .success(StatusReplyPacket(id: id, statusCode: statusCodeV3.statusCode, errorMessage: errorMessage, languageTag: langTag))
 		}
 	}
 }

@@ -90,7 +90,7 @@ extension jlsftp.DataLayer.Version_3 {
 		 */
 		case operationUnsupported = 8
 
-		var errorStatusCode: StatusCode {
+		var statusCode: StatusCode {
 			switch self {
 			case .ok: return .ok
 			case .endOfFile: return .endOfFile
