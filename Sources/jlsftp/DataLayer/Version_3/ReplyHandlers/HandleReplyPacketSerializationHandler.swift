@@ -14,7 +14,7 @@ extension jlsftp.DataLayer.Version_3 {
 			// Handle
 			let handleResult = buffer.readSftpString()
 			guard case let .success(handle) = handleResult else {
-				return .failure(.invalidData(reason: "Failed to deserialize handle: \(handleResult.error!)"))
+				return .failure(handleResult.error!.customMapError(wrapper: "Failed to deserialize handle"))
 			}
 
 			return .success(HandleReplyPacket(id: id, handle: handle))

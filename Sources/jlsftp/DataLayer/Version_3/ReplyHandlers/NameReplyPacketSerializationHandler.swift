@@ -21,17 +21,17 @@ extension jlsftp.DataLayer.Version_3 {
 			for index in 0..<count {
 				let filenameResult = buffer.readSftpString()
 				guard case let .success(filename) = filenameResult else {
-					return .failure(.invalidData(reason: "Failed to deserialize filename at index \(index): \(filenameResult.error!)"))
+					return .failure(filenameResult.error!.customMapError(wrapper: "Failed to deserialize filename at index \(index)"))
 				}
 
 				let longNameResult = buffer.readSftpString()
 				guard case let .success(longName) = longNameResult else {
-					return .failure(.invalidData(reason: "Failed to deserialize longName at index \(index): \(longNameResult.error!)"))
+					return .failure(longNameResult.error!.customMapError(wrapper: "Failed to deserialize longName at index \(index)"))
 				}
 
 				let fileAttrsResult = fileAttrSerializationV3.deserialize(from: &buffer)
 				guard case let .success(fileAttrs) = fileAttrsResult else {
-					return .failure(.invalidData(reason: "Failed to deserialize file attributes at index \(index): \(fileAttrsResult.error!)"))
+					return .failure(fileAttrsResult.error!.customMapError(wrapper: "Failed to deserialize file attributes at index \(index)"))
 				}
 
 				names.append(NameReplyPacket.Name(filename: filename, longName: longName, fileAttributes: fileAttrs))

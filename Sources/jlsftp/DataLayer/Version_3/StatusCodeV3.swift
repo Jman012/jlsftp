@@ -2,7 +2,7 @@ import Foundation
 
 extension jlsftp.DataLayer.Version_3 {
 
-	public enum ErrorStatusCodeV3: UInt32 {
+	public enum StatusCodeV3: UInt32 {
 
 		/**
 		  Indicates successful completion of the operation.
@@ -90,7 +90,7 @@ extension jlsftp.DataLayer.Version_3 {
 		 */
 		case operationUnsupported = 8
 
-		var errorStatusCode: ErrorStatusCode {
+		var errorStatusCode: StatusCode {
 			switch self {
 			case .ok: return .ok
 			case .endOfFile: return .endOfFile

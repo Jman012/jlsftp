@@ -1,6 +1,6 @@
 import Foundation
 
-public enum ErrorStatusCode: Error {
+public enum StatusCode: Error {
 
 	/**
 	 Indicates successful completion of the operation.

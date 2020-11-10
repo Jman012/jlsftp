@@ -12,6 +12,7 @@ extension ByteBuffer {
 			return .failure(.needMoreData)
 		}
 
+		// SSH protocol dictates UTF-8/ASCII encoding
 		guard let string = String(bytes: bytes, encoding: .utf8) else {
 			return .failure(.invalidData(reason: "Invalid UTF8 string data"))
 		}

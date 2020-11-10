@@ -21,12 +21,12 @@ extension jlsftp.DataLayer.Version_3 {
 			while buffer.readableBytes > 0 {
 				let extensionNameResult = buffer.readSftpString()
 				guard case let .success(extensionName) = extensionNameResult else {
-					return .failure(.invalidData(reason: "Failed to deserialize extension name at index \(index): \(extensionNameResult.error!)"))
+					return .failure(extensionNameResult.error!.customMapError(wrapper: "Failed to deserialize extension name at index \(index)"))
 				}
 
 				let extensionDataResult = buffer.readSftpString()
 				guard case let .success(extensionData) = extensionDataResult else {
-					return .failure(.invalidData(reason: "Failed to deserialize extension data at index \(index): \(extensionDataResult.error!)"))
+					return .failure(extensionDataResult.error!.customMapError(wrapper: "Failed to deserialize extension data at index \(index)"))
 				}
 
 				extensionDataResults.append(ExtensionData(name: extensionName, data: extensionData))

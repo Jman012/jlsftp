@@ -20,7 +20,7 @@ public class StatusReplyPacket: BasePacket {
 
 	 - Since: sftp v3
 	 */
-	public let errorStatusCode: ErrorStatusCode
+	public let statusCode: StatusCode
 	/**
 	 The error message for the error status code.
 
@@ -36,11 +36,11 @@ public class StatusReplyPacket: BasePacket {
 	public let languageTag: String
 
 	public init(id: PacketId,
-				errorStatusCode: ErrorStatusCode,
+				statusCode: StatusCode,
 				errorMessage: String,
 				languageTag: String) {
 		self.id = id
-		self.errorStatusCode = errorStatusCode
+		self.statusCode = statusCode
 		self.errorMessage = errorMessage
 		self.languageTag = languageTag
 	}

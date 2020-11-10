@@ -15,23 +15,23 @@ extension jlsftp.DataLayer.Version_3 {
 			guard let codeInt = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
 			}
-			guard let errorStatusCode = ErrorStatusCodeV3(rawValue: codeInt) else {
-				return .failure(.invalidData(reason: "Failed to parse error status code with value '\(codeInt)'"))
+			guard let statusCode = StatusCodeV3(rawValue: codeInt) else {
+				return .failure(.invalidData(reason: "Failed to parse status code with value '\(codeInt)'"))
 			}
 
 			// Error Message
 			let errorMessageResult = buffer.readSftpString()
 			guard case let .success(errorMessage) = errorMessageResult else {
-				return .failure(.invalidData(reason: "Failed to deserialize error message: \(errorMessageResult.error!)"))
+				return .failure(errorMessageResult.error!.customMapError(wrapper: "Failed to deserialize error message"))
 			}
 
 			// Language Tag
 			let langTagResult = buffer.readSftpString()
 			guard case let .success(langTag) = langTagResult else {
-				return .failure(.invalidData(reason: "Failed to deserialize language tag: \(langTagResult.error!)"))
+				return .failure(langTagResult.error!.customMapError(wrapper: "Failed to deserialize language tag"))
 			}
 
-			return .success(StatusReplyPacket(id: id, errorStatusCode: errorStatusCode.errorStatusCode, errorMessage: errorMessage, languageTag: langTag))
+			return .success(StatusReplyPacket(id: id, statusCode: statusCode.errorStatusCode, errorMessage: errorMessage, languageTag: langTag))
 		}
 	}
 }
