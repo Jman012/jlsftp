@@ -32,10 +32,8 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
 		let result = serialization.deserialize(from: &buffer)
 
-		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let fileAttrs = try! result.get()
 
 		let expectedFileAttrs = FileAttributes(sizeBytes: nil,
 											   userId: nil,
@@ -58,10 +56,8 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
 		let result = serialization.deserialize(from: &buffer)
 
-		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let fileAttrs = try! result.get()
 
 		let expectedFileAttrs = FileAttributes(sizeBytes: 2,
 											   userId: nil,
@@ -86,10 +82,8 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
 		let result = serialization.deserialize(from: &buffer)
 
-		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let fileAttrs = try! result.get()
 
 		let expectedFileAttrs = FileAttributes(sizeBytes: nil,
 											   userId: 2,
@@ -112,10 +106,8 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
 		let result = serialization.deserialize(from: &buffer)
 
-		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let fileAttrs = try! result.get()
 
 		let expectedFileAttrs = FileAttributes(sizeBytes: nil,
 											   userId: nil,
@@ -140,10 +132,8 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
 		let result = serialization.deserialize(from: &buffer)
 
-		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let fileAttrs = try! result.get()
 
 		let expectedFileAttrs = FileAttributes(sizeBytes: nil,
 											   userId: nil,
@@ -174,10 +164,8 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
 		let result = serialization.deserialize(from: &buffer)
 
-		guard case let .success(fileAttrs) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let fileAttrs = try! result.get()
 
 		let expectedFileAttrs = FileAttributes(sizeBytes: nil,
 											   userId: nil,
@@ -189,6 +177,133 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
+	func testNeedMoreData() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let buffers = [
+			// No Flags
+			ByteBuffer(bytes: []),
+			// Partial Flags
+			ByteBuffer(bytes: [0xFF]),
+			ByteBuffer(bytes: [0xFF, 0xFF]),
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF]),
+			// Flags, partial size
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF]),
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00]), // size
+			// Flags, size, partial userId
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF]),
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]), // size
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00]), // userId
+			// Flags, size, userId, partial groupId
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00]), // userId
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00]), // groupId
+			// Flags, size, userId, groupId, partial permissions
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00]), // groupId
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00]), // permissions
+			// Flags, size, userId, groupId, permissions, partial accessTime
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00, 0x00, 0x00, 0x00]), // permissions
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00, 0x00, 0x00, 0x00, // permissions
+							   0x00]), // accessTime
+			// Flags, size, userId, groupId, permissions, accessTime, partial modifyTime
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00, 0x00, 0x00, 0x00, // permissions
+							   0x00, 0x00, 0x00, 0x00]), // accessTime
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00, 0x00, 0x00, 0x00, // permissions
+							   0x00, 0x00, 0x00, 0x00, // accessTime
+							   0x00]), // modifyTime
+			// Flags, size, userId, groupId, permissions, accessTime, modifyTime, partial extension count
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00, 0x00, 0x00, 0x00, // permissions
+							   0x00, 0x00, 0x00, 0x00, // accessTime
+							   0x00, 0x00, 0x00, 0x00]), // modifyTime
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00, 0x00, 0x00, 0x00, // permissions
+							   0x00, 0x00, 0x00, 0x00, // accessTime
+							   0x00, 0x00, 0x00, 0x00, // modifyTime
+							   0x00]), // extension count
+			// Flags, size, userId, groupId, permissions, accessTime, modifyTime, extension count, partial extension name
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00, 0x00, 0x00, 0x00, // permissions
+							   0x00, 0x00, 0x00, 0x00, // accessTime
+							   0x00, 0x00, 0x00, 0x00, // modifyTime
+							   0x00, 0x00, 0x00, 0x01]), // extension count
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00, 0x00, 0x00, 0x00, // permissions
+							   0x00, 0x00, 0x00, 0x00, // accessTime
+							   0x00, 0x00, 0x00, 0x00, // modifyTime
+							   0x00, 0x00, 0x00, 0x01, // extension count
+							   0x00]), // extension name length+data
+			// Flags, size, userId, groupId, permissions, accessTime, modifyTime, extension count, extension name, partial extension data
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00, 0x00, 0x00, 0x00, // permissions
+							   0x00, 0x00, 0x00, 0x00, // accessTime
+							   0x00, 0x00, 0x00, 0x00, // modifyTime
+							   0x00, 0x00, 0x00, 0x01, // extension count
+							   0x00, 0x00, 0x00, 0x01, 0x61]), // extension name length+data
+			ByteBuffer(bytes: [0xFF, 0xFF, 0xFF, 0xFF,
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size
+							   0x00, 0x00, 0x00, 0x00, // userId
+							   0x00, 0x00, 0x00, 0x00, // groupId
+							   0x00, 0x00, 0x00, 0x00, // permissions
+							   0x00, 0x00, 0x00, 0x00, // accessTime
+							   0x00, 0x00, 0x00, 0x00, // modifyTime
+							   0x00, 0x00, 0x00, 0x01, // extension count
+							   0x00, 0x00, 0x00, 0x01, 0x61, // extension name length+data
+							   0x00]), // extension data length+data
+		]
+
+		for var buffer in buffers {
+			let result = serialization.deserialize(from: &buffer)
+
+			XCTAssertEqual(.needMoreData, result.error)
+		}
+	}
+
 	static var allTests = [
 		("testFlags", testFlags),
 		("testMinimal", testMinimal),
@@ -197,5 +312,6 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		("testPermissions", testPermissions),
 		("testACModTime", testACModTime),
 		("testExtended", testExtended),
+		("testNeedMoreData", testNeedMoreData),
 	]
 }

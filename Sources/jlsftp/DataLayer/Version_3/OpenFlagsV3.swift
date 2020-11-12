@@ -69,6 +69,7 @@ extension jlsftp.DataLayer.Version_3 {
 			if self.contains(.append) { openFlags.insert(.append) }
 			if self.contains(.create) { openFlags.insert(.create) }
 			if self.contains(.truncate) { openFlags.insert(.truncate) }
+			if self.contains(.exclusive) { openFlags.insert(.exclusive) }
 
 			return openFlags
 		}

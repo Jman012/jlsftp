@@ -25,7 +25,56 @@ final class OpenFlagsV3Tests: XCTestCase {
 			jlsftp.DataLayer.Version_3.OpenFlagsV3.exclusive)
 	}
 
+	func testToStandard() {
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.read.openFlags.contains(OpenFlag.read))
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.write.openFlags.contains(OpenFlag.write))
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.append.openFlags.contains(OpenFlag.append))
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.create.openFlags.contains(OpenFlag.create))
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.truncate.openFlags.contains(OpenFlag.truncate))
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.exclusive.openFlags.contains(OpenFlag.exclusive))
+
+		let all = jlsftp.DataLayer.Version_3.OpenFlagsV3([
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.read,
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.write,
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.append,
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.create,
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.truncate,
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.exclusive,
+		])
+		XCTAssert(all.openFlags.subtracting([
+			OpenFlag.read,
+			OpenFlag.write,
+			OpenFlag.append,
+			OpenFlag.create,
+			OpenFlag.truncate,
+			OpenFlag.exclusive,
+		]) == [])
+	}
+
+	func testFromStandard() {
+		XCTAssertEqual(
+			jlsftp.DataLayer.Version_3.OpenFlagsV3(openFlags: [.read]),
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.read)
+		XCTAssertEqual(
+			jlsftp.DataLayer.Version_3.OpenFlagsV3(openFlags: [.write]),
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.write)
+		XCTAssertEqual(
+			jlsftp.DataLayer.Version_3.OpenFlagsV3(openFlags: [.append]),
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.append)
+		XCTAssertEqual(
+			jlsftp.DataLayer.Version_3.OpenFlagsV3(openFlags: [.create]),
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.create)
+		XCTAssertEqual(
+			jlsftp.DataLayer.Version_3.OpenFlagsV3(openFlags: [.truncate]),
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.truncate)
+		XCTAssertEqual(
+			jlsftp.DataLayer.Version_3.OpenFlagsV3(openFlags: [.exclusive]),
+			jlsftp.DataLayer.Version_3.OpenFlagsV3.exclusive)
+	}
+
 	static var allTests = [
 		("testFlags", testFlags),
+		("testToStandard", testToStandard),
+		("testFromStandard", testFromStandard),
 	]
 }
