@@ -21,13 +21,12 @@ final class HandleReplyPacketSerializationHandlerTests: XCTestCase {
 
 		let result = handler.deserialize(buffer: &buffer)
 
-		guard case let .success(packet) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let packet = try! result.get()
 		XCTAssert(packet is HandleReplyPacket)
 		let handleReplyPacket = packet as! HandleReplyPacket
 
+		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, handleReplyPacket.id)
 		XCTAssertEqual("a", handleReplyPacket.handle)
 	}
@@ -50,10 +49,7 @@ final class HandleReplyPacketSerializationHandlerTests: XCTestCase {
 
 		for var buffer in buffers {
 			let result = handler.deserialize(buffer: &buffer)
-			guard case .failure(.needMoreData) = result else {
-				XCTFail("Expected failure. Instead, got '\(result)'")
-				return
-			}
+			XCTAssertEqual(.needMoreData, result.error)
 		}
 	}
 

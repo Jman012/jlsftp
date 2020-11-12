@@ -19,13 +19,12 @@ final class FileAttributesReplyPacketSerializationHandlerTests: XCTestCase {
 
 		let result = handler.deserialize(buffer: &buffer)
 
-		guard case let .success(packet) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let packet = try! result.get()
 		XCTAssert(packet is FileAttributesReplyPacket)
 		let fileAttrsReplyPacket = packet as! FileAttributesReplyPacket
 
+		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, fileAttrsReplyPacket.id)
 		XCTAssertEqual(nil, fileAttrsReplyPacket.fileAttributes.sizeBytes)
 		XCTAssertEqual(nil, fileAttrsReplyPacket.fileAttributes.userId)
@@ -57,10 +56,7 @@ final class FileAttributesReplyPacketSerializationHandlerTests: XCTestCase {
 		for var buffer in buffers {
 			let result = handler.deserialize(buffer: &buffer)
 
-			guard case .failure(.needMoreData) = result else {
-				XCTFail("Expected failure. Instead, got '\(result)'")
-				return
-			}
+			XCTAssertEqual(.needMoreData, result.error)
 		}
 	}
 

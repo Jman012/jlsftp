@@ -1,7 +1,7 @@
 import Foundation
 import NIO
 
-public enum PacketSerializationHandlerError: Error {
+public enum PacketSerializationHandlerError: Error, Equatable {
 	case needMoreData
 	case invalidData(reason: String)
 

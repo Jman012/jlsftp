@@ -2,10 +2,10 @@ import NIO
 import XCTest
 @testable import jlsftp
 
-final class DataReplyPacketSerializationHandlerTests: XCTestCase {
+final class ClosePacketSerializationHandlerTests: XCTestCase {
 
-	private func getHandler() -> jlsftp.DataLayer.Version_3.DataReplyPacketSerializationHandler {
-		return jlsftp.DataLayer.Version_3.DataReplyPacketSerializationHandler()
+	private func getHandler() -> jlsftp.DataLayer.Version_3.ClosePacketSerializationHandler {
+		return jlsftp.DataLayer.Version_3.ClosePacketSerializationHandler()
 	}
 
 	func testValid() {
@@ -13,27 +13,35 @@ final class DataReplyPacketSerializationHandlerTests: XCTestCase {
 		var buffer = ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
+			// Handle string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Handle string data ("a")
+			0x61,
 		])
 
 		let result = handler.deserialize(buffer: &buffer)
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-
-		XCTAssert(packet is DataReplyPacket)
-		let dataReplyPacket = packet as! DataReplyPacket
+		XCTAssert(packet is ClosePacket)
+		let closePacket = packet as! ClosePacket
 
 		XCTAssertEqual(0, buffer.readableBytes)
-		XCTAssertEqual(3, dataReplyPacket.id)
+		XCTAssertEqual(3, closePacket.id)
+		XCTAssertEqual("a", closePacket.handle)
 	}
 
 	func testNotEnoughData() {
 		let handler = getHandler()
 		let buffers = [
+			// No Id
 			ByteBuffer(bytes: []),
 			ByteBuffer(bytes: [0x03]),
-			ByteBuffer(bytes: [0x03, 0x00]),
-			ByteBuffer(bytes: [0x03, 0x00, 0x00]),
+			ByteBuffer(bytes: [0x00, 0x03]),
+			ByteBuffer(bytes: [0x00, 0x00, 0x03]),
+			// Id, no handle
+			ByteBuffer(bytes: [0x00, 0x00, 0x00, 0x03]),
+			ByteBuffer(bytes: [0x00, 0x00, 0x00, 0x03, 0x00]),
 		]
 
 		for var buffer in buffers {

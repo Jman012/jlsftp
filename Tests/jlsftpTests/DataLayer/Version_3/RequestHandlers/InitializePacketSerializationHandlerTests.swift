@@ -18,13 +18,12 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 
 		let result = handler.deserialize(buffer: &buffer)
 
-		guard case let .success(packet) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let packet = try! result.get()
 		XCTAssert(packet is InitializePacketV3)
 		let initPacket = packet as! InitializePacketV3
 
+		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(jlsftp.DataLayer.SftpVersion.v3, initPacket.version)
 		XCTAssertEqual(0, initPacket.extensionData.count)
 	}
@@ -41,10 +40,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		for var buffer in buffers {
 			let result = handler.deserialize(buffer: &buffer)
 
-			guard case .failure(.needMoreData) = result else {
-				XCTFail("Expected failure. Instead, got '\(result)'")
-				return
-			}
+			XCTAssertEqual(.needMoreData, result.error)
 		}
 	}
 
@@ -88,13 +84,12 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 
 		let result = handler.deserialize(buffer: &buffer)
 
-		guard case let .success(packet) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let packet = try! result.get()
 		XCTAssert(packet is InitializePacketV3)
 		let initPacket = packet as! InitializePacketV3
 
+		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(jlsftp.DataLayer.SftpVersion.v3, initPacket.version)
 		XCTAssertEqual(1, initPacket.extensionData.count)
 		XCTAssertEqual("A", initPacket.extensionData.first!.name)
@@ -126,13 +121,12 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 
 		let result = handler.deserialize(buffer: &buffer)
 
-		guard case let .success(packet) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let packet = try! result.get()
 		XCTAssert(packet is InitializePacketV3)
 		let initPacket = packet as! InitializePacketV3
 
+		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(jlsftp.DataLayer.SftpVersion.v3, initPacket.version)
 		XCTAssertEqual(2, initPacket.extensionData.count)
 		XCTAssertEqual("A@a.com", initPacket.extensionData.first!.name)

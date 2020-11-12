@@ -19,13 +19,12 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 
 		let result = handler.deserialize(buffer: &buffer)
 
-		guard case let .success(packet) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let packet = try! result.get()
 		XCTAssert(packet is NameReplyPacket)
 		let nameReplyPacket = packet as! NameReplyPacket
 
+		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, nameReplyPacket.id)
 		XCTAssertEqual(0, nameReplyPacket.names.count)
 	}
@@ -51,13 +50,12 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 
 		let result = handler.deserialize(buffer: &buffer)
 
-		guard case let .success(packet) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let packet = try! result.get()
 		XCTAssert(packet is NameReplyPacket)
 		let nameReplyPacket = packet as! NameReplyPacket
 
+		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, nameReplyPacket.id)
 		XCTAssertEqual(1, nameReplyPacket.names.count)
 		let name = nameReplyPacket.names[0]
@@ -89,10 +87,7 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 		for var buffer in buffers {
 			let result = handler.deserialize(buffer: &buffer)
 
-			guard case .failure(.needMoreData) = result else {
-				XCTFail("Expected failure. Instead, got '\(result)'")
-				return
-			}
+			XCTAssertEqual(.needMoreData, result.error)
 		}
 	}
 

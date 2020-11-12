@@ -1,13 +1,13 @@
 import Foundation
 
 /**
-  Opens a remote file.
+ Opens a remote file.
 
- - Since: sftp v3
- - Note: Expected Response Packet:
-   * Success => [HandleReplyPacket](x-source-tag://HandleReplyPacket)
-   * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
- */
+  - Since: sftp v3
+  - Note: Expected Response Packet:
+    * Success => [HandleReplyPacket](x-source-tag://HandleReplyPacket)
+    * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
+  */
 public class OpenPacket: BasePacket {
 
 	/**

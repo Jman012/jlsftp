@@ -25,13 +25,12 @@ final class OpenPacketSerializationHandlerTests: XCTestCase {
 
 		let result = handler.deserialize(buffer: &buffer)
 
-		guard case let .success(packet) = result else {
-			XCTFail("Expected success. Instead, got '\(result)'")
-			return
-		}
+		XCTAssertNoThrow(try result.get())
+		let packet = try! result.get()
 		XCTAssert(packet is OpenPacket)
 		let openPacket = packet as! OpenPacket
 
+		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, openPacket.id)
 		XCTAssertEqual("a", openPacket.filename)
 		XCTAssertEqual(OpenFlags([.read]), openPacket.pflags)
@@ -76,10 +75,7 @@ final class OpenPacketSerializationHandlerTests: XCTestCase {
 		for var buffer in buffers {
 			let result = handler.deserialize(buffer: &buffer)
 
-			guard case .failure(.needMoreData) = result else {
-				XCTFail("Expected failure. Instead, got '\(result)'")
-				return
-			}
+			XCTAssertEqual(.needMoreData, result.error)
 		}
 	}
 
