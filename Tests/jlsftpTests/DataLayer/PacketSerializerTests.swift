@@ -7,7 +7,7 @@ final class PacketSerializerTests: XCTestCase {
 	class MockHandler: PacketSerializationHandler {
 		public var isCalled = false
 
-		func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		func deserialize(buffer _: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			isCalled = true
 			return .failure(.needMoreData)
 		}
