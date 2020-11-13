@@ -23,6 +23,7 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(StatusCodeV3Tests),
 		// DataLayer
 		testCase(NotSupportedHandlerTests),
+		testCase(PacketTypeTests),
 		// Fields
 		// Packets
 		// Utilities
