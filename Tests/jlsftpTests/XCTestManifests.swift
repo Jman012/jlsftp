@@ -12,6 +12,7 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(VersionPacketSerializationHandlerTests),
 		// DataLayer > Version_3 > Request Handlers
 		testCase(ClosePacketSerializationHandlerTests),
+		testCase(CreateSymbolicLinkSerializationHandlerTests),
 		testCase(HandleStatusPacketSerializationHandlerTests),
 		testCase(InitializePacketSerializationHandlerTests),
 		testCase(LinkStatusPacketSerializationHandlerTests),
@@ -19,6 +20,7 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(OpenDirectoryPacketSerializationHandlerTests),
 		testCase(OpenPacketSerializationHandlerTests),
 		testCase(ReadDirectoryPacketSerializationHandlerTests),
+		testCase(ReadLinkPacketSerializationHandlerTests),
 		testCase(ReadPacketSerializationHandlerTests),
 		testCase(RemoveDirectoryPacketSerializationHandlerTests),
 		testCase(RemovePacketSerializationHandlerTests),
