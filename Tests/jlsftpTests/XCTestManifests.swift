@@ -13,9 +13,11 @@ public func allTests() -> [XCTestCaseEntry] {
 		// DataLayer > Version_3 > Request Handlers
 		testCase(ClosePacketSerializationHandlerTests),
 		testCase(InitializePacketSerializationHandlerTests),
+		testCase(MakeDirectoryPacketSerializationHandlerTests),
 		testCase(OpenPacketSerializationHandlerTests),
 		testCase(ReadPacketSerializationHandlerTests),
 		testCase(RemovePacketSerializationHandlerTests),
+		testCase(RemoveDirectoryPacketSerializationHandlerTests),
 		testCase(RenamePacketSerializationHandlerTests),
 		testcase(WritePacketSerializationHandlerTests),
 		// DataLayer > Version_3
