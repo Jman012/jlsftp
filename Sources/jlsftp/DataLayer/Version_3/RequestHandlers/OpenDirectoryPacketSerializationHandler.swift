@@ -3,7 +3,7 @@ import NIO
 
 extension jlsftp.DataLayer.Version_3 {
 
-	public class MakeDirectoryPacketSerializationHandler: PacketSerializationHandler {
+	public class OpenDirectoryPacketSerializationHandler: PacketSerializationHandler {
 
 		public func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			// Id
@@ -17,14 +17,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(pathResult.error!.customMapError(wrapper: "Failed to deserialize path"))
 			}
 
-			// File Attributes
-			let fileAttrsSerialization = FileAttributesSerializationV3()
-			let fileAttrsResult = fileAttrsSerialization.deserialize(from: &buffer)
-			guard case let .success(fileAttrs) = fileAttrsResult else {
-				return .failure(fileAttrsResult.error!.customMapError(wrapper: "Failed to deserialize file attributes"))
-			}
-
-			return .success(MakeDirectoryPacket(id: id, path: path, fileAttributes: fileAttrs))
+			return .success(OpenDirectoryPacket(id: id, path: path))
 		}
 	}
 }
