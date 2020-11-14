@@ -22,6 +22,7 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(ReadDirectoryPacketSerializationHandlerTests),
 		testCase(ReadLinkPacketSerializationHandlerTests),
 		testCase(ReadPacketSerializationHandlerTests),
+		testCase(RealPathPacketSerializationHandlerTests),
 		testCase(RemoveDirectoryPacketSerializationHandlerTests),
 		testCase(RemovePacketSerializationHandlerTests),
 		testCase(RenamePacketSerializationHandlerTests),
