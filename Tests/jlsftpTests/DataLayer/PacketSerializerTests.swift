@@ -78,5 +78,6 @@ final class PacketSerializerTests: XCTestCase {
 		("testCreateSerializer", testCreateSerializer),
 		("testDeserializeHandled", testDeserializeHandled),
 		("testDeserializeUnhandled", testDeserializeUnhandled),
+		("testBadType", testBadType),
 	]
 }

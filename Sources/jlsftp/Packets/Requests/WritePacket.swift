@@ -32,17 +32,10 @@ public class WritePacket: BasePacket {
 	  - Since: sftp v3
 	 */
 	public let offset: UInt64
-	/**
-	  The data to write to the remote file, starting at `offset`.
 
-	  - Since: sftp v3
-	 */
-	public let data: Data
-
-	public init(id: PacketId, handle: FileHandle, offset: UInt64, data: Data) {
+	public init(id: PacketId, handle: FileHandle, offset: UInt64) {
 		self.id = id
 		self.handle = handle
 		self.offset = offset
-		self.data = data
 	}
 }
