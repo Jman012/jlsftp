@@ -17,21 +17,21 @@ Deserialization, then Serialization
 | SSH_FXP_CLOSE    | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
 | SSH_FXP_READ     | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
 | SSH_FXP_WRITE    | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_LSTAT    | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_FSTAT    | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_SETSTAT  | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_FSETSTAT | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_OPENDIR  | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_READDIR  | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_LSTAT    | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_FSTAT    | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_SETSTAT  | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_FSETSTAT | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_OPENDIR  | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_READDIR  | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
 | SSH_FXP_REMOVE   | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_MKDIR    | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_RMDIR    | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_REALPATH | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_STAT     | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_RENAME   | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_READLINK | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_SYMLINK  | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
-| SSH_FXP_EXTENDED | ❌ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_MKDIR    | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_RMDIR    | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_REALPATH | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_STAT     | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_RENAME   | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_READLINK | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_SYMLINK  | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
+| SSH_FXP_EXTENDED | ✅ ❌ | ❌ ❌ | ❌ ❌ | ❌ ❌ |
 
 ### Reply
 
