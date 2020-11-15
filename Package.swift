@@ -31,6 +31,7 @@ let package = Package(
 			name: "jlsftpTests",
 			dependencies: [
 				"jlsftp",
+				.product(name: "NIOTestUtils", package: "swift-nio"),
 			]
 		),
 	]
