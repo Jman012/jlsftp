@@ -1,6 +1,6 @@
 import Foundation
 
-public enum Packet {
+public enum Packet: Equatable {
 	case initializeV3(InitializePacketV3)
 	case initializeV4(InitializePacketV4)
 	case version(VersionPacket)

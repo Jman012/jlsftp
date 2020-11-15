@@ -8,7 +8,7 @@ import Foundation
    * Success => [FileAttributesReplyPacket](x-source-tag://FileAttributesReplyPacket)
    * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
-public class RenamePacket: BasePacket {
+public struct RenamePacket: BasePacket, Equatable {
 
 	/**
 	 Request identifier.

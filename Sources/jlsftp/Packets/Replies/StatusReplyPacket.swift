@@ -7,7 +7,7 @@ import Foundation
  - Tag: StatusReplyPacket
  - Since: sftp v3
  */
-public class StatusReplyPacket: BasePacket {
+public struct StatusReplyPacket: BasePacket, Equatable {
 
 	/**
 	 Request identifier.

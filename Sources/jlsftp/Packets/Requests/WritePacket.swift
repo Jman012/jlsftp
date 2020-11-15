@@ -8,7 +8,7 @@ import Foundation
    * Success => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
    * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
-public class WritePacket: BasePacket {
+public struct WritePacket: BasePacket, Equatable {
 
 	/**
 	 Request identifier.

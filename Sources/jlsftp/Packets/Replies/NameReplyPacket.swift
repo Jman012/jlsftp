@@ -6,9 +6,9 @@ import Foundation
  - Tag: NameReplyPacket
  - Since: sftp v3
  */
-public class NameReplyPacket: BasePacket {
+public struct NameReplyPacket: BasePacket, Equatable {
 
-	public struct Name {
+	public struct Name: Equatable {
 		/**
 		 The relative or absolute name of a file or folder within the requested
 		 directory, depending on the request.

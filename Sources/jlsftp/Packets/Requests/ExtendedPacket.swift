@@ -9,7 +9,7 @@ import Foundation
  * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket) (specifically
    with `SSH_FX_OP_UNSUPPORTED`.
  */
-public class ExtendedPacket: BasePacket {
+public struct ExtendedPacket: BasePacket, Equatable {
 
 	/**
 	 Request identifier.

@@ -6,7 +6,7 @@ import Foundation
  - Since: sftp v3
  - Note: Expected Response Packet:
  */
-public class ExtendedReplyPacket: BasePacket {
+public struct ExtendedReplyPacket: BasePacket, Equatable {
 
 	/**
 	 Request identifier.

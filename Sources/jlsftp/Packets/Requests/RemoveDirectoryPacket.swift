@@ -8,7 +8,7 @@ import Foundation
    * Success => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
    * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
-public class RemoveDirectoryPacket: BasePacket {
+public struct RemoveDirectoryPacket: BasePacket, Equatable {
 
 	/**
 	 Request identifier.

@@ -6,7 +6,7 @@ import Foundation
  - Tag: HandleReplyPacket
  - Since: sftp v3
  */
-public class HandleReplyPacket: BasePacket {
+public struct HandleReplyPacket: BasePacket, Equatable {
 
 	/**
 	  Request identifier.

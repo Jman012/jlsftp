@@ -6,7 +6,7 @@ import Foundation
  - Tag: DataReplyPacket
  - Since: sftp v3
  */
-public class DataReplyPacket: BasePacket {
+public struct DataReplyPacket: BasePacket, Equatable {
 
 	/**
 	  Request identifier.

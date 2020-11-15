@@ -6,7 +6,7 @@ import Foundation
  - Tag: FileAttributesReplyPacket
  - Since: sftp v3
  */
-public class FileAttributesReplyPacket: BasePacket {
+public struct FileAttributesReplyPacket: BasePacket, Equatable {
 
 	/**
 	  Request identifier.

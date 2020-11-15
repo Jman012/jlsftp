@@ -8,7 +8,7 @@ import Foundation
    * Success => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
    * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
-public class CreateSymbolicLinkPacket: BasePacket {
+public struct CreateSymbolicLinkPacket: BasePacket, Equatable {
 
 	/**
 	 Request identifier.
