@@ -17,7 +17,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(filenameResult.error!.customMapError(wrapper: "Failed to deserialize filename"))
 			}
 
-			return .success(RemovePacket(id: id, filename: filename))
+			return .success(.remove(RemovePacket(id: id, filename: filename)))
 		}
 	}
 }

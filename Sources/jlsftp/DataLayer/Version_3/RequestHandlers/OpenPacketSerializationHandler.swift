@@ -30,7 +30,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(fileAttrResult.error!)
 			}
 
-			return .success(OpenPacket(id: id, filename: filename, pflags: openFlagsV3.openFlags, fileAttributes: fileAttrs))
+			return .success(.open(OpenPacket(id: id, filename: filename, pflags: openFlagsV3.openFlags, fileAttributes: fileAttrs)))
 		}
 	}
 }

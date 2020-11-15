@@ -23,8 +23,10 @@ final class RemovePacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is RemovePacket)
-		let removePacket = packet as! RemovePacket
+		guard case let .remove(removePacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, removePacket.id)

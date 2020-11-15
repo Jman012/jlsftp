@@ -269,5 +269,17 @@ extension jlsftp.DataLayer {
 				return PacketType.allPacketTypes(for: .v5).union([])
 			}
 		}
+
+		var hasBody: Bool {
+			switch self {
+			case .write,
+				 .dataReply,
+				 .extended,
+				 .extendedReply:
+				return true
+			default:
+				return false
+			}
+		}
 	}
 }

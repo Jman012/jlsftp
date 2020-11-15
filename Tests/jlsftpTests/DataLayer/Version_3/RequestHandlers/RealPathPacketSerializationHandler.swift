@@ -23,8 +23,10 @@ final class RealPathPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is RealPathPacket)
-		let realPathPacket = packet as! RealPathPacket
+		guard case let .realPath(realPathPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, realPathPacket.id)

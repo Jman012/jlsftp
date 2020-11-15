@@ -27,7 +27,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(.needMoreData)
 			}
 
-			return .success(ReadPacket(id: id, handle: handle, offset: offset, length: length))
+			return .success(.read(ReadPacket(id: id, handle: handle, offset: offset, length: length)))
 		}
 	}
 }

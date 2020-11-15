@@ -20,8 +20,10 @@ final class VersionPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is VersionPacket)
-		let versionPacket = packet as! VersionPacket
+		guard case let .version(versionPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(jlsftp.DataLayer.SftpVersion.v3, versionPacket.version)
@@ -101,8 +103,10 @@ final class VersionPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is VersionPacket)
-		let versionPacket = packet as! VersionPacket
+		guard case let .version(versionPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(jlsftp.DataLayer.SftpVersion.v3, versionPacket.version)
@@ -138,8 +142,10 @@ final class VersionPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is VersionPacket)
-		let versionPacket = packet as! VersionPacket
+		guard case let .version(versionPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(jlsftp.DataLayer.SftpVersion.v3, versionPacket.version)

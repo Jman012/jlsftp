@@ -27,8 +27,10 @@ final class CreateSymbolicLinkSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is CreateSymbolicLinkPacket)
-		let createSymbolicLinkPacket = packet as! CreateSymbolicLinkPacket
+		guard case let .createSymbolicLink(createSymbolicLinkPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, createSymbolicLinkPacket.id)

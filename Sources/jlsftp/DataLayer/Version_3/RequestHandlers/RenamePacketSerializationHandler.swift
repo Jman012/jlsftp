@@ -23,7 +23,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(newPathResult.error!.customMapError(wrapper: "Failed to deserialize new path"))
 			}
 
-			return .success(RenamePacket(id: id, oldPath: oldPath, newPath: newPath))
+			return .success(.rename(RenamePacket(id: id, oldPath: oldPath, newPath: newPath)))
 		}
 	}
 }

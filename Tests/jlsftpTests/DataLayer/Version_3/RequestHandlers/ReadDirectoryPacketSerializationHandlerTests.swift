@@ -23,8 +23,10 @@ final class ReadDirectoryPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is ReadDirectoryPacket)
-		let readDirectoryPacket = packet as! ReadDirectoryPacket
+		guard case let .readDirectory(readDirectoryPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, readDirectoryPacket.id)

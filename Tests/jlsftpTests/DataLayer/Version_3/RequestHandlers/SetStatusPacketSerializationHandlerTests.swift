@@ -25,8 +25,10 @@ final class SetStatusPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is SetStatusPacket)
-		let setStatusPacket = packet as! SetStatusPacket
+		guard case let .setStatus(setStatusPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, setStatusPacket.id)

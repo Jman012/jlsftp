@@ -23,8 +23,10 @@ final class RemoveDirectoryPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is RemoveDirectoryPacket)
-		let removeDirectoryPacket = packet as! RemoveDirectoryPacket
+		guard case let .removeDirectory(removeDirectoryPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, removeDirectoryPacket.id)

@@ -18,7 +18,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(fileAttrResult.error!)
 			}
 
-			return .success(FileAttributesReplyPacket(id: id, fileAttributes: fileAttrs))
+			return .success(.attributesReply(FileAttributesReplyPacket(id: id, fileAttributes: fileAttrs)))
 		}
 	}
 }

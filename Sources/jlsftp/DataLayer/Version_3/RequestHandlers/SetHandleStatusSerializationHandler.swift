@@ -24,7 +24,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(fileAttrsResult.error!.customMapError(wrapper: "Failed to deserialize file attributes"))
 			}
 
-			return .success(SetHandleStatusPacket(id: id, handle: handle, fileAttributes: fileAttrs))
+			return .success(.setHandleStatus(SetHandleStatusPacket(id: id, handle: handle, fileAttributes: fileAttrs)))
 		}
 	}
 }

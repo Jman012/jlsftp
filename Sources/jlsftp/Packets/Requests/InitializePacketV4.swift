@@ -9,7 +9,7 @@ import Foundation
  * Success => [VersionPacket](x-source-tag://VersionPacket)
  * Failure => [StatusReplyPacket](x-source-tag://StatusReplyPacket)
  */
-public class InitializePacketV4: Packet {
+public class InitializePacketV4 {
 
 	/**
 	 The highest sftp version number of the client.

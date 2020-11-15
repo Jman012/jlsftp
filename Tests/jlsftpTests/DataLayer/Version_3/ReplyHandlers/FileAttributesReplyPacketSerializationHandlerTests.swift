@@ -21,8 +21,10 @@ final class FileAttributesReplyPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is FileAttributesReplyPacket)
-		let fileAttrsReplyPacket = packet as! FileAttributesReplyPacket
+		guard case let .attributesReply(fileAttrsReplyPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, fileAttrsReplyPacket.id)

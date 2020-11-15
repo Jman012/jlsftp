@@ -11,7 +11,10 @@ final class NotSupportedHandlerTests: XCTestCase {
 		let result = handler.deserialize(buffer: &buffer)
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is SerializationErrorPacket)
+		guard case .serializationError = packet else {
+			XCTFail()
+			return
+		}
 	}
 
 	static var allTests = [

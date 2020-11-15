@@ -11,7 +11,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(.needMoreData)
 			}
 
-			return .success(DataReplyPacket(id: id))
+			return .success(.dataReply(DataReplyPacket(id: id)))
 		}
 	}
 }

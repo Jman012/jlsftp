@@ -25,8 +25,10 @@ final class MakeDirectoryPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is MakeDirectoryPacket)
-		let makeDirectoryPacket = packet as! MakeDirectoryPacket
+		guard case let .makeDirectory(makeDirectoryPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, makeDirectoryPacket.id)

@@ -23,8 +23,10 @@ final class StatusPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is StatusPacket)
-		let statusPacket = packet as! StatusPacket
+		guard case let .status(statusPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, statusPacket.id)

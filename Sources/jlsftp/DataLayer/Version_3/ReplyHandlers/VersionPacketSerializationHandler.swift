@@ -33,7 +33,7 @@ extension jlsftp.DataLayer.Version_3 {
 				index += 1
 			}
 
-			return .success(VersionPacket(version: sftpVersion, extensionData: extensionDataResults))
+			return .success(.version(VersionPacket(version: sftpVersion, extensionData: extensionDataResults)))
 		}
 	}
 }

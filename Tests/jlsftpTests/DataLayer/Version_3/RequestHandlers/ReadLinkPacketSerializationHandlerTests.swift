@@ -23,8 +23,10 @@ final class ReadLinkPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is ReadLinkPacket)
-		let readLinkPacket = packet as! ReadLinkPacket
+		guard case let .readLink(readLinkPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, readLinkPacket.id)

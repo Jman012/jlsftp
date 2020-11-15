@@ -22,7 +22,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(.needMoreData)
 			}
 
-			return .success(WritePacket(id: id, handle: handle, offset: offset))
+			return .success(.write(WritePacket(id: id, handle: handle, offset: offset)))
 		}
 	}
 }

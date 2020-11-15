@@ -17,7 +17,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(pathResult.error!.customMapError(wrapper: "Failed to deserialize path"))
 			}
 
-			return .success(RealPathPacket(id: id, path: path))
+			return .success(.realPath(RealPathPacket(id: id, path: path)))
 		}
 	}
 }

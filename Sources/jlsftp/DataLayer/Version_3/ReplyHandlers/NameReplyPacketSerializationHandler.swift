@@ -37,7 +37,7 @@ extension jlsftp.DataLayer.Version_3 {
 				names.append(NameReplyPacket.Name(filename: filename, longName: longName, fileAttributes: fileAttrs))
 			}
 
-			return .success(NameReplyPacket(id: id, names: names))
+			return .success(.nameReply(NameReplyPacket(id: id, names: names)))
 		}
 	}
 }

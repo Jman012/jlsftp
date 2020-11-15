@@ -6,7 +6,7 @@ import Foundation
  - Tag: VersionPacket
  - Since: sftp v3
  */
-public class VersionPacket: Packet {
+public class VersionPacket {
 
 	/**
 	 The highest sftp version number of the client.

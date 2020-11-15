@@ -24,7 +24,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(fileAttrsResult.error!.customMapError(wrapper: "Failed to deserialize file attributes"))
 			}
 
-			return .success(MakeDirectoryPacket(id: id, path: path, fileAttributes: fileAttrs))
+			return .success(.makeDirectory(MakeDirectoryPacket(id: id, path: path, fileAttributes: fileAttrs)))
 		}
 	}
 }

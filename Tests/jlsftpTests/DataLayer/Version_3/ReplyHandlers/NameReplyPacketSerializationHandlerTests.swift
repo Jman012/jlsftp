@@ -21,8 +21,10 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is NameReplyPacket)
-		let nameReplyPacket = packet as! NameReplyPacket
+		guard case let .nameReply(nameReplyPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, nameReplyPacket.id)
@@ -52,8 +54,10 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is NameReplyPacket)
-		let nameReplyPacket = packet as! NameReplyPacket
+		guard case let .nameReply(nameReplyPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, nameReplyPacket.id)

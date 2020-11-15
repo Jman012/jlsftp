@@ -32,7 +32,7 @@ final class PacketSerializerTests: XCTestCase {
 			handlers: [.initialize: mockHandler],
 			unhandledTypeHandler: mockNotSupportedHandler)
 
-		let result = serializer.deserialize(rawPacket: RawPacket(length: 0, type: jlsftp.DataLayer.PacketType.initialize.rawValue), buffer: &buffer)
+		let result = serializer.deserialize(packetType: jlsftp.DataLayer.PacketType.initialize, buffer: &buffer)
 
 		XCTAssertEqual(.needMoreData, result.error)
 		XCTAssertTrue(mockHandler.isCalled)
@@ -48,36 +48,16 @@ final class PacketSerializerTests: XCTestCase {
 			handlers: [.initialize: mockHandler],
 			unhandledTypeHandler: mockNotSupportedHandler)
 
-		let result = serializer.deserialize(rawPacket: RawPacket(length: 0, type: jlsftp.DataLayer.PacketType.version.rawValue), buffer: &buffer)
+		let result = serializer.deserialize(packetType: jlsftp.DataLayer.PacketType.version, buffer: &buffer)
 
 		XCTAssertEqual(.needMoreData, result.error)
 		XCTAssertFalse(mockHandler.isCalled)
 		XCTAssertTrue(mockNotSupportedHandler.isCalled)
 	}
 
-	func testBadType() {
-		let mockNotSupportedHandler = MockHandler()
-		let mockHandler = MockHandler()
-		var buffer = ByteBuffer()
-
-		let serializer = BasePacketSerializer(
-			handlers: [.initialize: mockHandler],
-			unhandledTypeHandler: mockNotSupportedHandler)
-
-		let result = serializer.deserialize(rawPacket: RawPacket(length: 0, type: 255), buffer: &buffer)
-
-		guard case .failure(.invalidData(reason: _)) = result else {
-			XCTFail("Expected invalid, instead got \(result)")
-			return
-		}
-		XCTAssertFalse(mockHandler.isCalled)
-		XCTAssertFalse(mockNotSupportedHandler.isCalled)
-	}
-
 	static var allTests = [
 		("testCreateSerializer", testCreateSerializer),
 		("testDeserializeHandled", testDeserializeHandled),
 		("testDeserializeUnhandled", testDeserializeUnhandled),
-		("testBadType", testBadType),
 	]
 }

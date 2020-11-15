@@ -27,8 +27,10 @@ final class RenamePacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is RenamePacket)
-		let renamePacket = packet as! RenamePacket
+		guard case let .rename(renamePacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, renamePacket.id)

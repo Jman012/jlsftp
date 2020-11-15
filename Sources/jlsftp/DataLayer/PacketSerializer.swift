@@ -2,7 +2,7 @@ import Foundation
 import NIO
 
 public protocol PacketSerializer {
-	func deserialize(rawPacket: RawPacket, buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError>
+	func deserialize(packetType: jlsftp.DataLayer.PacketType, buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError>
 }
 
 public class BasePacketSerializer: PacketSerializer {
@@ -18,13 +18,7 @@ public class BasePacketSerializer: PacketSerializer {
 		self.unhandledTypeHandler = unhandledTypeHandler
 	}
 
-	public func deserialize(rawPacket: RawPacket, buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
-
-		let packetTypeOpt = jlsftp.DataLayer.PacketType(rawValue: rawPacket.type)
-
-		guard let packetType = packetTypeOpt else {
-			return .failure(.invalidData(reason: "Unknown SFTP packet type (\(rawPacket.type))"))
-		}
+	public func deserialize(packetType: jlsftp.DataLayer.PacketType, buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 
 		guard let handler = handlers[packetType] else {
 			return unhandledTypeHandler.deserialize(buffer: &buffer)

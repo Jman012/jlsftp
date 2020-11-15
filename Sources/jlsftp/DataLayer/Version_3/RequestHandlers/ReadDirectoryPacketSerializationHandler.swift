@@ -17,7 +17,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(handleResult.error!.customMapError(wrapper: "Failed to deserialize handle"))
 			}
 
-			return .success(ReadDirectoryPacket(id: id, handle: handle))
+			return .success(.readDirectory(ReadDirectoryPacket(id: id, handle: handle)))
 		}
 	}
 }

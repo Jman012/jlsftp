@@ -23,8 +23,10 @@ final class OpenDirectoryPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is OpenDirectoryPacket)
-		let openDirectoryPacket = packet as! OpenDirectoryPacket
+		guard case let .openDirectory(openDirectoryPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, openDirectoryPacket.id)

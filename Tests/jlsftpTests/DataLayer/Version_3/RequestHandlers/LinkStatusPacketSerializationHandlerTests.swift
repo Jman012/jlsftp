@@ -23,8 +23,10 @@ final class LinkStatusPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is LinkStatusPacket)
-		let linkStatusPacket = packet as! LinkStatusPacket
+		guard case let .linkStatus(linkStatusPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, linkStatusPacket.id)

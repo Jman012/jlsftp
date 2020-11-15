@@ -15,6 +15,14 @@ final class PacketTypeTests: XCTestCase {
 		XCTAssert(v6.isSuperset(of: v5))
 	}
 
+	func testHasBody() {
+		XCTAssertEqual(true, jlsftp.DataLayer.PacketType.write.hasBody)
+		XCTAssertEqual(true, jlsftp.DataLayer.PacketType.dataReply.hasBody)
+		XCTAssertEqual(true, jlsftp.DataLayer.PacketType.extended.hasBody)
+		XCTAssertEqual(true, jlsftp.DataLayer.PacketType.extendedReply.hasBody)
+		XCTAssertEqual(false, jlsftp.DataLayer.PacketType.initialize.hasBody)
+	}
+
 	static var allTests = [
 		("testAllPacketTypes", testAllPacketTypes),
 	]

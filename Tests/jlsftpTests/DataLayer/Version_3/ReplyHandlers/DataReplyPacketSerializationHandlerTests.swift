@@ -19,9 +19,10 @@ final class DataReplyPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-
-		XCTAssert(packet is DataReplyPacket)
-		let dataReplyPacket = packet as! DataReplyPacket
+		guard case let .dataReply(dataReplyPacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, dataReplyPacket.id)

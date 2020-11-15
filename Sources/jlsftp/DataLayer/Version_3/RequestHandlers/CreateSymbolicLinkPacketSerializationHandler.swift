@@ -23,7 +23,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(targetPathResult.error!.customMapError(wrapper: "Failed to deserialize target path"))
 			}
 
-			return .success(CreateSymbolicLinkPacket(id: id, linkPath: linkPath, targetPath: targetPath))
+			return .success(.createSymbolicLink(CreateSymbolicLinkPacket(id: id, linkPath: linkPath, targetPath: targetPath)))
 		}
 	}
 }

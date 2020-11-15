@@ -23,8 +23,10 @@ final class ClosePacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is ClosePacket)
-		let closePacket = packet as! ClosePacket
+		guard case let .close(closePacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, closePacket.id)

@@ -17,7 +17,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(pathResult.error!.customMapError(wrapper: "Failed to deserialize path"))
 			}
 
-			return .success(LinkStatusPacket(id: id, path: path))
+			return .success(.linkStatus(LinkStatusPacket(id: id, path: path)))
 		}
 	}
 }

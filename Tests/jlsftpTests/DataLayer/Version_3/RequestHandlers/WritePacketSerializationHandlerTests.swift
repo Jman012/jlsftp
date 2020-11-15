@@ -25,8 +25,10 @@ final class WritePacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		XCTAssert(packet is WritePacket)
-		let writePacket = packet as! WritePacket
+		guard case let .write(writePacket) = packet else {
+			XCTFail()
+			return
+		}
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, writePacket.id)

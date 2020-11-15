@@ -17,7 +17,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(handleResult.error!.customMapError(wrapper: "Failed to deserialize handle"))
 			}
 
-			return .success(HandleStatusPacket(id: id, handle: handle))
+			return .success(.handleStatus(HandleStatusPacket(id: id, handle: handle)))
 		}
 	}
 }

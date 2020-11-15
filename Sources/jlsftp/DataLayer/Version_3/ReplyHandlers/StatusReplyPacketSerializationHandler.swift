@@ -31,7 +31,7 @@ extension jlsftp.DataLayer.Version_3 {
 				return .failure(langTagResult.error!.customMapError(wrapper: "Failed to deserialize language tag"))
 			}
 
-			return .success(StatusReplyPacket(id: id, statusCode: statusCodeV3.statusCode, errorMessage: errorMessage, languageTag: langTag))
+			return .success(.statusReply(StatusReplyPacket(id: id, statusCode: statusCodeV3.statusCode, errorMessage: errorMessage, languageTag: langTag)))
 		}
 	}
 }

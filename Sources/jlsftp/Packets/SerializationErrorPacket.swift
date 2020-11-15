@@ -1,6 +1,6 @@
 import Foundation
 
-public class SerializationErrorPacket: Packet {
+public class SerializationErrorPacket {
 	public let errorMessage: String
 
 	public init(errorMessage: String) {
