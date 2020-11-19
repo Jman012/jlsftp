@@ -41,6 +41,8 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(PacketSerializerTests),
 		testCase(PacketTypeTests),
 		// Fields
+		// Network
+		testCase(SftpPacketDecoderTests),
 		// Packets
 		// Utilities
 		testCase(DataExtensions.allTests),
