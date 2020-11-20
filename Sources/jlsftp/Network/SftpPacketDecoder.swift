@@ -33,6 +33,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 	typealias InboundIn = ByteBuffer
 	typealias InboundOut = MessagePart
 
+	/// The internal state of the the `SftpPacketDecoder`.
 	enum State {
 		/**
 		 The next call to `decode` will expect header data, and attempt to
@@ -47,10 +48,32 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		case readingBody(remaining: UInt32)
 	}
 
+	/**
+	 * Errors that can be thrown from the `SftpPacketDecoder` which may occur
+	 * due to the binary nature of the protocol.
+	 */
 	enum DecoderError: Error, Equatable {
+		/**
+		 * A packet with length 0 was encountered. Instead of treating this as a
+		 * NOP, this is more likely some kind of corruption.
+		 */
 		case emptyPacketPossiblyCorrupt
+		/**
+		 * An unknown packet type was encountered along with a length that might
+		 * cause an unnecessary amount of buffering. This may be malicious (or
+		 * corrupt), so the connection should be killed.
+		 */
 		case unknownPacketTypePossiblyMalicious(packetLength: UInt32, packetTypeInt: UInt8)
+		/**
+		 * The deserialization of a packet lead to an error. Pass the message.
+		 */
 		case deserializationError(errorMessage: String)
+		/**
+		 * After a successful deserialization of a packet from a payload, there
+		 * are leftover bytes. Strictly handle this by treating it as a protocol
+		 * error. If this wasn't correctly handled, the leftover bytes could be
+		 * parsed as its own packet, leading to corruption.
+		 */
 		case leftoverPacketBytes(mismatchLength: UInt32)
 
 		var description: String {
@@ -67,7 +90,6 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		}
 	}
 
-	// Begin the decoder's state by looking for a header
 	var state: State = .awaitingHeader
 	let packetSerializer: PacketSerializer
 
@@ -83,11 +105,14 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		return try decodeCentral(context: context, buffer: &buffer, isLast: true, seenEOF: seenEOF)
 	}
 
+	/// Handle `decode(context:buffer:)` and `decodeLast(context:buffer:)` the same way.
 	func decodeCentral(context: ChannelHandlerContext, buffer: inout ByteBuffer, isLast _: Bool, seenEOF _: Bool) throws -> DecodingState {
 		switch state {
 		case .awaitingHeader:
+			// Make a copy (copy-on-write) of the buffer and only read it
+			// on success
 			var bufferSlice = buffer.slice()
-			let result = try decodeStep1(context: context, buffer: &bufferSlice)
+			let result = try decodePacketHeader(context: context, buffer: &bufferSlice)
 
 			switch result {
 			case .needMoreData:
@@ -106,7 +131,10 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		}
 	}
 
-	func decodeStep1(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
+	/**
+	 * Decodes the packet length and packet type information.
+	 */
+	func decodePacketHeader(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
 		// Need at least the first 5 bytes, length + type, in order
 		// to proceed.
 		guard let packetLength = buffer.readInteger(endianness: .big, as: UInt32.self) else {
@@ -162,7 +190,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		let sliceSize = min(Int(clamping: payloadLength), buffer.readableBytes)
 		var bufferSlice = buffer.getSlice(at: buffer.readerIndex, length: sliceSize)!
 
-		let result = try decodeStep2(context: context, buffer: &bufferSlice, payloadLength: payloadLength, packetType: packetType)
+		let result = try decodePayload(context: context, buffer: &bufferSlice, payloadLength: payloadLength, packetType: packetType)
 
 		switch result {
 		case .needMoreData:
@@ -176,7 +204,10 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		}
 	}
 
-	func decodeStep2(context: ChannelHandlerContext, buffer: inout ByteBuffer, payloadLength: UInt32, packetType: jlsftp.DataLayer.PacketType) throws -> DecodingState {
+	/**
+	 * Decodes the payload of a packet, given the length and type of the packet.
+	 */
+	func decodePayload(context: ChannelHandlerContext, buffer: inout ByteBuffer, payloadLength: UInt32, packetType: jlsftp.DataLayer.PacketType) throws -> DecodingState {
 		//Make an attempt to deserialize the byte buffer into a packet.
 		let packetResult = packetSerializer.deserialize(packetType: packetType, buffer: &buffer)
 		let bytesRead = buffer.readerIndex
@@ -203,6 +234,8 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 				state = .readingBody(remaining: payloadLength - UInt32(bytesRead))
 				return .continue
 			} else {
+				// Ensure there are no leftover bytes in the buffer. This may
+				// be corruption or malice.
 				guard payloadLength == bytesRead else {
 					throw DecoderError.leftoverPacketBytes(mismatchLength: payloadLength - UInt32(bytesRead))
 				}

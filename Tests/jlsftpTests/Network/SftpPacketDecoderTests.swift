@@ -5,23 +5,7 @@ import XCTest
 
 final class SftpPacketDecoderTests: XCTestCase {
 
-	private class MockSerializer: PacketSerializer {
-
-		typealias Handle = (jlsftp.DataLayer.PacketType, inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError>
-
-		var isDeserializeCalled = false
-		var deserializeHandle: Handle
-
-		init(deserializeHandle: @escaping Handle) {
-			self.deserializeHandle = deserializeHandle
-		}
-
-		func deserialize(packetType: jlsftp.DataLayer.PacketType, buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
-			isDeserializeCalled = true
-			return deserializeHandle(packetType, &buffer)
-		}
-	}
-
+	/// Tests that normal packets are handled correctly.
 	func testValidPacketsNoBody() {
 		var expectedInOuts: [(ByteBuffer, [MessagePart])] = []
 
@@ -65,6 +49,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 		}))
 	}
 
+	/// Tests that a length of 0 is handled correctly.
 	func testInvalidEmptyLength() throws {
 		let channel = EmbeddedChannel()
 		_ = try channel.pipeline.addHandler(ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3)))).wait()
@@ -83,6 +68,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 		}
 	}
 
+	/// Tests that malicious lengths with unknown types are handled correctly.
 	func testInvalidTypeMaliciousLength() throws {
 		let channel = EmbeddedChannel()
 		_ = try channel.pipeline.addHandler(ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3)))).wait()
@@ -103,6 +89,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 		}
 	}
 
+	/// Tests that unknown packet types with lenient payloads are passed on.
 	func testInvalidTypeRecoverableLength() {
 		var expectedInOuts: [(ByteBuffer, [MessagePart])] = []
 
@@ -135,6 +122,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 		}))
 	}
 
+	/// Tests that deserialization errors are handled correctly.
 	func testInvalidDeserializationError() throws {
 		let channel = EmbeddedChannel()
 		_ = try channel.pipeline.addHandler(ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3)))).wait()
@@ -161,6 +149,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 		}
 	}
 
+	/// Tests that leftover bytes are handled correctly.
 	func testMismatchedPacketLengthForSerializedPacket() throws {
 		let channel = EmbeddedChannel()
 		_ = try channel.pipeline.addHandler(ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3)))).wait()
