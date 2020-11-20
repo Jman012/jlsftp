@@ -179,7 +179,107 @@ final class SftpPacketDecoderTests: XCTestCase {
 		}
 	}
 
-//	func testValidBody
+	func testValidBodyAllAtOnce() throws {
+		let channel = EmbeddedChannel()
+		_ = try channel.pipeline.addHandler(ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3)))).wait()
+
+		var buffer = channel.allocator.buffer(capacity: 64)
+		buffer.writeBytes([
+			// Length (UInt32 Network Order: 1+17+16=34)
+			0x00, 0x00, 0x00, 0x22,
+			// Type (UInt8 SSH_FXP_WRITE=6)
+			0x06,
+			// Id (UInt32 Network Order: 2)
+			0x00, 0x00, 0x00, 0x02,
+			// Handle string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Handle string data ("a")
+			0x61,
+			// Offset (UInt64 Network Order: 10)
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A,
+			// Write Data (16 bytes)
+			0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+			0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
+		])
+
+		channel.pipeline.fireChannelRead(NIOAny(buffer))
+
+		let messagePartHeader: MessagePart? = try channel.readInbound()
+		XCTAssertEqual(messagePartHeader, .header(.write(WritePacket(id: 2, handle: "a", offset: 10))))
+		XCTAssertNoThrow(try channel.throwIfErrorCaught())
+
+		let messagePartBody: MessagePart? = try channel.readInbound()
+		XCTAssertEqual(messagePartBody, .body(ByteBuffer(bytes: [
+			0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+			0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
+		])))
+		XCTAssertNoThrow(try channel.throwIfErrorCaught())
+	}
+
+	func testValidBodyIncremental() throws {
+		let channel = EmbeddedChannel()
+		_ = try channel.pipeline.addHandler(ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3)))).wait()
+
+		var buffer = channel.allocator.buffer(capacity: 64)
+		buffer.writeBytes([
+			// Length (UInt32 Network Order: 1+17+16=34)
+			0x00, 0x00, 0x00, 0x22,
+			// Type (UInt8 SSH_FXP_WRITE=6)
+			0x06,
+			// Id (UInt32 Network Order: 2)
+			0x00, 0x00, 0x00, 0x02,
+			// Handle string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Handle string data ("a")
+			0x61,
+			// Offset (UInt64 Network Order: 10)
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A,
+		])
+
+		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		let messagePartHeader: MessagePart? = try channel.readInbound()
+		XCTAssertEqual(messagePartHeader, .header(.write(WritePacket(id: 2, handle: "a", offset: 10))))
+		XCTAssertNoThrow(try channel.throwIfErrorCaught())
+
+		buffer.moveWriterIndex(to: 0)
+		buffer.writeBytes([
+			0x00,
+		])
+		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		var messagePartBody: MessagePart? = try channel.readInbound()
+		XCTAssertEqual(messagePartBody, .body(ByteBuffer(bytes: [
+			0x00,
+		])))
+
+		buffer.moveWriterIndex(to: 0)
+		buffer.writeBytes([
+			0x11, 0x22,
+		])
+		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		messagePartBody = try channel.readInbound()
+		XCTAssertEqual(messagePartBody, .body(ByteBuffer(bytes: [
+			0x11, 0x22,
+		])))
+
+		buffer.moveWriterIndex(to: 0)
+		buffer.writeBytes([
+			0x33, 0x44,
+		])
+		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		buffer.moveWriterIndex(to: 0)
+		buffer.writeBytes([
+			0x55, 0x66,
+		])
+		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		messagePartBody = try channel.readInbound()
+		XCTAssertEqual(messagePartBody, .body(ByteBuffer(bytes: [
+			0x33, 0x44,
+		])))
+		messagePartBody = try channel.readInbound()
+		XCTAssertEqual(messagePartBody, .body(ByteBuffer(bytes: [
+			0x55, 0x66,
+		])))
+	}
 
 	static var allTests = [
 		("testValidPacketsNoBody", testValidPacketsNoBody),
@@ -187,5 +287,8 @@ final class SftpPacketDecoderTests: XCTestCase {
 		("testInvalidTypeMaliciousLength", testInvalidTypeMaliciousLength),
 		("testInvalidTypeRecoverableLength", testInvalidTypeRecoverableLength),
 		("testInvalidDeserializationError", testInvalidDeserializationError),
+		("testMismatchedPacketLengthForSerializedPacket", testMismatchedPacketLengthForSerializedPacket),
+		("testValidBodyAllAtOnce", testValidBodyAllAtOnce),
+		("testValidBodyIncremental", testValidBodyIncremental),
 	]
 }
