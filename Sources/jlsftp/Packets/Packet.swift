@@ -30,5 +30,5 @@ public enum Packet: Equatable {
 	case extended(ExtendedPacket)
 	case extendedReply(ExtendedReplyPacket)
 
-	case serializationError(SerializationErrorPacket)
+	case nopDebug(NOPDebugPacket)
 }

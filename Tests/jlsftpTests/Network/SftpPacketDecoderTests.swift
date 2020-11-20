@@ -22,29 +22,6 @@ final class SftpPacketDecoderTests: XCTestCase {
 		}
 	}
 
-//	func testRealSinglePacket() throws {
-//		var buffer = ByteBuffer(bytes: [
-//			// Length (UInt32 Network Order: 1+4=5)
-//			0x00, 0x00, 0x00, 0x05,
-//			// Type (UInt8 SSH_FXP_INIT=1)
-//			0x01,
-//			// Version (UInt32 Network Order: 3)
-//			0x00, 0x00, 0x00, 0x03,
-//		])
-//
-//		let decoder = SftpPacketDecoder(packetSerializer: jlsftp.DataLayer.Version_3.PacketSerializerV3())
-//
-//		let channel = EmbeddedChannel()
-//		_ = try channel.pipeline.addHandler(ByteToMessageHandler(decoder)).wait()
-//
-//		try channel.writeInbound(buffer)
-//
-//		guard let actualOutput = try channel.readInbound(as: Packet.self) else {
-//			XCTFail()
-//			return
-//		}
-//	}
-
 	func testValidPacketsNoBody() {
 		var expectedInOuts: [(ByteBuffer, [MessagePart])] = []
 
@@ -85,43 +62,45 @@ final class SftpPacketDecoderTests: XCTestCase {
 		XCTAssertNoThrow(try ByteToMessageDecoderVerifier.verifyDecoder(inputOutputPairs: expectedInOuts,
 																		decoderFactory: {
 																			SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3))
-																		}))
+		}))
 	}
 
-	func testInvalidEmptyLength() {
-		var expectedInOuts: [(ByteBuffer, [MessagePart])] = []
+	func testInvalidEmptyLength() throws {
+		let channel = EmbeddedChannel()
+		_ = try channel.pipeline.addHandler(ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3)))).wait()
 
-		// Empty length
-		expectedInOuts.append((ByteBuffer(bytes: [
+		var buffer = channel.allocator.buffer(capacity: 64)
+		buffer.writeBytes([
 			// Length (UInt32 Network Order: 0)
 			0x00, 0x00, 0x00, 0x00,
-		]), [
-			.header(.serializationError(SerializationErrorPacket(errorMessage: "Packet length is invalid (0). Treating as corrupted."))),
-		]))
+		])
 
-		XCTAssertNoThrow(try ByteToMessageDecoderVerifier.verifyDecoder(inputOutputPairs: expectedInOuts,
-																		decoderFactory: {
-																			SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3))
-																		}))
+		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		XCTAssertNoThrow(XCTAssertNil(try channel.readInbound()))
+		XCTAssertThrowsError(try channel.throwIfErrorCaught()) { error in
+			XCTAssert(error is SftpPacketDecoder.DecoderError)
+			XCTAssertEqual(error as! SftpPacketDecoder.DecoderError, SftpPacketDecoder.DecoderError.emptyPacketPossiblyCorrupt)
+		}
 	}
 
-	func testInvalidTypeMaliciousLength() {
-		var expectedInOuts: [(ByteBuffer, [MessagePart])] = []
+	func testInvalidTypeMaliciousLength() throws {
+		let channel = EmbeddedChannel()
+		_ = try channel.pipeline.addHandler(ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3)))).wait()
 
-		// Invalid packet type with malicious length
-		expectedInOuts.append((ByteBuffer(bytes: [
+		var buffer = channel.allocator.buffer(capacity: 64)
+		buffer.writeBytes([
 			// Length (UInt32 Network Order: 10_001)
 			0x00, 0x00, 0x27, 0x11,
 			// Packet Type (UInt8: 0)
 			0x00,
-		]), [
-			.header(.serializationError(SerializationErrorPacket(errorMessage: "Unknown packet type (0) was sent with potentially malicious packet length (10001)")))
-		]))
+		])
 
-		XCTAssertNoThrow(try ByteToMessageDecoderVerifier.verifyDecoder(inputOutputPairs: expectedInOuts,
-																		decoderFactory: {
-																			SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3))
-																		}))
+		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		XCTAssertNoThrow(XCTAssertNil(try channel.readInbound()))
+		XCTAssertThrowsError(try channel.throwIfErrorCaught()) { error in
+			XCTAssert(error is SftpPacketDecoder.DecoderError)
+			XCTAssertEqual(error as! SftpPacketDecoder.DecoderError, SftpPacketDecoder.DecoderError.unknownPacketTypePossiblyMalicious(packetLength: 10001, packetTypeInt: 0))
+		}
 	}
 
 	func testInvalidTypeRecoverableLength() {
@@ -137,7 +116,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 		]), [
-			.header(.serializationError(SerializationErrorPacket(errorMessage: "Unknown packet type (0)")))
+			.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '0'"))),
 		]))
 
 		// Invalid packet type with recoverable length (alternate)
@@ -147,20 +126,21 @@ final class SftpPacketDecoderTests: XCTestCase {
 			// Packet Type (UInt8: 255)
 			0xFF,
 		]), [
-			.header(.serializationError(SerializationErrorPacket(errorMessage: "Unknown packet type (255)")))
+			.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '255'"))),
 		]))
 
 		XCTAssertNoThrow(try ByteToMessageDecoderVerifier.verifyDecoder(inputOutputPairs: expectedInOuts,
 																		decoderFactory: {
 																			SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3))
-																		}))
+		}))
 	}
 
-	func testInvalidDeserializationError() {
-		var expectedInOuts: [(ByteBuffer, [MessagePart])] = []
+	func testInvalidDeserializationError() throws {
+		let channel = EmbeddedChannel()
+		_ = try channel.pipeline.addHandler(ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3)))).wait()
 
-		// Deserialization error (HandleReplyPacket with bad string)
-		expectedInOuts.append((ByteBuffer(bytes: [
+		var buffer = channel.allocator.buffer(capacity: 64)
+		buffer.writeBytes([
 			// Length (UInt32 Network Order: 10)
 			0x00, 0x00, 0x00, 0x0A,
 			// Packet Type (UInt8: 102)
@@ -171,26 +151,46 @@ final class SftpPacketDecoderTests: XCTestCase {
 			0x00, 0x00, 0x00, 0x01,
 			// Handle data (invalid UTF8)
 			0xFF,
-		]), [
-			.header(.serializationError(SerializationErrorPacket(errorMessage: "Closing connection due to unexpected error reading network stream: Failed to deserialize handle: Invalid UTF8 string data")))
-		]))
+		])
 
-		XCTAssertNoThrow(try ByteToMessageDecoderVerifier.verifyDecoder(inputOutputPairs: expectedInOuts,
-																		decoderFactory: {
-																			SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3))
-																		}))
+		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		XCTAssertNoThrow(XCTAssertNil(try channel.readInbound()))
+		XCTAssertThrowsError(try channel.throwIfErrorCaught()) { error in
+			XCTAssert(error is SftpPacketDecoder.DecoderError)
+			XCTAssertEqual(error as! SftpPacketDecoder.DecoderError, SftpPacketDecoder.DecoderError.deserializationError(errorMessage: "Failed to deserialize handle: Invalid UTF8 string data"))
+		}
 	}
 
-	func testNeedsLength() throws {
-		let mockSerializer = MockSerializer(deserializeHandle: { _, _ in
-			return .success(.initializeV3(InitializePacketV3(version: .v3, extensionData: [])))
-		})
-		let decoder = SftpPacketDecoder(packetSerializer: mockSerializer)
-
+	func testMismatchedPacketLengthForSerializedPacket() throws {
 		let channel = EmbeddedChannel()
-		_ = try channel.pipeline.addHandler(ByteToMessageHandler(decoder)).wait()
-		var buffer = channel.allocator.buffer(capacity: 1024)
+		_ = try channel.pipeline.addHandler(ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3)))).wait()
+
+		var buffer = channel.allocator.buffer(capacity: 64)
+		buffer.writeBytes([
+			// Length (UInt32 Network Order: 1+9+1=11)
+			0x00, 0x00, 0x00, 0x0B,
+			// Type (UInt8 SSH_FXP_CLOSE=4)
+			0x04,
+			// Id (UInt32 Network Order: 2)
+			0x00, 0x00, 0x00, 0x02,
+			// Handle string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Handle string data ("a")
+			0x61,
+			// Leftover byte
+			0xFF,
+		])
+
+		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		let messagePart: MessagePart? = try channel.readInbound()
+		XCTAssertEqual(messagePart, .header(.close(ClosePacket(id: 2, handle: "a"))))
+		XCTAssertThrowsError(try channel.throwIfErrorCaught()) { error in
+			XCTAssert(error is SftpPacketDecoder.DecoderError)
+			XCTAssertEqual(error as! SftpPacketDecoder.DecoderError, SftpPacketDecoder.DecoderError.leftoverPacketBytes(mismatchLength: 1))
+		}
 	}
+
+//	func testValidBody
 
 	static var allTests = [
 		("testValidPacketsNoBody", testValidPacketsNoBody),

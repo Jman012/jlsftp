@@ -32,7 +32,7 @@ extension jlsftp.DataLayer.Version_3 {
 				.attributesReply: jlsftp.DataLayer.Version_3.FileAttributesReplyPacketSerializationHandler(),
 //				.extended: jlsftp.DataLayer.Version_3.ExtendedPacketSerializationHandler(),
 //				.extendedReply: jlsftp.DataLayer.Version_3.ExtendedReplyPacketSerializationHandler(),
-			], unhandledTypeHandler: NotSupportedHandler())
+			], unhandledTypeHandler: NotSupportedPacketSerializationHandler())
 		}
 	}
 }

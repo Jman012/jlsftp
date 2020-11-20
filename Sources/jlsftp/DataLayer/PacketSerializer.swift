@@ -28,7 +28,7 @@ public class BasePacketSerializer: PacketSerializer {
 	}
 
 	public static func createSerializer(fromSftpVersion sftpVersion: jlsftp.DataLayer.SftpVersion) -> BasePacketSerializer {
-		let notSupportedHandler = NotSupportedHandler()
+		let notSupportedHandler = NotSupportedPacketSerializationHandler()
 
 		switch sftpVersion {
 		case .v3:

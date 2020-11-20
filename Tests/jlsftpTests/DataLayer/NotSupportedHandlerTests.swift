@@ -5,13 +5,13 @@ import XCTest
 final class NotSupportedHandlerTests: XCTestCase {
 
 	func testDeserialize() {
-		let handler = NotSupportedHandler()
+		let handler = NotSupportedPacketSerializationHandler()
 		var buffer = ByteBuffer()
 
 		let result = handler.deserialize(buffer: &buffer)
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
-		guard case .serializationError = packet else {
+		guard case .nopDebug = packet else {
 			XCTFail()
 			return
 		}

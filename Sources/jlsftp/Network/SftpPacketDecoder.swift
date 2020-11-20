@@ -47,6 +47,26 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		case readingBody(remaining: UInt32)
 	}
 
+	enum DecoderError: Error, Equatable {
+		case emptyPacketPossiblyCorrupt
+		case unknownPacketTypePossiblyMalicious(packetLength: UInt32, packetTypeInt: UInt8)
+		case deserializationError(errorMessage: String)
+		case leftoverPacketBytes(mismatchLength: UInt32)
+
+		var description: String {
+			switch self {
+			case .emptyPacketPossiblyCorrupt:
+				return "Packet length is invalid (0). Treating as corrupted."
+			case let .unknownPacketTypePossiblyMalicious(packetLength: length, packetTypeInt: type):
+				return "Unknown packet type (\(type)) was sent with potentially malicious packet length (\(length))"
+			case let .deserializationError(errorMessage: message):
+				return "Closing connection due to unexpected error reading network stream: \(message)"
+			case let .leftoverPacketBytes(mismatchLength: length):
+				return "Actual packet length did not match specific length (leftover bytes: \(length))"
+			}
+		}
+	}
+
 	// Begin the decoder's state by looking for a header
 	var state: State = .awaitingHeader
 	let packetSerializer: PacketSerializer
@@ -56,10 +76,18 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 	}
 
 	func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
+		return try decodeCentral(context: context, buffer: &buffer, isLast: false, seenEOF: false)
+	}
+
+	func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF: Bool) throws -> DecodingState {
+		return try decodeCentral(context: context, buffer: &buffer, isLast: true, seenEOF: seenEOF)
+	}
+
+	func decodeCentral(context: ChannelHandlerContext, buffer: inout ByteBuffer, isLast _: Bool, seenEOF _: Bool) throws -> DecodingState {
 		switch state {
 		case .awaitingHeader:
 			var bufferSlice = buffer.slice()
-			let result = decodeStep1(context: context, buffer: &bufferSlice)
+			let result = try decodeStep1(context: context, buffer: &bufferSlice)
 
 			switch result {
 			case .needMoreData:
@@ -78,30 +106,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		}
 	}
 
-	func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF _: Bool) throws -> DecodingState {
-		switch state {
-		case .awaitingHeader:
-			var bufferSlice = buffer.slice()
-			let result = decodeStep1(context: context, buffer: &bufferSlice)
-
-			switch result {
-			case .needMoreData:
-				// The original buffer is unread, no need to reset it.
-				return .needMoreData
-			case .continue:
-				// A packet was created, mark the buffer read from the slice
-				// onto the original buffer for the next invocation.
-				buffer.moveReaderIndex(forwardBy: bufferSlice.readerIndex)
-				return .continue
-			}
-		case let .readingBody(remaining: remainingBytes):
-			// Since the body is just raw data, it always succeeds.
-			decodeBody(context: context, buffer: &buffer, remainingBytes: remainingBytes)
-			return .continue
-		}
-	}
-
-	func decodeStep1(context: ChannelHandlerContext, buffer: inout ByteBuffer) -> DecodingState {
+	func decodeStep1(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
 		// Need at least the first 5 bytes, length + type, in order
 		// to proceed.
 		guard let packetLength = buffer.readInteger(endianness: .big, as: UInt32.self) else {
@@ -113,10 +118,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 			// that a server or client might send this, it's more likely
 			// that something corrupted and we shouldn't attempt to
 			// interpret the data. Fail instead.
-			let result = MessagePart.header(.serializationError(SerializationErrorPacket(errorMessage: "Packet length is invalid (0). Treating as corrupted.")))
-			// TODO: fireError?
-			context.fireChannelRead(self.wrapInboundOut(result))
-			return .continue
+			throw DecoderError.emptyPacketPossiblyCorrupt
 		}
 
 		guard let packetTypeInt = buffer.readInteger(endianness: .big, as: UInt8.self) else {
@@ -133,12 +135,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 			// data packets, which we can handle by killing the connection
 			// instead.
 			if payloadLength >= 10000 { // Arbitrary length cutoff
-				let result = MessagePart.header(.serializationError(SerializationErrorPacket(errorMessage: "Unknown packet type (\(packetTypeInt)) was sent with potentially malicious packet length (\(packetLength))")))
-				// TODO: fireError?
-				context.fireChannelRead(self.wrapInboundOut(result))
-				// TODO
-//				context.close()
-				return .continue
+				throw DecoderError.unknownPacketTypePossiblyMalicious(packetLength: packetLength, packetTypeInt: packetTypeInt)
 			} else {
 				// Account for the single byte read for the packet type.
 				if buffer.readableBytes >= payloadLength {
@@ -148,8 +145,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 					// large, but the cap above isn't too large for this to be a
 					// problem.
 					buffer.moveReaderIndex(forwardBy: Int(payloadLength))
-					let result = MessagePart.header(.serializationError(SerializationErrorPacket(errorMessage: "Unknown packet type (\(packetTypeInt))")))
-					// TODO: fireError?
+					let result = MessagePart.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '\(packetTypeInt)'")))
 					context.fireChannelRead(self.wrapInboundOut(result))
 					return .continue
 				} else {
@@ -166,7 +162,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		let sliceSize = min(Int(clamping: payloadLength), buffer.readableBytes)
 		var bufferSlice = buffer.getSlice(at: buffer.readerIndex, length: sliceSize)!
 
-		let result = decodeStep2(context: context, buffer: &bufferSlice, payloadLength: payloadLength, packetType: packetType)
+		let result = try decodeStep2(context: context, buffer: &bufferSlice, payloadLength: payloadLength, packetType: packetType)
 
 		switch result {
 		case .needMoreData:
@@ -180,7 +176,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		}
 	}
 
-	func decodeStep2(context: ChannelHandlerContext, buffer: inout ByteBuffer, payloadLength: UInt32, packetType: jlsftp.DataLayer.PacketType) -> DecodingState {
+	func decodeStep2(context: ChannelHandlerContext, buffer: inout ByteBuffer, payloadLength: UInt32, packetType: jlsftp.DataLayer.PacketType) throws -> DecodingState {
 		//Make an attempt to deserialize the byte buffer into a packet.
 		let packetResult = packetSerializer.deserialize(packetType: packetType, buffer: &buffer)
 		let bytesRead = buffer.readerIndex
@@ -195,10 +191,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 			case let .invalidData(reason: errorMessage):
 				// If attempted deserialization resulted in an
 				// unrecoverable error, kill the connection.
-				// TODO: fireErrorCaught instead?
-				context.fireChannelRead(self.wrapInboundOut(.header(.serializationError(SerializationErrorPacket(errorMessage: "Closing connection due to unexpected error reading network stream: \(errorMessage)")))))
-//				_ = context.close()
-				return .continue
+				throw DecoderError.deserializationError(errorMessage: errorMessage)
 			}
 		case let .success(packet):
 			// Pass the packet along as the header
@@ -210,6 +203,9 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 				state = .readingBody(remaining: payloadLength - UInt32(bytesRead))
 				return .continue
 			} else {
+				guard payloadLength == bytesRead else {
+					throw DecoderError.leftoverPacketBytes(mismatchLength: payloadLength - UInt32(bytesRead))
+				}
 				state = .awaitingHeader
 				return .continue
 			}
