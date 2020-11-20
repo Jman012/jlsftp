@@ -30,8 +30,8 @@ extension jlsftp.DataLayer.Version_3 {
 				.dataReply: jlsftp.DataLayer.Version_3.DataReplyPacketSerializationHandler(),
 				.nameReply: jlsftp.DataLayer.Version_3.NameReplyPacketSerializationHandler(),
 				.attributesReply: jlsftp.DataLayer.Version_3.FileAttributesReplyPacketSerializationHandler(),
-//				.extended: jlsftp.DataLayer.Version_3.ExtendedPacketSerializationHandler(),
-//				.extendedReply: jlsftp.DataLayer.Version_3.ExtendedReplyPacketSerializationHandler(),
+				.extended: jlsftp.DataLayer.Version_3.ExtendedPacketSerializationHandler(),
+				.extendedReply: jlsftp.DataLayer.Version_3.ExtendedReplyPacketSerializationHandler(),
 			], unhandledTypeHandler: NotSupportedPacketSerializationHandler())
 		}
 	}

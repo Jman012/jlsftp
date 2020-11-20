@@ -2,7 +2,7 @@ import NIO
 import XCTest
 @testable import jlsftp
 
-final class NotSupportedHandlerTests: XCTestCase {
+final class NotSupportedPacketSerializationHandlerTests: XCTestCase {
 
 	func testDeserialize() {
 		let handler = NotSupportedPacketSerializationHandler()
