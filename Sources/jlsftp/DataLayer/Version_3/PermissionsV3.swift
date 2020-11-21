@@ -22,7 +22,7 @@ extension jlsftp.DataLayer.Version_3 {
 		}
 	}
 
-	public struct PermissionsV3 {
+	public struct PermissionsV3: Equatable {
 		let user: PermissionV3
 		let group: PermissionV3
 		let other: PermissionV3

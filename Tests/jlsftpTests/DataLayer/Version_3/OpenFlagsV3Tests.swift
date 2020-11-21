@@ -26,12 +26,12 @@ final class OpenFlagsV3Tests: XCTestCase {
 	}
 
 	func testToStandard() {
-		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.read.openFlags.contains(OpenFlag.read))
-		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.write.openFlags.contains(OpenFlag.write))
-		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.append.openFlags.contains(OpenFlag.append))
-		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.create.openFlags.contains(OpenFlag.create))
-		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.truncate.openFlags.contains(OpenFlag.truncate))
-		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.exclusive.openFlags.contains(OpenFlag.exclusive))
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.read.openFlags == [OpenFlag.read])
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.write.openFlags == [OpenFlag.write])
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.append.openFlags == [OpenFlag.append])
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.create.openFlags == [OpenFlag.create])
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.truncate.openFlags == [OpenFlag.truncate])
+		XCTAssert(jlsftp.DataLayer.Version_3.OpenFlagsV3.exclusive.openFlags == [OpenFlag.exclusive])
 
 		let all = jlsftp.DataLayer.Version_3.OpenFlagsV3([
 			jlsftp.DataLayer.Version_3.OpenFlagsV3.read,
@@ -41,14 +41,14 @@ final class OpenFlagsV3Tests: XCTestCase {
 			jlsftp.DataLayer.Version_3.OpenFlagsV3.truncate,
 			jlsftp.DataLayer.Version_3.OpenFlagsV3.exclusive,
 		])
-		XCTAssert(all.openFlags.subtracting([
+		XCTAssert(all.openFlags == [
 			OpenFlag.read,
 			OpenFlag.write,
 			OpenFlag.append,
 			OpenFlag.create,
 			OpenFlag.truncate,
 			OpenFlag.exclusive,
-		]) == [])
+		])
 	}
 
 	func testFromStandard() {

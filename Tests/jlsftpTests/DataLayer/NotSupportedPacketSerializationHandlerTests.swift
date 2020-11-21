@@ -17,7 +17,16 @@ final class NotSupportedPacketSerializationHandlerTests: XCTestCase {
 		}
 	}
 
+	func testSerialize() {
+		let handler = NotSupportedPacketSerializationHandler()
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(handler.serialize(packet: .nopDebug(NOPDebugPacket(message: "test")), to: &buffer))
+		XCTAssertEqual(ByteBuffer(), buffer)
+	}
+
 	static var allTests = [
 		("testDeserialize", testDeserialize),
+		("testSerialize", testSerialize),
 	]
 }

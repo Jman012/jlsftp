@@ -25,5 +25,6 @@ final class PacketTypeTests: XCTestCase {
 
 	static var allTests = [
 		("testAllPacketTypes", testAllPacketTypes),
+		("testHasBody", testHasBody),
 	]
 }
