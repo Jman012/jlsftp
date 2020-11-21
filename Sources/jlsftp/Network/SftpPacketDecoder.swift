@@ -162,23 +162,21 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 			// well. Malicious payloads may consume the bandwidth with giant
 			// data packets, which we can handle by killing the connection
 			// instead.
-			if payloadLength >= 10000 { // Arbitrary length cutoff
+			if payloadLength >= 10000 {
+				// Arbitrary length cutoff
 				throw DecoderError.unknownPacketTypePossiblyMalicious(packetLength: packetLength, packetTypeInt: packetTypeInt)
+			} else if buffer.readableBytes >= payloadLength {
+				// Consume the bytes of the unknown packet, so that we can
+				// potentially recover and read more legitmate packets. We
+				// could add a new state so that the buffer doesn't grow so
+				// large, but the cap above isn't too large for this to be a
+				// problem.
+				buffer.moveReaderIndex(forwardBy: Int(payloadLength))
+				let result = MessagePart.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '\(packetTypeInt)'")))
+				context.fireChannelRead(self.wrapInboundOut(result))
+				return .continue
 			} else {
-				// Account for the single byte read for the packet type.
-				if buffer.readableBytes >= payloadLength {
-					// Consume the bytes of the unknown packet, so that we can
-					// potentially recover and read more legitmate packets. We
-					// could add a new state so that the buffer doesn't grow so
-					// large, but the cap above isn't too large for this to be a
-					// problem.
-					buffer.moveReaderIndex(forwardBy: Int(payloadLength))
-					let result = MessagePart.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '\(packetTypeInt)'")))
-					context.fireChannelRead(self.wrapInboundOut(result))
-					return .continue
-				} else {
-					return .needMoreData
-				}
+				return .needMoreData
 			}
 		}
 

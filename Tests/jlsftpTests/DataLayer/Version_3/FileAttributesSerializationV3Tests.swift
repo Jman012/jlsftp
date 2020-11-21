@@ -4,6 +4,8 @@ import XCTest
 
 final class FileAttributesSerializationV3Tests: XCTestCase {
 
+	// MARK: Test FileAttributesFlags.init
+
 	func testFlags() {
 		// Values take from https://tools.ietf.org/html/draft-ietf-secsh-filexfer-02#section-5
 		XCTAssertEqual(
@@ -23,7 +25,9 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 			jlsftp.DataLayer.Version_3.FileAttributesFlags.extendedAttributes)
 	}
 
-	func testMinimal() {
+	// MARK: Test deserialize(from:)
+
+	func testDeserializeMinimal() {
 		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32)
 			0x00, 0x00, 0x00, 0x00,
@@ -45,7 +49,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
-	func testSize() {
+	func testDeserializeSize() {
 		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ATTR_SIZE)
 			0x00, 0x00, 0x00, 0x01,
@@ -69,7 +73,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
-	func testUserGroupIds() {
+	func testDeserializeUserGroupIds() {
 		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ATTR_UIDGID)
 			0x00, 0x00, 0x00, 0x02,
@@ -95,7 +99,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
-	func testPermissions() {
+	func testDeserializePermissions() {
 		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ATTR_PERMISSIONS)
 			0x00, 0x00, 0x00, 0x04,
@@ -119,7 +123,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
-	func testPermissionExtraBitsIgnored() {
+	func testDeserializePermissionExtraBitsIgnored() {
 		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ATTR_PERMISSIONS)
 			0x00, 0x00, 0x00, 0x04,
@@ -143,7 +147,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
-	func testACModTime() {
+	func testDeserializeACModTime() {
 		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ACMODTIME)
 			0x00, 0x00, 0x00, 0x08,
@@ -169,7 +173,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
-	func testExtended() {
+	func testDeserializeExtended() {
 		var buffer = ByteBuffer(bytes: [
 			// Flags (UInt32 Network Byte Order: SSH_FILEXFER_ATTR_EXTENDED)
 			0x80, 0x00, 0x00, 0x00,
@@ -201,7 +205,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
 
-	func testNeedMoreData() {
+	func testDeserializeNeedMoreData() {
 		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
 		let buffers = [
 			// No Flags
@@ -328,15 +332,304 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		}
 	}
 
+	// MARK: Test serialize(fileAttrs:to:)
+
+	func testSerializeValidMinimal() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let fileAttrs = FileAttributes(sizeBytes: nil,
+									   userId: nil,
+									   groupId: nil,
+									   permissions: nil,
+									   accessDate: nil,
+									   modifyDate: nil,
+									   extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+
+		let expectedBuffer = ByteBuffer(bytes: [
+			// Flags (UInt32: Nothing)
+			0x00, 0x00, 0x00, 0x00,
+		])
+		XCTAssertEqual(expectedBuffer, buffer)
+	}
+
+	func testSerializeSize() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let fileAttrs = FileAttributes(sizeBytes: 1,
+									   userId: nil,
+									   groupId: nil,
+									   permissions: nil,
+									   accessDate: nil,
+									   modifyDate: nil,
+									   extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+
+		let expectedBuffer = ByteBuffer(bytes: [
+			// Flags (UInt32: SSH_FILEXFER_ATTR_SIZE)
+			0x00, 0x00, 0x00, 0x01,
+			// Size (UInt64 Network Order: 1)
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+		])
+		XCTAssertEqual(expectedBuffer, buffer)
+	}
+
+	func testSerializeUserGroupdIds() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let fileAttrs = FileAttributes(sizeBytes: nil,
+									   userId: 2,
+									   groupId: 3,
+									   permissions: nil,
+									   accessDate: nil,
+									   modifyDate: nil,
+									   extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+
+		let expectedBuffer = ByteBuffer(bytes: [
+			// Flags (UInt32: SSH_FILEXFER_ATTR_UIDGID)
+			0x00, 0x00, 0x00, 0x02,
+			// UserId (UInt32 Network Order: 2)
+			0x00, 0x00, 0x00, 0x02,
+			// GroupId (UInt32 Network Order: 3)
+			0x00, 0x00, 0x00, 0x03,
+		])
+		XCTAssertEqual(expectedBuffer, buffer)
+	}
+
+	func testSerializeUserGroupdIdsNoUser() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let fileAttrs = FileAttributes(sizeBytes: nil,
+									   userId: nil,
+									   groupId: 3,
+									   permissions: nil,
+									   accessDate: nil,
+									   modifyDate: nil,
+									   extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+
+		let expectedBuffer = ByteBuffer(bytes: [
+			// Flags (UInt32: SSH_FILEXFER_ATTR_UIDGID)
+			0x00, 0x00, 0x00, 0x02,
+			// UserId (UInt32 Network Order: 0)
+			0x00, 0x00, 0x00, 0x00,
+			// GroupId (UInt32 Network Order: 3)
+			0x00, 0x00, 0x00, 0x03,
+		])
+		XCTAssertEqual(expectedBuffer, buffer)
+	}
+
+	func testSerializeUserGroupdIdsNoGroup() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let fileAttrs = FileAttributes(sizeBytes: nil,
+									   userId: 2,
+									   groupId: nil,
+									   permissions: nil,
+									   accessDate: nil,
+									   modifyDate: nil,
+									   extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+
+		let expectedBuffer = ByteBuffer(bytes: [
+			// Flags (UInt32: SSH_FILEXFER_ATTR_UIDGID)
+			0x00, 0x00, 0x00, 0x02,
+			// UserId (UInt32 Network Order: 2)
+			0x00, 0x00, 0x00, 0x02,
+			// GroupId (UInt32 Network Order: 0)
+			0x00, 0x00, 0x00, 0x00,
+		])
+		XCTAssertEqual(expectedBuffer, buffer)
+	}
+
+	func testSerializePermissions() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let fileAttrs = FileAttributes(sizeBytes: nil,
+									   userId: nil,
+									   groupId: nil,
+									   permissions: Permissions(user: Set([.read]), group: Set([.write]), other: Set([.execute])),
+									   accessDate: nil,
+									   modifyDate: nil,
+									   extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+
+		let expectedBuffer = ByteBuffer(bytes: [
+			// Flags (UInt32: SSH_FILEXFER_ATTR_PERMISSIONS)
+			0x00, 0x00, 0x00, 0x04,
+			// Permissions (UInt32: U+R G+W O+E)
+			0x00, 0x00, 0b0000_0001, 0b0001_0001,
+		])
+		XCTAssertEqual(expectedBuffer, buffer)
+	}
+
+	func testSerializeACModTime() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let fileAttrs = FileAttributes(sizeBytes: nil,
+									   userId: nil,
+									   groupId: nil,
+									   permissions: nil,
+									   accessDate: Date(timeIntervalSince1970: 4),
+									   modifyDate: Date(timeIntervalSince1970: 5),
+									   extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+
+		let expectedBuffer = ByteBuffer(bytes: [
+			// Flags (UInt32: SSH_FILEXFER_ATTR_ACMODTIME)
+			0x00, 0x00, 0x00, 0x08,
+			// Access Time (UInt32 Network Order: 4)
+			0x00, 0x00, 0x00, 0x04,
+			// Modify Time (UInt32 Network Order: 5)
+			0x00, 0x00, 0x00, 0x05,
+		])
+		XCTAssertEqual(expectedBuffer, buffer)
+	}
+
+	func testSerializeACModTimeNoAccess() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let fileAttrs = FileAttributes(sizeBytes: nil,
+									   userId: nil,
+									   groupId: nil,
+									   permissions: nil,
+									   accessDate: nil,
+									   modifyDate: Date(timeIntervalSince1970: 5),
+									   extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+
+		let expectedBuffer = ByteBuffer(bytes: [
+			// Flags (UInt32: SSH_FILEXFER_ATTR_ACMODTIME)
+			0x00, 0x00, 0x00, 0x08,
+			// Access Time (UInt32 Network Order: 0)
+			0x00, 0x00, 0x00, 0x00,
+			// Modify Time (UInt32 Network Order: 5)
+			0x00, 0x00, 0x00, 0x05,
+		])
+		XCTAssertEqual(expectedBuffer, buffer)
+	}
+
+	func testSerializeACModTimeNoModify() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let fileAttrs = FileAttributes(sizeBytes: nil,
+									   userId: nil,
+									   groupId: nil,
+									   permissions: nil,
+									   accessDate: Date(timeIntervalSince1970: 4),
+									   modifyDate: nil,
+									   extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+
+		let expectedBuffer = ByteBuffer(bytes: [
+			// Flags (UInt32: SSH_FILEXFER_ATTR_ACMODTIME)
+			0x00, 0x00, 0x00, 0x08,
+			// Access Time (UInt32 Network Order: 4)
+			0x00, 0x00, 0x00, 0x04,
+			// Modify Time (UInt32 Network Order: 0)
+			0x00, 0x00, 0x00, 0x00,
+		])
+		XCTAssertEqual(expectedBuffer, buffer)
+	}
+
+	func testSerializeExtensions() {
+		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+		let fileAttrs = FileAttributes(sizeBytes: nil,
+									   userId: nil,
+									   groupId: nil,
+									   permissions: nil,
+									   accessDate: nil,
+									   modifyDate: nil,
+									   extensionData: [ExtensionData(name: "a", data: "bc"), ExtensionData(name: "de", data: "f")])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+
+		let expectedBuffer = ByteBuffer(bytes: [
+			// Flags (UInt32: SSH_FILEXFER_ATTR_EXTENDED)
+			0x80, 0x00, 0x00, 0x00,
+			// Extended Datum 1 Name string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Extended Datum 1 Name string data ("a")
+			0x61,
+			// Extended Datum 1 Data string length (UInt32 Network Order: 2)
+			0x00, 0x00, 0x00, 0x02,
+			// Extended Datum 1 Data string data ("bc")
+			0x62, 0x63,
+			// Extended Datum 2 Name string length (UInt32 Network Order: 2)
+			0x00, 0x00, 0x00, 0x02,
+			// Extended Datum 2 Name string data ("de")
+			0x64, 0x65,
+			// Extended Datum 2 Data string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Extended Datum 2 Data string data ("f")
+			0x66,
+		])
+		XCTAssertEqual(expectedBuffer, buffer)
+	}
+
+//	func testSerializeExtensionsLargeName() {
+//		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+//		let fileAttrs = FileAttributes(sizeBytes: nil,
+//									   userId: nil,
+//									   groupId: nil,
+//									   permissions: nil,
+//									   accessDate: nil,
+//									   modifyDate: nil,
+//									   extensionData: [ExtensionData(name: jlsftpTests.stringOverUInt32Length, data: "bc")])
+//		var buffer = ByteBuffer()
+//
+//		XCTAssertFalse(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+//	}
+//
+//	func testSerializeExtensionsLargeData() {
+//		let serialization = jlsftp.DataLayer.Version_3.FileAttributesSerializationV3()
+//		let fileAttrs = FileAttributes(sizeBytes: nil,
+//									   userId: nil,
+//									   groupId: nil,
+//									   permissions: nil,
+//									   accessDate: nil,
+//									   modifyDate: nil,
+//									   extensionData: [ExtensionData(name: "a", data: jlsftpTests.stringOverUInt32Length)])
+//		var buffer = ByteBuffer()
+//
+//		XCTAssertFalse(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+//	}
+
 	static var allTests = [
+		// Test FileAttributesFlags.init
 		("testFlags", testFlags),
-		("testMinimal", testMinimal),
-		("testSize", testSize),
-		("testUserGroupIds", testUserGroupIds),
-		("testPermissions", testPermissions),
-		("testPermissionExtraBitsIgnored", testPermissionExtraBitsIgnored),
-		("testACModTime", testACModTime),
-		("testExtended", testExtended),
-		("testNeedMoreData", testNeedMoreData),
+		// Test deserialize(from:)
+		("testDeserializeMinimal", testDeserializeMinimal),
+		("testDeserializeSize", testDeserializeSize),
+		("testDeserializeUserGroupIds", testDeserializeUserGroupIds),
+		("testDeserializePermissions", testDeserializePermissions),
+		("testDeserializePermissionExtraBitsIgnored", testDeserializePermissionExtraBitsIgnored),
+		("testDeserializeACModTime", testDeserializeACModTime),
+		("testDeserializeExtended", testDeserializeExtended),
+		("testDeserializeNeedMoreData", testDeserializeNeedMoreData),
+		// Test serialize(fileAttrs:to:)
+		("testSerializeValidMinimal", testSerializeValidMinimal),
+		("testSerializeSize", testSerializeSize),
+		("testSerializeUserGroupdIds", testSerializeUserGroupdIds),
+		("testSerializeUserGroupdIdsNoUser", testSerializeUserGroupdIdsNoUser),
+		("testSerializeUserGroupdIdsNoGroup", testSerializeUserGroupdIdsNoGroup),
+		("testSerializePermissions", testSerializePermissions),
+		("testSerializeACModTime", testSerializeACModTime),
+		("testSerializeACModTimeNoAccess", testSerializeACModTimeNoAccess),
+		("testSerializeACModTimeNoModify", testSerializeACModTimeNoModify),
+		("testSerializeExtensions", testSerializeExtensions),
+//		("testSerializeExtensionsLargeName", testSerializeExtensionsLargeName),
+//		("testSerializeExtensionsLargeData", testSerializeExtensionsLargeData),
 	]
 }

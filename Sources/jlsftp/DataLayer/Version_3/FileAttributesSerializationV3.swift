@@ -11,10 +11,15 @@ extension jlsftp.DataLayer.Version_3 {
 			self.rawValue = rawValue
 		}
 
+		/// `SSH_FILEXFER_ATTR_SIZE`
 		public static let size = FileAttributesFlags(rawValue: 0x0000_0001)
+		/// `SSH_FILEXFER_ATTR_UIDGID`
 		public static let userAndGroupIds = FileAttributesFlags(rawValue: 0x0000_0002)
+		/// `SSH_FILEXFER_ATTR_PERMISSIONS`
 		public static let permissions = FileAttributesFlags(rawValue: 0x0000_0004)
+		/// `SSH_FILEXFER_ATTR_PERMISSIONS`
 		public static let accessAndModificationTimes = FileAttributesFlags(rawValue: 0x0000_0008)
+		/// `SSH_FILEXFER_ATTR_EXTENDED`
 		public static let extendedAttributes = FileAttributesFlags(rawValue: 0x8000_0000)
 	}
 
