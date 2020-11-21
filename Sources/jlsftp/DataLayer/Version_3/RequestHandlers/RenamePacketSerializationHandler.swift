@@ -25,5 +25,26 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.rename(RenamePacket(id: id, oldPath: oldPath, newPath: newPath)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .rename(renamePacket) = packet else {
+				return false
+			}
+
+			// Id
+			buffer.writeInteger(renamePacket.id, endianness: .big, as: UInt32.self)
+
+			// Old Path
+			guard buffer.writeSftpString(renamePacket.oldPath) else {
+				return false
+			}
+
+			// New Path
+			guard buffer.writeSftpString(renamePacket.newPath) else {
+				return false
+			}
+
+			return true
+		}
 	}
 }

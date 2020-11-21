@@ -43,6 +43,45 @@ extension jlsftp.DataLayer.Version_3 {
 			self.other = other
 		}
 
+		public init(from permissions: Permissions) {
+			var userPerm = PermissionV3()
+			if permissions.user.contains(.read) {
+				userPerm.formUnion(.read)
+			}
+			if permissions.user.contains(.write) {
+				userPerm.formUnion(.write)
+			}
+			if permissions.user.contains(.execute) {
+				userPerm.formUnion(.execute)
+			}
+
+			var groupPerm = PermissionV3()
+			if permissions.group.contains(.read) {
+				groupPerm.formUnion(.read)
+			}
+			if permissions.group.contains(.write) {
+				groupPerm.formUnion(.write)
+			}
+			if permissions.group.contains(.execute) {
+				groupPerm.formUnion(.execute)
+			}
+
+			var otherPerm = PermissionV3()
+			if permissions.other.contains(.read) {
+				otherPerm.formUnion(.read)
+			}
+			if permissions.other.contains(.write) {
+				otherPerm.formUnion(.write)
+			}
+			if permissions.other.contains(.execute) {
+				otherPerm.formUnion(.execute)
+			}
+
+			self.user = userPerm
+			self.group = groupPerm
+			self.other = otherPerm
+		}
+
 		public init(fromBinary binary: UInt16) {
 			user = PermissionV3(rawValue: UInt8((binary & 0o700) >> 6))
 			group = PermissionV3(rawValue: UInt8((binary & 0o070) >> 3))

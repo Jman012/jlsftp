@@ -3,9 +3,10 @@ import NIO
 
 public protocol PacketSerializer {
 	func deserialize(packetType: jlsftp.DataLayer.PacketType, buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError>
+	func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool
 }
 
-public class BasePacketSerializer: PacketSerializer {
+public class BasePacketSerializer {
 
 	let handlers: [jlsftp.DataLayer.PacketType: PacketSerializationHandler]
 	let unhandledTypeHandler: PacketSerializationHandler
@@ -16,15 +17,6 @@ public class BasePacketSerializer: PacketSerializer {
 	) {
 		self.handlers = handlers
 		self.unhandledTypeHandler = unhandledTypeHandler
-	}
-
-	public func deserialize(packetType: jlsftp.DataLayer.PacketType, buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
-
-		guard let handler = handlers[packetType] else {
-			return unhandledTypeHandler.deserialize(buffer: &buffer)
-		}
-
-		return handler.deserialize(buffer: &buffer)
 	}
 
 	public static func createSerializer(fromSftpVersion sftpVersion: jlsftp.DataLayer.SftpVersion) -> BasePacketSerializer {
@@ -49,5 +41,30 @@ public class BasePacketSerializer: PacketSerializer {
 				.version: jlsftp.DataLayer.Version_3.VersionPacketSerializationHandler(),
 			], unhandledTypeHandler: notSupportedHandler)
 		}
+	}
+}
+
+extension BasePacketSerializer: PacketSerializer {
+
+	public func deserialize(packetType: jlsftp.DataLayer.PacketType, buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+
+		guard let handler = handlers[packetType] else {
+			return unhandledTypeHandler.deserialize(buffer: &buffer)
+		}
+
+		return handler.deserialize(buffer: &buffer)
+	}
+
+	public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+
+		guard let packetType = packet.packetType else {
+			return false
+		}
+
+		guard let handler = handlers[packetType] else {
+			return false
+		}
+
+		return handler.serialize(packet: packet, to: &buffer)
 	}
 }

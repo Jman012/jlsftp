@@ -19,5 +19,21 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.realPath(RealPathPacket(id: id, path: path)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .realPath(realPathPacket) = packet else {
+				return false
+			}
+
+			// Id
+			buffer.writeInteger(realPathPacket.id, endianness: .big, as: UInt32.self)
+
+			// Path
+			guard buffer.writeSftpString(realPathPacket.path) else {
+				return false
+			}
+
+			return true
+		}
 	}
 }

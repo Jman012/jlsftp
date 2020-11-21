@@ -19,4 +19,15 @@ extension ByteBuffer {
 
 		return .success(string)
 	}
+
+	mutating func writeSftpString(_ value: String) -> Bool {
+		let bytes = Array(value.utf8)
+		guard let bytesCount = UInt32(exactly: bytes.count) else {
+			return false
+		}
+
+		self.writeInteger(bytesCount, endianness: .big, as: UInt32.self)
+		self.writeBytes(bytes)
+		return true
+	}
 }

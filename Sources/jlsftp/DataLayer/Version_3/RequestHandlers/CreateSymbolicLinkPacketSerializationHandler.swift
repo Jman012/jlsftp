@@ -25,5 +25,26 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.createSymbolicLink(CreateSymbolicLinkPacket(id: id, linkPath: linkPath, targetPath: targetPath)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .createSymbolicLink(createSymbolicLinkPacket) = packet else {
+				return false
+			}
+
+			// Id
+			buffer.writeInteger(createSymbolicLinkPacket.id, endianness: .big, as: UInt32.self)
+
+			// Link Path
+			guard buffer.writeSftpString(createSymbolicLinkPacket.linkPath) else {
+				return false
+			}
+
+			// Target Path
+			guard buffer.writeSftpString(createSymbolicLinkPacket.targetPath) else {
+				return false
+			}
+
+			return true
+		}
 	}
 }

@@ -35,5 +35,29 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.version(VersionPacket(version: sftpVersion, extensionData: extensionDataResults)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .version(versionPacket) = packet else {
+				return false
+			}
+
+			// Version
+			buffer.writeInteger(versionPacket.version.rawValue, endianness: .big, as: UInt32.self)
+
+			// Extension Data
+			for extensionDatum in versionPacket.extensionData {
+				// Extension Name
+				guard buffer.writeSftpString(extensionDatum.name) else {
+					return false
+				}
+
+				// Extension data
+				guard buffer.writeSftpString(extensionDatum.data) else {
+					return false
+				}
+			}
+
+			return true
+		}
 	}
 }

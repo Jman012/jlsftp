@@ -19,5 +19,21 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.close(ClosePacket(id: id, handle: handle)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .close(closePacket) = packet else {
+				return false
+			}
+
+			// Id
+			buffer.writeInteger(closePacket.id, endianness: .big, as: UInt32.self)
+
+			// Handle
+			guard buffer.writeSftpString(closePacket.handle) else {
+				return false
+			}
+
+			return true
+		}
 	}
 }

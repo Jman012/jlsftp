@@ -26,5 +26,27 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.setHandleStatus(SetHandleStatusPacket(id: id, handle: handle, fileAttributes: fileAttrs)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .setHandleStatus(setHandleStatusPacket) = packet else {
+				return false
+			}
+
+			// Id
+			buffer.writeInteger(setHandleStatusPacket.id, endianness: .big, as: UInt32.self)
+
+			// Handle
+			guard buffer.writeSftpString(setHandleStatusPacket.handle) else {
+				return false
+			}
+
+			// File Attributes
+			let fileAttrsSerializationV3 = FileAttributesSerializationV3()
+			guard fileAttrsSerializationV3.serialize(fileAttrs: setHandleStatusPacket.fileAttributes, to: &buffer) else {
+				return false
+			}
+
+			return true
+		}
 	}
 }

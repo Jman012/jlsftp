@@ -29,5 +29,27 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.read(ReadPacket(id: id, handle: handle, offset: offset, length: length)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .read(readPacket) = packet else {
+				return false
+			}
+
+			// Id
+			buffer.writeInteger(readPacket.id, endianness: .big, as: UInt32.self)
+
+			// Handle
+			guard buffer.writeSftpString(readPacket.handle) else {
+				return false
+			}
+
+			// Offset
+			buffer.writeInteger(readPacket.offset, endianness: .big, as: UInt64.self)
+
+			// Length
+			buffer.writeInteger(readPacket.length, endianness: .big, as: UInt32.self)
+
+			return true
+		}
 	}
 }

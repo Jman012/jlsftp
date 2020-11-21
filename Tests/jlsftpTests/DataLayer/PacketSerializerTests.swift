@@ -5,11 +5,17 @@ import XCTest
 final class PacketSerializerTests: XCTestCase {
 
 	class MockHandler: PacketSerializationHandler {
-		public var isCalled = false
+		var isDeserializeCalled = false
+		var isSerializeCalled = false
 
 		func deserialize(buffer _: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
-			isCalled = true
+			isDeserializeCalled = true
 			return .failure(.needMoreData)
+		}
+
+		func serialize(packet _: Packet, to _: inout ByteBuffer) -> Bool {
+			isSerializeCalled = true
+			return false
 		}
 	}
 
@@ -35,8 +41,8 @@ final class PacketSerializerTests: XCTestCase {
 		let result = serializer.deserialize(packetType: jlsftp.DataLayer.PacketType.initialize, buffer: &buffer)
 
 		XCTAssertEqual(.needMoreData, result.error)
-		XCTAssertTrue(mockHandler.isCalled)
-		XCTAssertFalse(mockNotSupportedHandler.isCalled)
+		XCTAssertTrue(mockHandler.isDeserializeCalled)
+		XCTAssertFalse(mockNotSupportedHandler.isDeserializeCalled)
 	}
 
 	func testDeserializeUnhandled() {
@@ -51,8 +57,8 @@ final class PacketSerializerTests: XCTestCase {
 		let result = serializer.deserialize(packetType: jlsftp.DataLayer.PacketType.version, buffer: &buffer)
 
 		XCTAssertEqual(.needMoreData, result.error)
-		XCTAssertFalse(mockHandler.isCalled)
-		XCTAssertTrue(mockNotSupportedHandler.isCalled)
+		XCTAssertFalse(mockHandler.isDeserializeCalled)
+		XCTAssertTrue(mockNotSupportedHandler.isDeserializeCalled)
 	}
 
 	static var allTests = [

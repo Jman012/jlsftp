@@ -13,5 +13,16 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.dataReply(DataReplyPacket(id: id)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .dataReply(dataReplyPacket) = packet else {
+				return false
+			}
+
+			// Id
+			buffer.writeInteger(dataReplyPacket.id, endianness: .big, as: UInt32.self)
+
+			return true
+		}
 	}
 }

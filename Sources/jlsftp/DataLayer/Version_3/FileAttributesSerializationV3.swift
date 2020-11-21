@@ -88,5 +88,55 @@ extension jlsftp.DataLayer.Version_3 {
 			let fileAttributes = FileAttributes(sizeBytes: size, userId: userId, groupId: groupId, permissions: permissions?.permission, accessDate: accessDate, modifyDate: modifyDate, extensionData: extensionDataResults)
 			return .success(fileAttributes)
 		}
+
+		func serialize(fileAttrs: FileAttributes, to buffer: inout ByteBuffer) -> Bool {
+			var flags = FileAttributesFlags()
+
+			if fileAttrs.sizeBytes != nil {
+				flags.formUnion(.size)
+			}
+			if fileAttrs.userId != nil || fileAttrs.groupId != nil {
+				flags.formUnion(.userAndGroupIds)
+			}
+			if fileAttrs.permissions != nil {
+				flags.formUnion(.permissions)
+			}
+			if fileAttrs.accessDate != nil || fileAttrs.modifyDate != nil {
+				flags.formUnion(.accessAndModificationTimes)
+			}
+			if !fileAttrs.extensionData.isEmpty {
+				flags.formUnion(.extendedAttributes)
+			}
+
+			buffer.writeInteger(flags.rawValue, endianness: .big, as: UInt32.self)
+
+			if let sizeBytes = fileAttrs.sizeBytes {
+				buffer.writeInteger(sizeBytes, endianness: .big, as: UInt64.self)
+			}
+			if fileAttrs.userId != nil || fileAttrs.groupId != nil {
+				buffer.writeInteger(fileAttrs.userId ?? 0, endianness: .big, as: UInt32.self)
+				buffer.writeInteger(fileAttrs.groupId ?? 0, endianness: .big, as: UInt32.self)
+			}
+			if let permissions = fileAttrs.permissions {
+				let permsV3 = PermissionsV3(from: permissions)
+				buffer.writeInteger(UInt32(permsV3.binaryRepresentation), endianness: .big, as: UInt32.self)
+			}
+			if fileAttrs.accessDate != nil || fileAttrs.modifyDate != nil {
+				buffer.writeInteger(UInt32(fileAttrs.accessDate?.timeIntervalSince1970 ?? 0), endianness: .big, as: UInt32.self)
+				buffer.writeInteger(UInt32(fileAttrs.modifyDate?.timeIntervalSince1970 ?? 0), endianness: .big, as: UInt32.self)
+			}
+			if !fileAttrs.extensionData.isEmpty {
+				for extensionDatum in fileAttrs.extensionData {
+					guard buffer.writeSftpString(extensionDatum.name) else {
+						return false
+					}
+					guard buffer.writeSftpString(extensionDatum.data) else {
+						return false
+					}
+				}
+			}
+
+			return true
+		}
 	}
 }

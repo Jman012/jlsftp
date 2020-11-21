@@ -19,5 +19,21 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.remove(RemovePacket(id: id, filename: filename)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .remove(removePacket) = packet else {
+				return false
+			}
+
+			// Id
+			buffer.writeInteger(removePacket.id, endianness: .big, as: UInt32.self)
+
+			// Filename
+			guard buffer.writeSftpString(removePacket.filename) else {
+				return false
+			}
+
+			return true
+		}
 	}
 }

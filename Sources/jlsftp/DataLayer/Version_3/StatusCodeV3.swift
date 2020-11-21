@@ -90,6 +90,24 @@ extension jlsftp.DataLayer.Version_3 {
 		 */
 		case operationUnsupported = 8
 
+		public init(from statusCode: StatusCode) {
+			self = StatusCodeV3.createFrom(statusCode: statusCode)
+		}
+
+		public static func createFrom(statusCode: StatusCode) -> StatusCodeV3 {
+			switch statusCode {
+			case .ok: return .ok
+			case .endOfFile: return .endOfFile
+			case .noSuchFile: return .noSuchFile
+			case .permissionDenied: return .permissionDenied
+			case .failure: return .failure
+			case .badMessage: return .badMessage
+			case .noConnection: return .noConnection
+			case .connectionLost: return .connectionLost
+			case .operationUnsupported: return .operationUnsupported
+			}
+		}
+
 		var statusCode: StatusCode {
 			switch self {
 			case .ok: return .ok

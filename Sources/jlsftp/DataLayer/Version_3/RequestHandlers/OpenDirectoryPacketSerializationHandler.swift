@@ -19,5 +19,21 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.openDirectory(OpenDirectoryPacket(id: id, path: path)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .openDirectory(openDirectoryPacket) = packet else {
+				return false
+			}
+
+			// Id
+			buffer.writeInteger(openDirectoryPacket.id, endianness: .big, as: UInt32.self)
+
+			// Path
+			guard buffer.writeSftpString(openDirectoryPacket.path) else {
+				return false
+			}
+
+			return true
+		}
 	}
 }

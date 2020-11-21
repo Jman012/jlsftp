@@ -26,5 +26,27 @@ extension jlsftp.DataLayer.Version_3 {
 
 			return .success(.makeDirectory(MakeDirectoryPacket(id: id, path: path, fileAttributes: fileAttrs)))
 		}
+
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+			guard case let .makeDirectory(makeDirectoryPacket) = packet else {
+				return false
+			}
+
+			// Id
+			buffer.writeInteger(makeDirectoryPacket.id, endianness: .big, as: UInt32.self)
+
+			// Path
+			guard buffer.writeSftpString(makeDirectoryPacket.path) else {
+				return false
+			}
+
+			// File Attributes
+			let fileAttrsSerialization = FileAttributesSerializationV3()
+			guard fileAttrsSerialization.serialize(fileAttrs: makeDirectoryPacket.fileAttributes, to: &buffer) else {
+				return false
+			}
+
+			return true
+		}
 	}
 }
