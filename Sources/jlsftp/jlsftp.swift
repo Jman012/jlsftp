@@ -1,6 +1,6 @@
 public struct jlsftp {
 
-	public struct Protocol {
+	public struct SftpProtocol {
 
 		public struct Version_3 {}
 	}
