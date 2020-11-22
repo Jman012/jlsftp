@@ -32,7 +32,7 @@ public enum Packet: Equatable {
 
 	case nopDebug(NOPDebugPacket)
 
-	var packetType: jlsftp.DataLayer.PacketType? {
+	var packetType: jlsftp.SftpProtocol.PacketType? {
 		switch self {
 		case .initializeV3: return .initialize
 		case .initializeV4: return .initialize

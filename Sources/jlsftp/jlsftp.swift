@@ -1,6 +1,6 @@
 public struct jlsftp {
 
-	public struct DataLayer {
+	public struct Protocol {
 
 		public struct Version_3 {}
 	}

@@ -6,14 +6,15 @@ import XCTest
 final class SftpPacketEncoderTests: XCTestCase {
 
 	class MockSerializer: PacketSerializer {
-		var serializeHandler: (Packet, inout ByteBuffer) -> Bool = {_,_ in
+		var serializeHandler: (Packet, inout ByteBuffer) -> Bool = { _, _ in
 			return false
 		}
 
-		func deserialize(packetType: jlsftp.DataLayer.PacketType, buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		func deserialize(packetType _: jlsftp.SftpProtocol.PacketType, buffer _: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			XCTFail()
 			return .failure(.needMoreData)
 		}
+
 		func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
 			return serializeHandler(packet, &buffer)
 		}
@@ -22,7 +23,7 @@ final class SftpPacketEncoderTests: XCTestCase {
 	/// Tests that normal packets are handled correctly.
 	func testValid() {
 		let mockSerializer = MockSerializer()
-		mockSerializer.serializeHandler = { packet, buffer in
+		mockSerializer.serializeHandler = { _, buffer in
 			buffer.writeBytes([0x01])
 			return true
 		}
@@ -35,7 +36,7 @@ final class SftpPacketEncoderTests: XCTestCase {
 
 	func testInvalid() {
 		let mockSerializer = MockSerializer()
-		mockSerializer.serializeHandler = { packet, buffer in
+		mockSerializer.serializeHandler = { _, buffer in
 			buffer.writeBytes([0x01])
 			return false
 		}

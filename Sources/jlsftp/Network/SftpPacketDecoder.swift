@@ -155,7 +155,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 
 		let payloadLength = packetLength - 1
 
-		guard let packetType = jlsftp.DataLayer.PacketType(rawValue: packetTypeInt) else {
+		guard let packetType = jlsftp.SftpProtocol.PacketType(rawValue: packetTypeInt) else {
 			// It's possible that the endpoint is sending a packet type not
 			// known, so we should pass it along as an unknown packet to be
 			// displayed. We'll need to consume the bytes for the packet as
@@ -205,7 +205,7 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 	/**
 	 * Decodes the payload of a packet, given the length and type of the packet.
 	 */
-	func decodePayload(context: ChannelHandlerContext, buffer: inout ByteBuffer, payloadLength: UInt32, packetType: jlsftp.DataLayer.PacketType) throws -> DecodingState {
+	func decodePayload(context: ChannelHandlerContext, buffer: inout ByteBuffer, payloadLength: UInt32, packetType: jlsftp.SftpProtocol.PacketType) throws -> DecodingState {
 		//Make an attempt to deserialize the byte buffer into a packet.
 		let packetResult = packetSerializer.deserialize(packetType: packetType, buffer: &buffer)
 		let bytesRead = buffer.readerIndex

@@ -15,7 +15,7 @@ public struct InitializePacketV3: Equatable {
 
 	  - Since: sftp v3
 	 */
-	public let version: jlsftp.DataLayer.SftpVersion
+	public let version: jlsftp.SftpProtocol.SftpVersion
 	/**
 	  Initialization extension data.
 
@@ -23,7 +23,7 @@ public struct InitializePacketV3: Equatable {
 	 */
 	public let extensionData: [ExtensionData]
 
-	public init(version: jlsftp.DataLayer.SftpVersion, extensionData: [ExtensionData]) {
+	public init(version: jlsftp.SftpProtocol.SftpVersion, extensionData: [ExtensionData]) {
 		self.version = version
 		self.extensionData = extensionData
 	}
