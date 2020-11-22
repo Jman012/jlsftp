@@ -5,7 +5,7 @@ extension jlsftp.DataLayer.Version_3 {
 
 	public class VersionPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			// Version
 			guard let versionByte = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)

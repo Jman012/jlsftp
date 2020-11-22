@@ -8,7 +8,7 @@ final class NotSupportedPacketSerializationHandlerTests: XCTestCase {
 		let handler = NotSupportedPacketSerializationHandler()
 		var buffer = ByteBuffer()
 
-		let result = handler.deserialize(buffer: &buffer)
+		let result = handler.deserialize(from: &buffer)
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
 		guard case .nopDebug = packet else {

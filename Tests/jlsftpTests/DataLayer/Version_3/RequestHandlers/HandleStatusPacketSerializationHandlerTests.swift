@@ -8,7 +8,9 @@ final class HandleStatusPacketSerializationHandlerTests: XCTestCase {
 		return jlsftp.DataLayer.Version_3.HandleStatusPacketSerializationHandler()
 	}
 
-	func testValid() {
+	// MARK: Test deserialize(buffer:)
+
+	func testDeserializeValid() {
 		let handler = getHandler()
 		var buffer = ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
@@ -19,7 +21,7 @@ final class HandleStatusPacketSerializationHandlerTests: XCTestCase {
 			0x61,
 		])
 
-		let result = handler.deserialize(buffer: &buffer)
+		let result = handler.deserialize(from: &buffer)
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
@@ -33,7 +35,7 @@ final class HandleStatusPacketSerializationHandlerTests: XCTestCase {
 		XCTAssertEqual("a", handleStatusPacket.handle)
 	}
 
-	func testNotEnoughData() {
+	func testDeserializeNotEnoughData() {
 		let handler = getHandler()
 		let buffers = [
 			// No Id
@@ -47,14 +49,45 @@ final class HandleStatusPacketSerializationHandlerTests: XCTestCase {
 		]
 
 		for var buffer in buffers {
-			let result = handler.deserialize(buffer: &buffer)
+			let result = handler.deserialize(from: &buffer)
 
 			XCTAssertEqual(.needMoreData, result.error)
 		}
 	}
 
+	// MARK: Test serialize(packet:to:)
+
+	func testSerializeValid() {
+		let handler = getHandler()
+		let packet = HandleStatusPacket(id: 3, handle: "a")
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(handler.serialize(packet: .handleStatus(packet), to: &buffer))
+		XCTAssertEqual(buffer, ByteBuffer(bytes: [
+			// Id (UInt32 Network Order: 3)
+			0x00, 0x00, 0x00, 0x03,
+			// Handle string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Handle string data ("a")
+			0x61,
+		]))
+	}
+
+	func testSerializeWrongPacket() {
+		let handler = getHandler()
+		let packet = InitializePacketV3(version: .v3, extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertFalse(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertEqual(ByteBuffer(), buffer)
+	}
+
 	static var allTests = [
-		("testValid", testValid),
-		("testNotEnoughData", testNotEnoughData),
+		// Test deserialize(from:)
+		("testDeserializeValid", testDeserializeValid),
+		("testDeserializeNotEnoughData", testDeserializeNotEnoughData),
+		// Test serialize(packet:to:)
+		("testSerializeValid", testSerializeValid),
+		("testSerializeWrongPacket", testSerializeWrongPacket),
 	]
 }

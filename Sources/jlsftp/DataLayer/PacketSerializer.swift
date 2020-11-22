@@ -49,10 +49,10 @@ extension BasePacketSerializer: PacketSerializer {
 	public func deserialize(packetType: jlsftp.DataLayer.PacketType, buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 
 		guard let handler = handlers[packetType] else {
-			return unhandledTypeHandler.deserialize(buffer: &buffer)
+			return unhandledTypeHandler.deserialize(from: &buffer)
 		}
 
-		return handler.deserialize(buffer: &buffer)
+		return handler.deserialize(from: &buffer)
 	}
 
 	public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {

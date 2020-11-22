@@ -5,7 +5,7 @@ extension jlsftp.DataLayer.Version_3 {
 
 	public class RemoveDirectoryPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)

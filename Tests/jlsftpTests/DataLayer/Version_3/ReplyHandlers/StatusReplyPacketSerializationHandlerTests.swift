@@ -8,7 +8,9 @@ final class StatusReplyPacketSerializationHandlerTests: XCTestCase {
 		return jlsftp.DataLayer.Version_3.StatusReplyPacketSerializationHandler()
 	}
 
-	func testValid() {
+	// MARK: Test deserialize(buffer:)
+
+	func testDeserializeValid() {
 		let handler = getHandler()
 		var buffer = ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
@@ -25,7 +27,7 @@ final class StatusReplyPacketSerializationHandlerTests: XCTestCase {
 			0x62,
 		])
 
-		let result = handler.deserialize(buffer: &buffer)
+		let result = handler.deserialize(from: &buffer)
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
@@ -41,7 +43,7 @@ final class StatusReplyPacketSerializationHandlerTests: XCTestCase {
 		XCTAssertEqual("b", statusReplyPacket.languageTag)
 	}
 
-	func testNotEnoughData() {
+	func testDeserializeNotEnoughData() {
 		let handler = getHandler()
 		let buffers = [
 			// Partial id
@@ -69,13 +71,13 @@ final class StatusReplyPacketSerializationHandlerTests: XCTestCase {
 		]
 
 		for var buffer in buffers {
-			let result = handler.deserialize(buffer: &buffer)
+			let result = handler.deserialize(from: &buffer)
 
 			XCTAssertEqual(.needMoreData, result.error)
 		}
 	}
 
-	func testInvalidStatusCode() {
+	func testDeserializeInvalidStatusCode() {
 		let handler = getHandler()
 		var buffer = ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
@@ -84,7 +86,7 @@ final class StatusReplyPacketSerializationHandlerTests: XCTestCase {
 			0x00, 0x00, 0x00, 0xFF,
 		])
 
-		let result = handler.deserialize(buffer: &buffer)
+		let result = handler.deserialize(from: &buffer)
 
 		guard case .failure(.invalidData(reason: _)) = result else {
 			XCTFail("Expected failure. Instead, got '\(result)'")
@@ -92,9 +94,46 @@ final class StatusReplyPacketSerializationHandlerTests: XCTestCase {
 		}
 	}
 
+	// MARK: Test serialize(packet:to:)
+
+	func testSerializeValid() {
+		let handler = getHandler()
+		let packet = StatusReplyPacket(id: 3, statusCode: .endOfFile, errorMessage: "a", languageTag: "b")
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(handler.serialize(packet: .statusReply(packet), to: &buffer))
+		XCTAssertEqual(buffer, ByteBuffer(bytes: [
+			// Id (UInt32 Network Order: 3)
+			0x00, 0x00, 0x00, 0x03,
+			// Status Code (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Error Message string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Error Message string data ("a")
+			0x61,
+			// Language Tag string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Language Tag string data ("b")
+			0x62,
+		]))
+	}
+
+	func testSerializeWrongPacket() {
+		let handler = getHandler()
+		let packet = InitializePacketV3(version: .v3, extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertFalse(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertEqual(ByteBuffer(), buffer)
+	}
+
 	static var allTests = [
-		("testValid", testValid),
-		("testNotEnoughData", testNotEnoughData),
-		("testInvalidStatusCode", testInvalidStatusCode),
+		// Test deserialize(from:)
+		("testDeserializeValid", testDeserializeValid),
+		("testDeserializeNotEnoughData", testDeserializeNotEnoughData),
+		("testDeserializeInvalidStatusCode", testDeserializeInvalidStatusCode),
+		// Test serialize(packet:to:)
+		("testSerializeValid", testSerializeValid),
+		("testSerializeWrongPacket", testSerializeWrongPacket),
 	]
 }

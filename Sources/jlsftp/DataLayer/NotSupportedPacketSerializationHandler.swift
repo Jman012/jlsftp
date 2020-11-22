@@ -3,7 +3,7 @@ import NIO
 
 public class NotSupportedPacketSerializationHandler: PacketSerializationHandler {
 
-	public func deserialize(buffer _: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+	public func deserialize(from _: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 		return .success(.nopDebug(NOPDebugPacket(message: "This feature is not supported.")))
 	}
 

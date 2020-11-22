@@ -8,7 +8,9 @@ final class WritePacketSerializationHandlerTests: XCTestCase {
 		return jlsftp.DataLayer.Version_3.WritePacketSerializationHandler()
 	}
 
-	func testValid() {
+	// MARK: Test deserialize(buffer:)
+
+	func testDeserializeValid() {
 		let handler = getHandler()
 		var buffer = ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
@@ -21,7 +23,7 @@ final class WritePacketSerializationHandlerTests: XCTestCase {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
 		])
 
-		let result = handler.deserialize(buffer: &buffer)
+		let result = handler.deserialize(from: &buffer)
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
@@ -36,7 +38,7 @@ final class WritePacketSerializationHandlerTests: XCTestCase {
 		XCTAssertEqual(2, writePacket.offset)
 	}
 
-	func testNotEnoughData() {
+	func testDeserializeNotEnoughData() {
 		let handler = getHandler()
 		let buffers = [
 			// No Id
@@ -57,14 +59,47 @@ final class WritePacketSerializationHandlerTests: XCTestCase {
 		]
 
 		for var buffer in buffers {
-			let result = handler.deserialize(buffer: &buffer)
+			let result = handler.deserialize(from: &buffer)
 
 			XCTAssertEqual(.needMoreData, result.error)
 		}
 	}
 
+	// MARK: Test serialize(packet:to:)
+
+	func testSerializeValid() {
+		let handler = getHandler()
+		let packet = WritePacket(id: 3, handle: "a", offset: 4)
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(handler.serialize(packet: .write(packet), to: &buffer))
+		XCTAssertEqual(buffer, ByteBuffer(bytes: [
+			// Id (UInt32 Network Order: 3)
+			0x00, 0x00, 0x00, 0x03,
+			// Handle string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Handle string data ("a")
+			0x61,
+			// Offset (UInt64 Network Order: 4)
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 
+		]))
+	}
+
+	func testSerializeWrongPacket() {
+		let handler = getHandler()
+		let packet = InitializePacketV3(version: .v3, extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertFalse(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertEqual(ByteBuffer(), buffer)
+	}
+
 	static var allTests = [
-		("testValid", testValid),
-		("testNotEnoughData", testNotEnoughData),
+		// Test deserialize(from:)
+		("testDeserializeValid", testDeserializeValid),
+		("testDeserializeNotEnoughData", testDeserializeNotEnoughData),
+		// Test serialize(packet:to:)
+		("testSerializeValid", testSerializeValid),
+		("testSerializeWrongPacket", testSerializeWrongPacket),
 	]
 }

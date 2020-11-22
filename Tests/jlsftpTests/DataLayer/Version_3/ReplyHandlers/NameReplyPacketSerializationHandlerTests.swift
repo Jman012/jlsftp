@@ -8,7 +8,9 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 		return jlsftp.DataLayer.Version_3.NameReplyPacketSerializationHandler()
 	}
 
-	func testValidMinimal() {
+	// MARK: Test deserialize(buffer:)
+
+	func testDeserializeValidMinimal() {
 		let handler = getHandler()
 		var buffer = ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
@@ -17,7 +19,7 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 			0x00, 0x00, 0x00, 0x00,
 		])
 
-		let result = handler.deserialize(buffer: &buffer)
+		let result = handler.deserialize(from: &buffer)
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
@@ -31,7 +33,7 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 		XCTAssertEqual(0, nameReplyPacket.names.count)
 	}
 
-	func testValidSingle() {
+	func testDeserializeValidSingle() {
 		let handler = getHandler()
 		var buffer = ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
@@ -50,7 +52,7 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 			0x00, 0x00, 0x00, 0x00,
 		])
 
-		let result = handler.deserialize(buffer: &buffer)
+		let result = handler.deserialize(from: &buffer)
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
@@ -72,7 +74,7 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 			&& fileAttrs.extensionData.isEmpty)
 	}
 
-	func testNotEnoughData() {
+	func testDeserializeNotEnoughData() {
 		let handler = getHandler()
 		let buffers = [
 			// Partial id
@@ -117,15 +119,74 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 		]
 
 		for var buffer in buffers {
-			let result = handler.deserialize(buffer: &buffer)
+			let result = handler.deserialize(from: &buffer)
 
 			XCTAssertEqual(.needMoreData, result.error)
 		}
 	}
 
+	// MARK: Test serialize(packet:to:)
+
+	func testSerializeValidEmpty() {
+		let handler = getHandler()
+		let packet = NameReplyPacket(id: 3, names: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(handler.serialize(packet: .nameReply(packet), to: &buffer))
+		XCTAssertEqual(buffer, ByteBuffer(bytes: [
+			// Id (UInt32 Network Order: 3)
+			0x00, 0x00, 0x00, 0x03,
+			// Names count (UInt32 Network Order: 0)
+			0x00, 0x00, 0x00, 0x00,
+		]))
+	}
+
+	func testSerializeValidItems() {
+		let handler = getHandler()
+		let packet = NameReplyPacket(id: 3, names: [
+			NameReplyPacket.Name(
+				filename: "a",
+				longName: "b",
+				fileAttributes: FileAttributes(sizeBytes: nil, userId: nil, groupId: nil, permissions: nil, accessDate: nil, modifyDate: nil, extensionData: []))
+		])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(handler.serialize(packet: .nameReply(packet), to: &buffer))
+		XCTAssertEqual(buffer, ByteBuffer(bytes: [
+			// Id (UInt32 Network Order: 3)
+			0x00, 0x00, 0x00, 0x03,
+			// Names count (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Filename string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Filename string data ("a")
+			0x61,
+			// Long Name string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Long Name string data ("b")
+			0x62,
+			// File Attributes Flags
+			0x00, 0x00, 0x00, 0x00,
+		]))
+	}
+
+	func testSerializeWrongPacket() {
+		let handler = getHandler()
+		let packet = InitializePacketV3(version: .v3, extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertFalse(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertEqual(ByteBuffer(), buffer)
+	}
+
 	static var allTests = [
-		("testValidMinimal", testValidMinimal),
-		("testValidSingle", testValidSingle),
-		("testNotEnoughData", testNotEnoughData),
+		// Test deserialize(from:)
+		("testDeserializeValidMinimal", testDeserializeValidMinimal),
+		("testDeserializeValidSingle", testDeserializeValidSingle),
+		("testDeserializeNotEnoughData", testDeserializeNotEnoughData),
+		// Test serialize(packet:to:)
+		("testSerializeValid", testSerializeValidEmpty),
+		("testSerializeValidItems", testSerializeValidItems),
+		("testSerializeWrongPacket", testSerializeWrongPacket),
 	]
 }

@@ -8,7 +8,9 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		return jlsftp.DataLayer.Version_3.InitializePacketSerializationHandler()
 	}
 
-	func testValid() {
+	// MARK: Test deserialize(buffer:)
+
+	func testDeserializeValid() {
 		let handler = getHandler()
 		var buffer = ByteBuffer(bytes: [
 			// Version (UInt32 Network Order: 3)
@@ -16,7 +18,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 			// Extensions (nil)
 		])
 
-		let result = handler.deserialize(buffer: &buffer)
+		let result = handler.deserialize(from: &buffer)
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
@@ -30,7 +32,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		XCTAssertEqual(0, initPacket.extensionData.count)
 	}
 
-	func testNotEnoughData() {
+	func testDeserializeNotEnoughData() {
 		let handler = getHandler()
 		let buffers = [
 			// No version
@@ -55,13 +57,13 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		]
 
 		for var buffer in buffers {
-			let result = handler.deserialize(buffer: &buffer)
+			let result = handler.deserialize(from: &buffer)
 
 			XCTAssertEqual(.needMoreData, result.error)
 		}
 	}
 
-	func testInvalidVersion() {
+	func testDeserializeInvalidVersion() {
 		let handler = getHandler()
 		let buffers = [
 			ByteBuffer(bytes: [
@@ -75,7 +77,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		]
 
 		for var buffer in buffers {
-			let result = handler.deserialize(buffer: &buffer)
+			let result = handler.deserialize(from: &buffer)
 
 			guard case .failure(.invalidData(reason: _)) = result else {
 				XCTFail("Expected failure. Instead, got '\(result)'")
@@ -84,7 +86,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		}
 	}
 
-	func testExtension() {
+	func testDeserializeExtension() {
 		let handler = getHandler()
 		var buffer = ByteBuffer(bytes: [
 			// Version (UInt32 Network Byte Order: 3)
@@ -99,7 +101,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 			66,
 		])
 
-		let result = handler.deserialize(buffer: &buffer)
+		let result = handler.deserialize(from: &buffer)
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
@@ -115,7 +117,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		XCTAssertEqual("B", initPacket.extensionData.first!.data)
 	}
 
-	func testExtensionMultiple() {
+	func testDeserializeExtensionMultiple() {
 		let handler = getHandler()
 		var buffer = ByteBuffer(bytes: [
 			// Version (UInt32 Network Byte Order: 3)
@@ -138,7 +140,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 			67,
 		])
 
-		let result = handler.deserialize(buffer: &buffer)
+		let result = handler.deserialize(from: &buffer)
 
 		XCTAssertNoThrow(try result.get())
 		let packet = try! result.get()
@@ -156,11 +158,59 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		XCTAssertEqual("C", initPacket.extensionData[1].data)
 	}
 
+	// MARK: Test serialize(packet:to:)
+
+	func testSerializeValidEmpty() {
+		let handler = getHandler()
+		let packet = InitializePacketV3(version: .v3, extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertEqual(buffer, ByteBuffer(bytes: [
+			// Version (UInt32 Network Order: 3)
+			0x00, 0x00, 0x00, 0x03,
+		]))
+	}
+
+	func testSerializeValidItems() {
+		let handler = getHandler()
+		let packet = InitializePacketV3(version: .v3, extensionData: [ExtensionData(name: "a", data: "b")])
+		var buffer = ByteBuffer()
+
+		XCTAssertTrue(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertEqual(buffer, ByteBuffer(bytes: [
+			// Id (UInt32 Network Order: 3)
+			0x00, 0x00, 0x00, 0x03,
+			// Extension Datum #1 Name string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Extension Datum #1 Name string data ("a")
+			0x61,
+			// Extension Datum #1 Data string length (UInt32 Network Order: 1)
+			0x00, 0x00, 0x00, 0x01,
+			// Extension Datum #1 Data string data ("b")
+			0x62,
+		]))
+	}
+
+	func testSerializeWrongPacket() {
+		let handler = getHandler()
+		let packet = VersionPacket(version: .v3, extensionData: [])
+		var buffer = ByteBuffer()
+
+		XCTAssertFalse(handler.serialize(packet: .version(packet), to: &buffer))
+		XCTAssertEqual(ByteBuffer(), buffer)
+	}
+
 	static var allTests = [
-		("testValid", testValid),
-		("testNotEnoughData", testNotEnoughData),
-		("testInvalidVersion", testInvalidVersion),
-		("testExtension", testExtension),
-		("testExtensionMultiple", testExtensionMultiple),
+		// Test deserialize(from:)
+		("testDeserializeValid", testDeserializeValid),
+		("testDeserializeNotEnoughData", testDeserializeNotEnoughData),
+		("testDeserializeInvalidVersion", testDeserializeInvalidVersion),
+		("testDeserializeExtension", testDeserializeExtension),
+		("testDeserializeExtensionMultiple", testDeserializeExtensionMultiple),
+		// Test serialize(packet:to:)
+		("testSerializeValidEmpty", testSerializeValidEmpty),
+		("testSerializeValidItems", testSerializeValidItems),
+		("testSerializeWrongPacket", testSerializeWrongPacket),
 	]
 }

@@ -8,7 +8,7 @@ final class PacketSerializerTests: XCTestCase {
 		var isDeserializeCalled = false
 		var isSerializeCalled = false
 
-		func deserialize(buffer _: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		func deserialize(from _: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
 			isDeserializeCalled = true
 			return .failure(.needMoreData)
 		}
@@ -61,9 +61,59 @@ final class PacketSerializerTests: XCTestCase {
 		XCTAssertTrue(mockNotSupportedHandler.isDeserializeCalled)
 	}
 
+	func testSerializeHandled() {
+		let mockNotSupportedHandler = MockHandler()
+		let mockHandler = MockHandler()
+		var buffer = ByteBuffer()
+
+		let serializer = BasePacketSerializer(
+			handlers: [.initialize: mockHandler],
+			unhandledTypeHandler: mockNotSupportedHandler)
+
+		let result = serializer.serialize(packet: .initializeV3(InitializePacketV3(version: .v3, extensionData: [])), to: &buffer)
+
+		XCTAssertFalse(result)
+		XCTAssertTrue(mockHandler.isSerializeCalled)
+		XCTAssertFalse(mockNotSupportedHandler.isSerializeCalled)
+	}
+
+	func testSerializeUnhandled() {
+		let mockNotSupportedHandler = MockHandler()
+		let mockHandler = MockHandler()
+		var buffer = ByteBuffer()
+
+		let serializer = BasePacketSerializer(
+			handlers: [.initialize: mockHandler],
+			unhandledTypeHandler: mockNotSupportedHandler)
+
+		let result = serializer.serialize(packet: .version(VersionPacket(version: .v3, extensionData: [])), to: &buffer)
+
+		XCTAssertFalse(result)
+		XCTAssertFalse(mockHandler.isSerializeCalled)
+		XCTAssertFalse(mockNotSupportedHandler.isSerializeCalled)
+	}
+
+	func testSerializeNOP() {
+		let mockNotSupportedHandler = MockHandler()
+		let mockHandler = MockHandler()
+		var buffer = ByteBuffer()
+
+		let serializer = BasePacketSerializer(
+			handlers: [.initialize: mockHandler],
+			unhandledTypeHandler: mockNotSupportedHandler)
+
+		let result = serializer.serialize(packet: .nopDebug(NOPDebugPacket(message: "test")), to: &buffer)
+
+		XCTAssertFalse(result)
+		XCTAssertFalse(mockHandler.isSerializeCalled)
+		XCTAssertFalse(mockNotSupportedHandler.isSerializeCalled)
+	}
+
 	static var allTests = [
 		("testCreateSerializer", testCreateSerializer),
 		("testDeserializeHandled", testDeserializeHandled),
 		("testDeserializeUnhandled", testDeserializeUnhandled),
+		("testSerializeHandled", testSerializeHandled),
+		("testSerializeUnhandled", testSerializeUnhandled),
 	]
 }

@@ -281,6 +281,13 @@ final class SftpPacketDecoderTests: XCTestCase {
 		])))
 	}
 
+	func testDecoderError() {
+		XCTAssertEqual("Packet length is invalid (0). Treating as corrupted.", SftpPacketDecoder.DecoderError.emptyPacketPossiblyCorrupt.description)
+		XCTAssertEqual("Unknown packet type (2) was sent with potentially malicious packet length (1)", SftpPacketDecoder.DecoderError.unknownPacketTypePossiblyMalicious(packetLength: 1, packetTypeInt: 2).description)
+		XCTAssertEqual("Closing connection due to unexpected error reading network stream: test", SftpPacketDecoder.DecoderError.deserializationError(errorMessage: "test").description)
+		XCTAssertEqual("Actual packet length did not match specific length (leftover bytes: 1)", SftpPacketDecoder.DecoderError.leftoverPacketBytes(mismatchLength: 1).description)
+	}
+
 	static var allTests = [
 		("testValidPacketsNoBody", testValidPacketsNoBody),
 		("testInvalidEmptyLength", testInvalidEmptyLength),
@@ -290,5 +297,6 @@ final class SftpPacketDecoderTests: XCTestCase {
 		("testMismatchedPacketLengthForSerializedPacket", testMismatchedPacketLengthForSerializedPacket),
 		("testValidBodyAllAtOnce", testValidBodyAllAtOnce),
 		("testValidBodyIncremental", testValidBodyIncremental),
+		("testDecoderError", testDecoderError),
 	]
 }

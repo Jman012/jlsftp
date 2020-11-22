@@ -17,7 +17,7 @@ public enum PacketSerializationHandlerError: Error, Equatable {
 
 public protocol PacketSerializationHandler {
 
-	func deserialize(buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError>
+	func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError>
 
 	func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool
 }
