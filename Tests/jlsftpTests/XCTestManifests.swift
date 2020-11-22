@@ -40,6 +40,7 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(StatusCodeV3Tests.allTests),
 		// DataLayer
 		testCase(NotSupportedPacketSerializationHandlerTests.allTests),
+		testCase(PacketSerializationHandlerTests.allTests),
 		testCase(PacketSerializerTests.allTests),
 		testCase(PacketTypeTests.allTests),
 		// Fields
