@@ -71,7 +71,7 @@ final class FileAttributesReplyPacketSerializationHandlerTests: XCTestCase {
 		let packet = FileAttributesReplyPacket(id: 3, fileAttributes: FileAttributes(sizeBytes: nil, userId: nil, groupId: nil, permissions: nil, accessDate: nil, modifyDate: nil, extensionData: []))
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(handler.serialize(packet: .attributesReply(packet), to: &buffer))
+		XCTAssertNil(handler.serialize(packet: .attributesReply(packet), to: &buffer))
 		XCTAssertEqual(buffer, ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
@@ -85,7 +85,7 @@ final class FileAttributesReplyPacketSerializationHandlerTests: XCTestCase {
 		let packet = InitializePacketV3(version: .v3, extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertFalse(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertEqual(handler.serialize(packet: .initializeV3(packet), to: &buffer), .wrongPacketInternalError)
 		XCTAssertEqual(ByteBuffer(), buffer)
 	}
 

@@ -7,15 +7,16 @@ final class PacketSerializerTests: XCTestCase {
 	class MockHandler: PacketSerializationHandler {
 		var isDeserializeCalled = false
 		var isSerializeCalled = false
+		var serializeReturn: PacketSerializationHandlerError?
 
-		func deserialize(from _: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		func deserialize(from _: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			isDeserializeCalled = true
 			return .failure(.needMoreData)
 		}
 
-		func serialize(packet _: Packet, to _: inout ByteBuffer) -> Bool {
+		func serialize(packet _: Packet, to _: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			isSerializeCalled = true
-			return false
+			return serializeReturn
 		}
 	}
 
@@ -63,7 +64,9 @@ final class PacketSerializerTests: XCTestCase {
 
 	func testSerializeHandled() {
 		let mockNotSupportedHandler = MockHandler()
+		mockNotSupportedHandler.serializeReturn = nil
 		let mockHandler = MockHandler()
+		mockHandler.serializeReturn = nil
 		var buffer = ByteBuffer()
 
 		let serializer = BasePacketSerializer(
@@ -72,14 +75,16 @@ final class PacketSerializerTests: XCTestCase {
 
 		let result = serializer.serialize(packet: .initializeV3(InitializePacketV3(version: .v3, extensionData: [])), to: &buffer)
 
-		XCTAssertFalse(result)
+		XCTAssertEqual(result, nil)
 		XCTAssertTrue(mockHandler.isSerializeCalled)
 		XCTAssertFalse(mockNotSupportedHandler.isSerializeCalled)
 	}
 
 	func testSerializeUnhandled() {
 		let mockNotSupportedHandler = MockHandler()
+		mockNotSupportedHandler.serializeReturn = nil
 		let mockHandler = MockHandler()
+		mockHandler.serializeReturn = nil
 		var buffer = ByteBuffer()
 
 		let serializer = BasePacketSerializer(
@@ -88,14 +93,16 @@ final class PacketSerializerTests: XCTestCase {
 
 		let result = serializer.serialize(packet: .version(VersionPacket(version: .v3, extensionData: [])), to: &buffer)
 
-		XCTAssertFalse(result)
+		XCTAssertEqual(result, .missingPacketSerializationHandler)
 		XCTAssertFalse(mockHandler.isSerializeCalled)
 		XCTAssertFalse(mockNotSupportedHandler.isSerializeCalled)
 	}
 
 	func testSerializeNOP() {
 		let mockNotSupportedHandler = MockHandler()
+		mockNotSupportedHandler.serializeReturn = nil
 		let mockHandler = MockHandler()
+		mockHandler.serializeReturn = nil
 		var buffer = ByteBuffer()
 
 		let serializer = BasePacketSerializer(
@@ -104,7 +111,7 @@ final class PacketSerializerTests: XCTestCase {
 
 		let result = serializer.serialize(packet: .nopDebug(NOPDebugPacket(message: "test")), to: &buffer)
 
-		XCTAssertFalse(result)
+		XCTAssertEqual(result, .packetNotSerializable)
 		XCTAssertFalse(mockHandler.isSerializeCalled)
 		XCTAssertFalse(mockNotSupportedHandler.isSerializeCalled)
 	}

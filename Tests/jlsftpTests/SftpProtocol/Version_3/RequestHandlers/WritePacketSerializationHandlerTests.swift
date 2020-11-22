@@ -72,7 +72,7 @@ final class WritePacketSerializationHandlerTests: XCTestCase {
 		let packet = WritePacket(id: 3, handle: "a", offset: 4)
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(handler.serialize(packet: .write(packet), to: &buffer))
+		XCTAssertNil(handler.serialize(packet: .write(packet), to: &buffer))
 		XCTAssertEqual(buffer, ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
@@ -90,7 +90,7 @@ final class WritePacketSerializationHandlerTests: XCTestCase {
 		let packet = InitializePacketV3(version: .v3, extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertFalse(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertEqual(handler.serialize(packet: .initializeV3(packet), to: &buffer), .wrongPacketInternalError)
 		XCTAssertEqual(ByteBuffer(), buffer)
 	}
 

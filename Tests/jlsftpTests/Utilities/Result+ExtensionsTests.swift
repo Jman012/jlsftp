@@ -6,13 +6,13 @@ final class resultExtensionsTests: XCTestCase {
 	// MARK: Test `error?`
 
 	func testError() {
-		let resultError: Result<Bool, PacketSerializationHandlerError> = .failure(.needMoreData)
+		let resultError: Result<Bool, PacketDeserializationHandlerError> = .failure(.needMoreData)
 
 		XCTAssertEqual(.some(.needMoreData), resultError.error)
 	}
 
 	func testSuccess() {
-		let resultSuccess: Result<Bool, PacketSerializationHandlerError> = .success(true)
+		let resultSuccess: Result<Bool, PacketDeserializationHandlerError> = .success(true)
 
 		XCTAssertNil(resultSuccess.error)
 	}

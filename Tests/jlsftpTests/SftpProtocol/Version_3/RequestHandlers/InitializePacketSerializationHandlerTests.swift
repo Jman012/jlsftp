@@ -165,7 +165,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		let packet = InitializePacketV3(version: .v3, extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertNil(handler.serialize(packet: .initializeV3(packet), to: &buffer))
 		XCTAssertEqual(buffer, ByteBuffer(bytes: [
 			// Version (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
@@ -177,7 +177,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		let packet = InitializePacketV3(version: .v3, extensionData: [ExtensionData(name: "a", data: "b")])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertNil(handler.serialize(packet: .initializeV3(packet), to: &buffer))
 		XCTAssertEqual(buffer, ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
@@ -197,7 +197,7 @@ final class InitializePacketSerializationHandlerTests: XCTestCase {
 		let packet = VersionPacket(version: .v3, extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertFalse(handler.serialize(packet: .version(packet), to: &buffer))
+		XCTAssertEqual(handler.serialize(packet: .version(packet), to: &buffer), .wrongPacketInternalError)
 		XCTAssertEqual(ByteBuffer(), buffer)
 	}
 

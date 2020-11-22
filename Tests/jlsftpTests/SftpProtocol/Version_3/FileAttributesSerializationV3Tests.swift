@@ -345,7 +345,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+		XCTAssertNotNil(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
 
 		let expectedBuffer = ByteBuffer(bytes: [
 			// Flags (UInt32: Nothing)
@@ -365,7 +365,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+		XCTAssertNotNil(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
 
 		let expectedBuffer = ByteBuffer(bytes: [
 			// Flags (UInt32: SSH_FILEXFER_ATTR_SIZE)
@@ -387,7 +387,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+		XCTAssertNotNil(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
 
 		let expectedBuffer = ByteBuffer(bytes: [
 			// Flags (UInt32: SSH_FILEXFER_ATTR_UIDGID)
@@ -411,7 +411,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+		XCTAssertNotNil(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
 
 		let expectedBuffer = ByteBuffer(bytes: [
 			// Flags (UInt32: SSH_FILEXFER_ATTR_UIDGID)
@@ -435,7 +435,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+		XCTAssertNotNil(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
 
 		let expectedBuffer = ByteBuffer(bytes: [
 			// Flags (UInt32: SSH_FILEXFER_ATTR_UIDGID)
@@ -459,7 +459,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+		XCTAssertNotNil(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
 
 		let expectedBuffer = ByteBuffer(bytes: [
 			// Flags (UInt32: SSH_FILEXFER_ATTR_PERMISSIONS)
@@ -481,7 +481,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+		XCTAssertNotNil(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
 
 		let expectedBuffer = ByteBuffer(bytes: [
 			// Flags (UInt32: SSH_FILEXFER_ATTR_ACMODTIME)
@@ -505,7 +505,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+		XCTAssertNotNil(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
 
 		let expectedBuffer = ByteBuffer(bytes: [
 			// Flags (UInt32: SSH_FILEXFER_ATTR_ACMODTIME)
@@ -529,7 +529,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+		XCTAssertNotNil(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
 
 		let expectedBuffer = ByteBuffer(bytes: [
 			// Flags (UInt32: SSH_FILEXFER_ATTR_ACMODTIME)
@@ -553,7 +553,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   extensionData: [ExtensionData(name: "a", data: "bc"), ExtensionData(name: "de", data: "f")])
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
+		XCTAssertNotNil(serialization.serialize(fileAttrs: fileAttrs, to: &buffer))
 
 		let expectedBuffer = ByteBuffer(bytes: [
 			// Flags (UInt32: SSH_FILEXFER_ATTR_EXTENDED)

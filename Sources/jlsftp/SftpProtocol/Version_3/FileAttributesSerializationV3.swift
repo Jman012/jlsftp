@@ -25,7 +25,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class FileAttributesSerializationV3 {
 
-		func deserialize(from buffer: inout ByteBuffer) -> Result<FileAttributes, PacketSerializationHandlerError> {
+		func deserialize(from buffer: inout ByteBuffer) -> Result<FileAttributes, PacketDeserializationHandlerError> {
 			guard let flagsInt = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
 			}
@@ -94,7 +94,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(fileAttributes)
 		}
 
-		func serialize(fileAttrs: FileAttributes, to buffer: inout ByteBuffer) -> Bool {
+		func serialize(fileAttrs: FileAttributes, to buffer: inout ByteBuffer) {
 			var flags = FileAttributesFlags()
 
 			if fileAttrs.sizeBytes != nil {
@@ -132,16 +132,10 @@ extension jlsftp.SftpProtocol.Version_3 {
 			}
 			if !fileAttrs.extensionData.isEmpty {
 				for extensionDatum in fileAttrs.extensionData {
-					guard buffer.writeSftpString(extensionDatum.name) else {
-						return false
-					}
-					guard buffer.writeSftpString(extensionDatum.data) else {
-						return false
-					}
+					buffer.writeSftpString(extensionDatum.name)
+					buffer.writeSftpString(extensionDatum.data)
 				}
 			}
-
-			return true
 		}
 	}
 }

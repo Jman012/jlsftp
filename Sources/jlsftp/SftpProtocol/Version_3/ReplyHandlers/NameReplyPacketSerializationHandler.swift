@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class NameReplyPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -43,37 +43,31 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.nameReply(NameReplyPacket(id: id, names: names)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .nameReply(nameReplyPacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
 			buffer.writeInteger(nameReplyPacket.id, endianness: .big, as: UInt32.self)
 
 			// Names Count
-			guard let namesCount = UInt32(exactly: nameReplyPacket.names.count) else {
-				return false
-			}
+			precondition(UInt32(exactly: nameReplyPacket.names.count) != nil,
+						 "A name reply packet (SSH_FXP_NAME) could not be serialized: Too many names (above UInt32.max)") // Who has over 4 billion files in a folder?
+			let namesCount = UInt32(exactly: nameReplyPacket.names.count)!
 			buffer.writeInteger(namesCount, endianness: .big, as: UInt32.self)
 
 			let fileAttrSerializationV3 = FileAttributesSerializationV3()
 			for name in nameReplyPacket.names {
 				// Filename
-				guard buffer.writeSftpString(name.filename) else {
-					return false
-				}
+				buffer.writeSftpString(name.filename)
 				// Long Name
-				guard buffer.writeSftpString(name.longName) else {
-					return false
-				}
+				buffer.writeSftpString(name.longName)
 				// File Attributes
-				guard fileAttrSerializationV3.serialize(fileAttrs: name.fileAttributes, to: &buffer) else {
-					return false
-				}
+				fileAttrSerializationV3.serialize(fileAttrs: name.fileAttributes, to: &buffer)
 			}
 
-			return true
+			return nil
 		}
 	}
 }

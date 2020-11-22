@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class CreateSymbolicLinkPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -26,25 +26,21 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.createSymbolicLink(CreateSymbolicLinkPacket(id: id, linkPath: linkPath, targetPath: targetPath)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .createSymbolicLink(createSymbolicLinkPacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
 			buffer.writeInteger(createSymbolicLinkPacket.id, endianness: .big, as: UInt32.self)
 
 			// Link Path
-			guard buffer.writeSftpString(createSymbolicLinkPacket.linkPath) else {
-				return false
-			}
+			buffer.writeSftpString(createSymbolicLinkPacket.linkPath)
 
 			// Target Path
-			guard buffer.writeSftpString(createSymbolicLinkPacket.targetPath) else {
-				return false
-			}
+			buffer.writeSftpString(createSymbolicLinkPacket.targetPath)
 
-			return true
+			return nil
 		}
 	}
 }

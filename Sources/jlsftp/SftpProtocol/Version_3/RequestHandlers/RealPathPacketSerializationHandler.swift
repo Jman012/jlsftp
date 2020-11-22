@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class RealPathPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -20,20 +20,18 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.realPath(RealPathPacket(id: id, path: path)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .realPath(realPathPacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
 			buffer.writeInteger(realPathPacket.id, endianness: .big, as: UInt32.self)
 
 			// Path
-			guard buffer.writeSftpString(realPathPacket.path) else {
-				return false
-			}
+			buffer.writeSftpString(realPathPacket.path)
 
-			return true
+			return nil
 		}
 	}
 }

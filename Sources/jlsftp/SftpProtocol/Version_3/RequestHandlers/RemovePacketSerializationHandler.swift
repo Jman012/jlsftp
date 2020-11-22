@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class RemovePacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -20,20 +20,18 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.remove(RemovePacket(id: id, filename: filename)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .remove(removePacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
 			buffer.writeInteger(removePacket.id, endianness: .big, as: UInt32.self)
 
 			// Filename
-			guard buffer.writeSftpString(removePacket.filename) else {
-				return false
-			}
+			buffer.writeSftpString(removePacket.filename)
 
-			return true
+			return nil
 		}
 	}
 }

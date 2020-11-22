@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class OpenPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -33,18 +33,16 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.open(OpenPacket(id: id, filename: filename, pflags: openFlagsV3.openFlags, fileAttributes: fileAttrs)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .open(openPacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
 			buffer.writeInteger(openPacket.id, endianness: .big, as: UInt32.self)
 
 			// Filename
-			guard buffer.writeSftpString(openPacket.filename) else {
-				return false
-			}
+			buffer.writeSftpString(openPacket.filename)
 
 			// Open Flags
 			let openFlagsV3 = OpenFlagsV3(openFlags: openPacket.pflags)
@@ -52,11 +50,9 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 			// File Attributes
 			let fileAttrSerializationV3 = FileAttributesSerializationV3()
-			guard fileAttrSerializationV3.serialize(fileAttrs: openPacket.fileAttributes, to: &buffer) else {
-				return false
-			}
+			fileAttrSerializationV3.serialize(fileAttrs: openPacket.fileAttributes, to: &buffer)
 
-			return true
+			return nil
 		}
 	}
 }

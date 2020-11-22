@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class RenamePacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -26,25 +26,21 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.rename(RenamePacket(id: id, oldPath: oldPath, newPath: newPath)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .rename(renamePacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
 			buffer.writeInteger(renamePacket.id, endianness: .big, as: UInt32.self)
 
 			// Old Path
-			guard buffer.writeSftpString(renamePacket.oldPath) else {
-				return false
-			}
+			buffer.writeSftpString(renamePacket.oldPath)
 
 			// New Path
-			guard buffer.writeSftpString(renamePacket.newPath) else {
-				return false
-			}
+			buffer.writeSftpString(renamePacket.newPath)
 
-			return true
+			return nil
 		}
 	}
 }

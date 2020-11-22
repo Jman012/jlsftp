@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class StatusReplyPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -34,9 +34,9 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.statusReply(StatusReplyPacket(id: id, statusCode: statusCodeV3.statusCode, errorMessage: errorMessage, languageTag: langTag)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .statusReply(statusReplyPacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
@@ -46,16 +46,12 @@ extension jlsftp.SftpProtocol.Version_3 {
 			buffer.writeInteger(StatusCodeV3(from: statusReplyPacket.statusCode).rawValue, endianness: .big, as: UInt32.self)
 
 			// Error Message
-			guard buffer.writeSftpString(statusReplyPacket.errorMessage) else {
-				return false
-			}
+			buffer.writeSftpString(statusReplyPacket.errorMessage)
 
 			// Language Tag
-			guard buffer.writeSftpString(statusReplyPacket.languageTag) else {
-				return false
-			}
+			buffer.writeSftpString(statusReplyPacket.languageTag)
 
-			return true
+			return nil
 		}
 	}
 }

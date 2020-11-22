@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class FileAttributesReplyPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -21,9 +21,9 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.attributesReply(FileAttributesReplyPacket(id: id, fileAttributes: fileAttrs)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .attributesReply(fileAttrsPacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
@@ -31,11 +31,9 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 			// File Attributes
 			let fileAttrsSerialization = FileAttributesSerializationV3()
-			guard fileAttrsSerialization.serialize(fileAttrs: fileAttrsPacket.fileAttributes, to: &buffer) else {
-				return false
-			}
+			fileAttrsSerialization.serialize(fileAttrs: fileAttrsPacket.fileAttributes, to: &buffer)
 
-			return true
+			return nil
 		}
 	}
 }

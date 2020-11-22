@@ -6,16 +6,16 @@ import XCTest
 final class SftpPacketEncoderTests: XCTestCase {
 
 	class MockSerializer: PacketSerializer {
-		var serializeHandler: (Packet, inout ByteBuffer) -> Bool = { _, _ in
-			return false
+		var serializeHandler: (Packet, inout ByteBuffer) -> PacketSerializationHandlerError? = { _, _ in
+			return .wrongPacketInternalError
 		}
 
-		func deserialize(packetType _: jlsftp.SftpProtocol.PacketType, buffer _: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		func deserialize(packetType _: jlsftp.SftpProtocol.PacketType, buffer _: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			XCTFail()
 			return .failure(.needMoreData)
 		}
 
-		func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			return serializeHandler(packet, &buffer)
 		}
 	}
@@ -25,7 +25,7 @@ final class SftpPacketEncoderTests: XCTestCase {
 		let mockSerializer = MockSerializer()
 		mockSerializer.serializeHandler = { _, buffer in
 			buffer.writeBytes([0x01])
-			return true
+			return nil
 		}
 		let encoder = SftpPacketEncoder(serializer: mockSerializer)
 		var buffer = ByteBuffer()
@@ -38,14 +38,14 @@ final class SftpPacketEncoderTests: XCTestCase {
 		let mockSerializer = MockSerializer()
 		mockSerializer.serializeHandler = { _, buffer in
 			buffer.writeBytes([0x01])
-			return false
+			return .wrongPacketInternalError
 		}
 		let encoder = SftpPacketEncoder(serializer: mockSerializer)
 		var buffer = ByteBuffer()
 
 		XCTAssertThrowsError(try encoder.encode(data: .initializeV3(InitializePacketV3(version: .v3, extensionData: [])), out: &buffer)) { error in
 			XCTAssert(error is SftpPacketEncoder.EncoderError)
-			XCTAssert(error as! SftpPacketEncoder.EncoderError == .failedToSerialize)
+			XCTAssertEqual(error as! SftpPacketEncoder.EncoderError, SftpPacketEncoder.EncoderError.failedToSerialize(message: "wrongPacketInternalError"))
 		}
 		// Ensure that any writes to the buffer were undone upon failure
 		XCTAssertEqual(buffer, ByteBuffer(bytes: []))

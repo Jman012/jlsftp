@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class MakeDirectoryPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -27,26 +27,22 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.makeDirectory(MakeDirectoryPacket(id: id, path: path, fileAttributes: fileAttrs)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .makeDirectory(makeDirectoryPacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
 			buffer.writeInteger(makeDirectoryPacket.id, endianness: .big, as: UInt32.self)
 
 			// Path
-			guard buffer.writeSftpString(makeDirectoryPacket.path) else {
-				return false
-			}
+			buffer.writeSftpString(makeDirectoryPacket.path)
 
 			// File Attributes
 			let fileAttrsSerialization = FileAttributesSerializationV3()
-			guard fileAttrsSerialization.serialize(fileAttrs: makeDirectoryPacket.fileAttributes, to: &buffer) else {
-				return false
-			}
+			fileAttrsSerialization.serialize(fileAttrs: makeDirectoryPacket.fileAttributes, to: &buffer)
 
-			return true
+			return nil
 		}
 	}
 }

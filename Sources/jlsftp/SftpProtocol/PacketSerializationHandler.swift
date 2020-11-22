@@ -1,7 +1,7 @@
 import Foundation
 import NIO
 
-public enum PacketSerializationHandlerError: Error, Equatable {
+public enum PacketDeserializationHandlerError: Error, Equatable {
 	case needMoreData
 	case invalidData(reason: String)
 
@@ -15,9 +15,15 @@ public enum PacketSerializationHandlerError: Error, Equatable {
 	}
 }
 
+public enum PacketSerializationHandlerError: Error, Equatable {
+	case wrongPacketInternalError
+	case packetNotSerializable
+	case missingPacketSerializationHandler
+}
+
 public protocol PacketSerializationHandler {
 
-	func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError>
+	func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError>
 
-	func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool
+	func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError?
 }

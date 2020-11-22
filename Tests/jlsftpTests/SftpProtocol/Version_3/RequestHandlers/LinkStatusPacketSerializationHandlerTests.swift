@@ -64,7 +64,7 @@ final class LinkStatusPacketSerializationHandlerTests: XCTestCase {
 		let packet = LinkStatusPacket(id: 3, path: "a")
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(handler.serialize(packet: .linkStatus(packet), to: &buffer))
+		XCTAssertNil(handler.serialize(packet: .linkStatus(packet), to: &buffer))
 		XCTAssertEqual(buffer, ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
@@ -80,7 +80,7 @@ final class LinkStatusPacketSerializationHandlerTests: XCTestCase {
 		let packet = InitializePacketV3(version: .v3, extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertFalse(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertEqual(handler.serialize(packet: .initializeV3(packet), to: &buffer), .wrongPacketInternalError)
 		XCTAssertEqual(ByteBuffer(), buffer)
 	}
 

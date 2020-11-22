@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class VersionPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Version
 			guard let versionByte = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -36,9 +36,9 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.version(VersionPacket(version: sftpVersion, extensionData: extensionDataResults)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .version(versionPacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Version
@@ -47,17 +47,13 @@ extension jlsftp.SftpProtocol.Version_3 {
 			// Extension Data
 			for extensionDatum in versionPacket.extensionData {
 				// Extension Name
-				guard buffer.writeSftpString(extensionDatum.name) else {
-					return false
-				}
+				buffer.writeSftpString(extensionDatum.name)
 
 				// Extension data
-				guard buffer.writeSftpString(extensionDatum.data) else {
-					return false
-				}
+				buffer.writeSftpString(extensionDatum.data)
 			}
 
-			return true
+			return nil
 		}
 	}
 }

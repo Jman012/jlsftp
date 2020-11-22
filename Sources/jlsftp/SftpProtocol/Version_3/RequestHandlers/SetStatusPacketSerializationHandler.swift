@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class SetStatusPacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -27,26 +27,22 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.setStatus(SetStatusPacket(id: id, path: path, fileAttributes: fileAttrs)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .setStatus(setStatusPacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
 			buffer.writeInteger(setStatusPacket.id, endianness: .big, as: UInt32.self)
 
 			// Path
-			guard buffer.writeSftpString(setStatusPacket.path) else {
-				return false
-			}
+			buffer.writeSftpString(setStatusPacket.path)
 
 			// File Attributes
 			let fileAttrsSerializationV3 = FileAttributesSerializationV3()
-			guard fileAttrsSerializationV3.serialize(fileAttrs: setStatusPacket.fileAttributes, to: &buffer) else {
-				return false
-			}
+			fileAttrsSerializationV3.serialize(fileAttrs: setStatusPacket.fileAttributes, to: &buffer)
 
-			return true
+			return nil
 		}
 	}
 }

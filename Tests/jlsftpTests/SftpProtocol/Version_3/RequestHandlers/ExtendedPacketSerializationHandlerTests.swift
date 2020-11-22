@@ -64,7 +64,7 @@ final class ExtendedPacketSerializationHandlerTests: XCTestCase {
 		let packet = ExtendedPacket(id: 3, extendedRequest: "a")
 		var buffer = ByteBuffer()
 
-		XCTAssertTrue(handler.serialize(packet: .extended(packet), to: &buffer))
+		XCTAssertNil(handler.serialize(packet: .extended(packet), to: &buffer))
 		XCTAssertEqual(buffer, ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
@@ -80,7 +80,7 @@ final class ExtendedPacketSerializationHandlerTests: XCTestCase {
 		let packet = InitializePacketV3(version: .v3, extensionData: [])
 		var buffer = ByteBuffer()
 
-		XCTAssertFalse(handler.serialize(packet: .initializeV3(packet), to: &buffer))
+		XCTAssertEqual(handler.serialize(packet: .initializeV3(packet), to: &buffer), .wrongPacketInternalError)
 		XCTAssertEqual(ByteBuffer(), buffer)
 	}
 

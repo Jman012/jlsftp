@@ -5,7 +5,7 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 	public class WritePacketSerializationHandler: PacketSerializationHandler {
 
-		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketSerializationHandlerError> {
+		public func deserialize(from buffer: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
 			// Id
 			guard let id = buffer.readInteger(endianness: .big, as: UInt32.self) else {
 				return .failure(.needMoreData)
@@ -25,23 +25,21 @@ extension jlsftp.SftpProtocol.Version_3 {
 			return .success(.write(WritePacket(id: id, handle: handle, offset: offset)))
 		}
 
-		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> Bool {
+		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
 			guard case let .write(writePacket) = packet else {
-				return false
+				return .wrongPacketInternalError
 			}
 
 			// Id
 			buffer.writeInteger(writePacket.id, endianness: .big, as: UInt32.self)
 
 			// Handle
-			guard buffer.writeSftpString(writePacket.handle) else {
-				return false
-			}
+			buffer.writeSftpString(writePacket.handle)
 
 			// Offtset
 			buffer.writeInteger(writePacket.offset, endianness: .big, as: UInt64.self)
 
-			return true
+			return nil
 		}
 	}
 }
