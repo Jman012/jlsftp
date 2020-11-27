@@ -43,7 +43,7 @@ final class SftpPacketEncoderTests: XCTestCase {
 	func testInvalid() {
 		let mockSerializer = MockSerializer()
 		mockSerializer.serializeHandler = { _, buffer in
-			buffer.writeBytes([0x01])
+			buffer.writeBytes([0x05])
 			return .wrongPacketInternalError
 		}
 		let encoder = SftpPacketEncoder(serializer: mockSerializer)
@@ -54,6 +54,48 @@ final class SftpPacketEncoderTests: XCTestCase {
 			XCTAssertEqual(error as! SftpPacketEncoder.EncoderError, SftpPacketEncoder.EncoderError.failedToSerialize(message: "wrongPacketInternalError"))
 		}
 		// Ensure that any writes to the buffer were undone upon failure
+		XCTAssertEqual(buffer, ByteBuffer(bytes: []))
+	}
+
+	func testNopSkip() {
+		let mockSerializer = MockSerializer()
+		mockSerializer.serializeHandler = { _, buffer in
+			buffer.writeBytes([0x05])
+			return nil
+		}
+		let encoder = SftpPacketEncoder(serializer: mockSerializer)
+		var buffer = ByteBuffer()
+
+		XCTAssertNoThrow(try encoder.encode(data: .header(.nopDebug(NOPDebugPacket(message: "test"))), out: &buffer))
+		// Ensure that nothing was written
+		XCTAssertEqual(buffer, ByteBuffer(bytes: []))
+	}
+
+	func testBody() {
+		let mockSerializer = MockSerializer()
+		mockSerializer.serializeHandler = { _, buffer in
+			buffer.writeBytes([0x05])
+			return nil
+		}
+		let encoder = SftpPacketEncoder(serializer: mockSerializer)
+		var buffer = ByteBuffer()
+
+		XCTAssertNoThrow(try encoder.encode(data: .body(ByteBuffer(bytes: [0x06])), out: &buffer))
+		// Ensure that body was written plainly, without length/type prefix.
+		XCTAssertEqual(buffer, ByteBuffer(bytes: [0x06]))
+	}
+
+	func testEnd() {
+		let mockSerializer = MockSerializer()
+		mockSerializer.serializeHandler = { _, buffer in
+			buffer.writeBytes([0x05])
+			return nil
+		}
+		let encoder = SftpPacketEncoder(serializer: mockSerializer)
+		var buffer = ByteBuffer()
+
+		XCTAssertNoThrow(try encoder.encode(data: .end, out: &buffer))
+		// Ensure that nothing was written.
 		XCTAssertEqual(buffer, ByteBuffer(bytes: []))
 	}
 
