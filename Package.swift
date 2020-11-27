@@ -27,6 +27,14 @@ let package = Package(
 				.product(name: "NIOExtras", package: "swift-nio-extras"),
 			]
 		),
+		.target(name: "jlsftpSimplePlaintextClient", dependencies: [
+			"jlsftp",
+			.product(name: "NIO", package: "swift-nio"),
+		]),
+		.target(name: "jlsftpSimplePlaintextServer", dependencies: [
+			"jlsftp",
+			.product(name: "NIO", package: "swift-nio"),
+		]),
 		.testTarget(
 			name: "jlsftpTests",
 			dependencies: [

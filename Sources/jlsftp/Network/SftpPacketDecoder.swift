@@ -4,7 +4,7 @@ import NIO
 /**
  The output of `SftpPacketDecoder`.
  */
-enum MessagePart: Equatable {
+public enum MessagePart: Equatable {
 	/**
 	 An entire deserialized `Packet`. Depending on a packet type, a body may
 	 follow.
@@ -29,9 +29,9 @@ enum MessagePart: Equatable {
  a packet will be followed be 1 or more `MessagePart.body(ByteBuffer)` items
  and then a single `MessagePart.end`, before returning to producing headers.
  */
-class SftpPacketDecoder: ByteToMessageDecoder {
-	typealias InboundIn = ByteBuffer
-	typealias InboundOut = MessagePart
+public class SftpPacketDecoder: ByteToMessageDecoder {
+	public typealias InboundIn = ByteBuffer
+	public typealias InboundOut = MessagePart
 
 	/// The internal state of the the `SftpPacketDecoder`.
 	enum State {
@@ -97,11 +97,11 @@ class SftpPacketDecoder: ByteToMessageDecoder {
 		self.packetSerializer = packetSerializer
 	}
 
-	func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
+	public func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
 		return try decodeCentral(context: context, buffer: &buffer, isLast: false, seenEOF: false)
 	}
 
-	func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF: Bool) throws -> DecodingState {
+	public func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF: Bool) throws -> DecodingState {
 		return try decodeCentral(context: context, buffer: &buffer, isLast: true, seenEOF: seenEOF)
 	}
 
