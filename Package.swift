@@ -5,6 +5,12 @@ import PackageDescription
 
 let package = Package(
 	name: "jlsftp",
+	platforms: [
+		.macOS(.v10_15),
+		.iOS(.v13),
+		.watchOS(.v6),
+		.tvOS(.v13),
+	],
 	products: [
 		// Products define the executables and libraries produced by a package, and make them visible to other packages.
 		.library(
@@ -16,6 +22,7 @@ let package = Package(
 		// .package(url: /* package url */, from: "1.0.0"),
 		.package(url: "https://github.com/apple/swift-nio.git", from: "2.0.0"),
 		.package(url: "https://github.com/apple/swift-nio-extras.git", from: "1.0.0"),
+		.package(url: "https://github.com/apple/swift-nio-ssh", from: "0.0.2"),
 	],
 	targets: [
 		// Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -34,6 +41,11 @@ let package = Package(
 		.target(name: "jlsftpSimplePlaintextServer", dependencies: [
 			"jlsftp",
 			.product(name: "NIO", package: "swift-nio"),
+		]),
+		.target(name: "jlsftpSimpleSSHClient", dependencies: [
+			"jlsftp",
+			.product(name: "NIO", package: "swift-nio"),
+			.product(name: "NIOSSH", package: "swift-nio-ssh"),
 		]),
 		.testTarget(
 			name: "jlsftpTests",

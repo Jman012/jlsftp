@@ -26,7 +26,7 @@ final class SftpPacketEncoderTests: XCTestCase {
 			buffer.writeBytes([0x05])
 			return nil
 		}
-		let encoder = SftpPacketEncoder(serializer: mockSerializer)
+		let encoder = SftpPacketEncoder(serializer: mockSerializer, allocator: ByteBufferAllocator())
 		var buffer = ByteBuffer()
 
 		XCTAssertNoThrow(try encoder.encode(data: .header(.initializeV3(InitializePacketV3(version: .v3, extensionData: []))), out: &buffer))
@@ -46,7 +46,7 @@ final class SftpPacketEncoderTests: XCTestCase {
 			buffer.writeBytes([0x05])
 			return .wrongPacketInternalError
 		}
-		let encoder = SftpPacketEncoder(serializer: mockSerializer)
+		let encoder = SftpPacketEncoder(serializer: mockSerializer, allocator: ByteBufferAllocator())
 		var buffer = ByteBuffer()
 
 		XCTAssertThrowsError(try encoder.encode(data: .header(.initializeV3(InitializePacketV3(version: .v3, extensionData: []))), out: &buffer)) { error in
@@ -63,7 +63,7 @@ final class SftpPacketEncoderTests: XCTestCase {
 			buffer.writeBytes([0x05])
 			return nil
 		}
-		let encoder = SftpPacketEncoder(serializer: mockSerializer)
+		let encoder = SftpPacketEncoder(serializer: mockSerializer, allocator: ByteBufferAllocator())
 		var buffer = ByteBuffer()
 
 		XCTAssertNoThrow(try encoder.encode(data: .header(.nopDebug(NOPDebugPacket(message: "test"))), out: &buffer))
@@ -77,7 +77,7 @@ final class SftpPacketEncoderTests: XCTestCase {
 			buffer.writeBytes([0x05])
 			return nil
 		}
-		let encoder = SftpPacketEncoder(serializer: mockSerializer)
+		let encoder = SftpPacketEncoder(serializer: mockSerializer, allocator: ByteBufferAllocator())
 		var buffer = ByteBuffer()
 
 		XCTAssertNoThrow(try encoder.encode(data: .body(ByteBuffer(bytes: [0x06])), out: &buffer))
@@ -91,7 +91,7 @@ final class SftpPacketEncoderTests: XCTestCase {
 			buffer.writeBytes([0x05])
 			return nil
 		}
-		let encoder = SftpPacketEncoder(serializer: mockSerializer)
+		let encoder = SftpPacketEncoder(serializer: mockSerializer, allocator: ByteBufferAllocator())
 		var buffer = ByteBuffer()
 
 		XCTAssertNoThrow(try encoder.encode(data: .end, out: &buffer))

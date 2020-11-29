@@ -9,10 +9,11 @@ public class SftpPacketEncoder: MessageToByteEncoder {
 	}
 
 	let serializer: PacketSerializer
-	let allocator = ByteBufferAllocator()
+	let allocator: ByteBufferAllocator
 
-	public init(serializer: PacketSerializer) {
+	public init(serializer: PacketSerializer, allocator: ByteBufferAllocator) {
 		self.serializer = serializer
+		self.allocator = allocator
 	}
 
 	public func encode(data: OutboundIn, out: inout ByteBuffer) throws {

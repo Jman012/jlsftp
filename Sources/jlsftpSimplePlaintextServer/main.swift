@@ -2,9 +2,11 @@ import Foundation
 import NIO
 import jlsftp
 
-class ServerChannelHandler: ChannelInboundHandler {
+class ServerChannelHandler: ChannelDuplexHandler {
 	typealias InboundIn = MessagePart
 	typealias OutboundOut = MessagePart
+	typealias InboundOut = Never
+	typealias OutboundIn = Never
 
 	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
 		// As we are not really interested getting notified on success or failure we just pass nil as promise to
@@ -46,7 +48,8 @@ let bootstrap = ServerBootstrap(group: group)
 			BackPressureHandler(),
 			ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3))),
 			// Server outbould
-			MessageToByteHandler(SftpPacketEncoder(serializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3))),
+			MessageToByteHandler(SftpPacketEncoder(serializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3),
+												   allocator: channel.allocator)),
 			// End
 			ServerChannelHandler(),
 		])

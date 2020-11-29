@@ -2,9 +2,11 @@ import Foundation
 import NIO
 import jlsftp
 
-class ClientChannelHandler: ChannelInboundHandler {
+class ClientChannelHandler: ChannelDuplexHandler {
 	typealias InboundIn = MessagePart
 	typealias OutboundOut = MessagePart
+	typealias InboundOut = Never
+	typealias OutboundIn = Never
 
 	public func channelActive(context: ChannelHandlerContext) {
 		print("channelActive. sending init")
@@ -41,7 +43,8 @@ let bootstrap = ClientBootstrap(group: group)
 		channel.pipeline.addHandlers([
 			ByteToMessageHandler(SftpPacketDecoder(packetSerializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3))),
 			// Server outbould
-			MessageToByteHandler(SftpPacketEncoder(serializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3))),
+			MessageToByteHandler(SftpPacketEncoder(serializer: BasePacketSerializer.createSerializer(fromSftpVersion: .v3),
+												   allocator: channel.allocator)),
 			// End
 			ClientChannelHandler(),
 		])
