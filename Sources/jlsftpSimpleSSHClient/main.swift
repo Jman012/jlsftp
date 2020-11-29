@@ -12,10 +12,26 @@ class SSHToSFTPHander: ChannelDuplexHandler {
 	func channelActive(context: ChannelHandlerContext) {
 		context.triggerUserOutboundEvent(SSHChannelRequestEvent.SubsystemRequest(subsystem: "sftp", wantReply: true))
 			.whenSuccess {
+				// Init (v3)
 				context.write(self.wrapOutboundOut(SSHChannelData(type: .channel, data: .byteBuffer(ByteBuffer(bytes: [
 					0x00, 0x00, 0x00, 0x05,
 					0x01,
 					0x00, 0x00, 0x00, 0x03,
+				])))))
+				context.flush()
+				// Open dir to get back a handle
+				context.write(self.wrapOutboundOut(SSHChannelData(type: .channel, data: .byteBuffer(ByteBuffer(bytes: [
+					// Length: 10
+					0x00, 0x00, 0x00, 0x0A,
+					// Type: 11
+					0x0B,
+					// id
+					0x00, 0x00, 0x00, 0x10,
+					// path length
+					0x00, 0x00, 0x00, 0x01,
+					// path "."
+					0x2E,
+//					0x2f, 0x55, 0x73, 0x65, 0x72, 0x73, 0x2f, 0x6a, 0x61, 0x6d, 0x65, 0x73,
 				])))))
 				context.flush()
 			}
@@ -33,7 +49,7 @@ class SSHToSFTPHander: ChannelDuplexHandler {
 		}
 
 		let bytes = buffer.getBytes(at: buffer.readerIndex, length: buffer.readableBytes)
-		print(bytes!.reduce("") { $0 + String(format: "%02x", $1) })
+		print(bytes!.reduce("") { $0 + String(format: "%02x ", $1) })
 	}
 }
 
