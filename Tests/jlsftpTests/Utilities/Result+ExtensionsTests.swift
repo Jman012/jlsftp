@@ -1,7 +1,7 @@
 import XCTest
 @testable import jlsftp
 
-final class resultExtensionsTests: XCTestCase {
+final class ResultExtensionsTests: XCTestCase {
 
 	// MARK: Test `error?`
 

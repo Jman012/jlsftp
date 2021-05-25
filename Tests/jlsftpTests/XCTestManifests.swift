@@ -51,6 +51,7 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(PacketTypeTests.allTests),
 		// Utilities
 		testCase(ResultExtensionTests.allTests),
+		testCase(SequenceExtensionTests.allTests),
 		//
 		testCase(jlsftpTests.allTests),
 	]
