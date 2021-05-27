@@ -4,6 +4,12 @@ import NIO
 
 extension Publisher {
 
+	/**
+	 Allows incoming data to be buffered in memory in the Combine chain upon
+	 backpressure. Stores up to a set amount of inputs when downstream demand
+	 is zero. When the buffer is full, it exerts back pressure further up
+	 the chain.
+	 */
 	func bufferedData(bufferSize: UInt) -> BufferedDataPublisher<Self.Output, Self.Failure, Self> {
 		return BufferedDataPublisher(upstream: self, bufferSize: bufferSize)
 	}
@@ -12,6 +18,7 @@ extension Publisher {
 public class BufferedDataPublisher<Output, Failure, Upstream: Publisher>: Publisher
 	where Output == Upstream.Output, Failure == Upstream.Failure {
 
+	/// The number of buffered items to store
 	private let bufferSize: UInt
 	private let upstream: Upstream
 
@@ -21,6 +28,7 @@ public class BufferedDataPublisher<Output, Failure, Upstream: Publisher>: Publis
 	}
 
 	public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
+		// First subscribe ourself to the upstream, then initiate demand.
 		let op = Operator(downstream: subscriber, bufferSize: bufferSize)
 		upstream.subscribe(op)
 		subscriber.receive(subscription: op)
@@ -55,9 +63,11 @@ extension BufferedDataPublisher.Operator: Subscription {
 
 	public func request(_ additionalDemand: Subscribers.Demand) {
 
+		// Our downstream is requesting more demand.
 		downstreamDemand += additionalDemand
 
-		// Immediately fulfill the demand that we can from the buffer.
+		// Immediately fulfill the demand that we can from the buffer, if
+		// there is any buffer.
 		var bufferItemsPopped = 0
 		while let downstream = downstream, let input = buffer.first, downstreamDemand > .none && buffer.count > 0 {
 			downstreamDemand += downstream.receive(input)
@@ -66,6 +76,7 @@ extension BufferedDataPublisher.Operator: Subscription {
 			bufferItemsPopped += 1
 		}
 
+		// At the end, let upstream know of more demand
 		upstream?.request(additionalDemand)
 	}
 
@@ -77,11 +88,13 @@ extension BufferedDataPublisher.Operator: Subscription {
 extension BufferedDataPublisher.Operator: Subscriber {
 
 	public func receive(subscription: Subscription) {
+		// After we've subscribed to upstream, request demand.
 		upstream = subscription
 		subscription.request(upstreamDemand)
 	}
 
 	public func receive(_ input: Input) -> Subscribers.Demand {
+		// We should only be receiving input if we have demand.
 		let bufferOpenCapacity = bufferCapacity - buffer.count
 		precondition(bufferOpenCapacity > 0, "A value was sent when there was no demand.")
 

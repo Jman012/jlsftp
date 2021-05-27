@@ -3,6 +3,7 @@ import Combine
 
 public class DemandBridgeSubject<Output, Failure: Error>: Subject {
 
+	/// Indicates to the external component whether or not to send values to th subject.
 	public typealias DemandHandler = (Bool) -> Void
 	private let handler: DemandHandler
 	private var downstreamSubscription: Subscription<Output, Failure>?
@@ -14,11 +15,14 @@ public class DemandBridgeSubject<Output, Failure: Error>: Subject {
 	// MARK: Subject Implementation
 
 	public func send(_ value: Output) {
+		// Ensure we're only sending a value if there is demand for it.
 		precondition(downstreamSubscription != nil)
 		precondition(downstreamSubscription!.demand > .none)
+		// Send the value and adjust the demand.
 		downstreamSubscription!.demand -= 1
 		downstreamSubscription!.demand += downstreamSubscription!.downstream?.receive(value) ?? .none
 
+		// If demand has dropped to 0, alert the handler to stop sending values.
 		if downstreamSubscription!.demand == .none {
 			downstreamSubscription!.handler(false)
 		}

@@ -19,17 +19,21 @@ final class DemandBridgeSubjectTests: XCTestCase {
 		})
 		demandBridgeSubj.subscribe(sink)
 
+		// After setting up the combine chain, we should have been alerted to the demand.
 		XCTAssertEqual(canSendValues, [true])
 		XCTAssertEqual(receivedValues, [])
 		demandBridgeSubj.send(1)
 		XCTAssertEqual(canSendValues, [true])
 		XCTAssertEqual(receivedValues, [1])
+		// After the second value, demand should be 0, and we should have been told to stop.
 		demandBridgeSubj.send(2)
 		XCTAssertEqual(canSendValues, [true, false])
 		XCTAssertEqual(receivedValues, [1, 2])
+		// Now it's open and we can send values again.
 		sink.increaseDemand(1)
 		XCTAssertEqual(canSendValues, [true, false, true])
 		XCTAssertEqual(receivedValues, [1, 2])
+		// And disabled again.
 		demandBridgeSubj.send(3)
 		XCTAssertEqual(canSendValues, [true, false, true, false])
 		XCTAssertEqual(receivedValues, [1, 2, 3])
