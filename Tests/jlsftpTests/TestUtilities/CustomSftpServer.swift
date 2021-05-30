@@ -6,7 +6,7 @@ class CustomSftpServer: SftpServer {
 	var registerReplyHandlerHandler: (() -> Void)?
 	var handleMessageHandler: ((SftpMessage) -> ())?
 
-	var replyHandler: ReplyHandler? = nil
+	var replyHandler: ReplyHandler?
 
 	init() {
 		self.registerReplyHandlerHandler = nil
@@ -28,12 +28,12 @@ class CustomSftpServer: SftpServer {
 		self.handleMessageHandler = handleMessageHandler
 	}
 
-
 	func register(replyHandler: @escaping ReplyHandler) {
 		registerReplyHandlerHandler?()
 		self.replyHandler = replyHandler
 	}
-	func handle(message: SftpMessage, on eventLoop: EventLoop) {
+
+	func handle(message: SftpMessage, on _: EventLoop) {
 		handleMessageHandler?(message)
 	}
 }

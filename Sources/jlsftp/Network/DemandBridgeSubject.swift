@@ -32,9 +32,7 @@ public class DemandBridgeSubject<Output, Failure: Error>: Subject {
 		downstreamSubscription?.downstream?.receive(completion: completion)
 	}
 
-	public func send(subscription: Combine.Subscription) {
-
-	}
+	public func send(subscription _: Combine.Subscription) {}
 
 	// MARK: Publisher Implementation
 

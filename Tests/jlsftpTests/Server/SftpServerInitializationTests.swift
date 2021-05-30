@@ -7,7 +7,7 @@ import Logging
 final class SftpServerInitializationTests: XCTestCase {
 
 	func testInvalidInit() {
-		var initialization: SftpServerInitialization? = nil
+		var initialization: SftpServerInitialization?
 		let server = CustomSftpServer()
 
 		var didLog = false
@@ -51,7 +51,7 @@ final class SftpServerInitializationTests: XCTestCase {
 	}
 
 	func testValidInit() {
-		var initialization: SftpServerInitialization? = nil
+		var initialization: SftpServerInitialization?
 		let server = CustomSftpServer()
 
 		var didLog = false
@@ -83,7 +83,7 @@ final class SftpServerInitializationTests: XCTestCase {
 	}
 
 	func testMinimumVersion() {
-		var initialization: SftpServerInitialization? = nil
+		var initialization: SftpServerInitialization?
 		let server = CustomSftpServer()
 
 		let logger = Logger(label: "test", factory: { _ in CustomLogHandler() })
@@ -106,7 +106,7 @@ final class SftpServerInitializationTests: XCTestCase {
 	}
 
 	func testMaximumVersion() {
-		var initialization: SftpServerInitialization? = nil
+		var initialization: SftpServerInitialization?
 		let server = CustomSftpServer()
 
 		let logger = Logger(label: "test", factory: { _ in CustomLogHandler() })
@@ -154,7 +154,7 @@ final class SftpServerInitializationTests: XCTestCase {
 		// V3-V4 with V3
 		var initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3, .v4: serverV4])
 		XCTAssert(initialization != nil)
-		var lastReplyMessage: Packet? = nil
+		var lastReplyMessage: Packet?
 		initialization!.register(replyHandler: { lastReplyMessage = $0 })
 
 		initialization!.handle(message: .init(packet: initV3Packet, dataLength: 0, shouldReadHandler: { _ in }), on: channel.eventLoop)
@@ -188,7 +188,7 @@ final class SftpServerInitializationTests: XCTestCase {
 		// V3-V4 with V3 then V4
 		let initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3, .v4: serverV4])
 		XCTAssert(initialization != nil)
-		var lastReplyMessage: Packet? = nil
+		var lastReplyMessage: Packet?
 		initialization!.register(replyHandler: { lastReplyMessage = $0 })
 
 		initialization!.handle(message: .init(packet: initV3Packet, dataLength: 0, shouldReadHandler: { _ in }), on: channel.eventLoop)
@@ -201,7 +201,7 @@ final class SftpServerInitializationTests: XCTestCase {
 
 	func testValid() {
 		var didHandleMessageV3 = false, didHandleMessageV4 = false
-		var lastReplyMessage: Packet? = nil
+		var lastReplyMessage: Packet?
 		let serverV3 = CustomSftpServer(handleMessageHandler: { _ in didHandleMessageV3 = true })
 		let serverV4 = CustomSftpServer(handleMessageHandler: { _ in didHandleMessageV4 = true })
 		let logger = Logger(label: "test", factory: { _ in CustomLogHandler() })

@@ -12,6 +12,7 @@ public class SftpChannelHandler: ChannelDuplexHandler {
 		case awaitingHeader
 		case processingHeader(SftpMessage)
 	}
+
 //	public enum HandlerError {
 //		case
 //	}
@@ -21,13 +22,12 @@ public class SftpChannelHandler: ChannelDuplexHandler {
 	private var state: State
 	private var shouldRead: Bool = false
 
-
 	public init(server: SftpServer) {
 		self.server = server
 		self.state = .awaitingHeader
 	}
 
-	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+	public func channelRead(context _: ChannelHandlerContext, data: NIOAny) {
 		let messagePart = self.unwrapInboundIn(data)
 
 //		switch messagePart {

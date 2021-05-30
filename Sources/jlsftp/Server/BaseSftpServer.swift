@@ -62,7 +62,5 @@ extension BaseSftpServer {
 
 	public func handleClose(packet _: ClosePacket) {}
 
-	public func handleWrite(packet: WritePacket, dataPublisher: AnyPublisher<ByteBuffer, Never>, on eventLoop: EventLoop) {
-
-	}
+	public func handleWrite(packet _: WritePacket, dataPublisher _: AnyPublisher<ByteBuffer, Never>, on _: EventLoop) {}
 }

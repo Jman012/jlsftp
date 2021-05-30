@@ -5,9 +5,7 @@ import NIO
 
 final class NetworkingPublisherChainTests: XCTestCase {
 
-	func testValid() {
-		
-	}
+	func testValid() {}
 
 	static var allTests = [
 		("testValid", testValid),

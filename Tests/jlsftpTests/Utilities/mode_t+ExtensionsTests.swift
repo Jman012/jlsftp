@@ -87,7 +87,7 @@ final class mode_tExtensionsTests: XCTestCase {
 				Permissions(
 					user: [],
 					group: [],
-					other: [.write,]
+					other: [.write]
 				),
 				S_IWOTH
 			),

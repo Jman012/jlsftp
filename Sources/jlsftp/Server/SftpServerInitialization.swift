@@ -75,7 +75,6 @@ extension SftpServerInitialization: SftpServer {
 			}
 		default:
 			self.bootstrappedServer?.handle(message: message, on: eventLoop)
-			break
 		}
 	}
 }

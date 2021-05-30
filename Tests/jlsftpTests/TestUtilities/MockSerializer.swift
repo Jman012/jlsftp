@@ -4,7 +4,6 @@ import NIOTestUtils
 import XCTest
 @testable import jlsftp
 
-
 class MockSerializer: PacketSerializer {
 	var serializeHandler: (Packet, inout ByteBuffer) -> PacketSerializationHandlerError? = { _, _ in
 		return .wrongPacketInternalError

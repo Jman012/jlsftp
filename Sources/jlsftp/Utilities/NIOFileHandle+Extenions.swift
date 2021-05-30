@@ -2,6 +2,12 @@ import Foundation
 import NIO
 
 extension NIOFileHandle.Mode {
+
+	/**
+	 Creates an NIO `NIOFileHandle.Mode` from a jlsftp OpenFlags struct.
+	 This only handles read and write, because that is all `NIOFileHandle.Mode`
+	 can handle.
+	 */
 	init(fromOpenFlags openFlags: OpenFlags) {
 		let mode = NIOFileHandle.Mode(openFlags.compactMap({ flag -> NIOFileHandle.Mode? in
 			switch flag {
@@ -15,6 +21,11 @@ extension NIOFileHandle.Mode {
 }
 
 extension NIOFileHandle.Flags {
+
+	/**
+	 Given both a jlsftp `FileAttributes` and `OpenFlags`, this creates the
+	 `NIOFileHandle.Flags` struct for NIO to handle file operations.
+	 */
 	static func jlsftp(fileAttributes: FileAttributes, openFlags: OpenFlags) -> NIOFileHandle.Flags {
 		var flags: CInt = 0
 		var mode: mode_t = 0

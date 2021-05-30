@@ -69,7 +69,7 @@ extension BufferedDataPublisher.Operator: Subscription {
 		// Immediately fulfill the demand that we can from the buffer, if
 		// there is any buffer.
 		var bufferItemsPopped = 0
-		while let downstream = downstream, let input = buffer.first, downstreamDemand > .none && buffer.count > 0 {
+		while let downstream = downstream, let input = buffer.first, downstreamDemand > .none && !buffer.isEmpty {
 			downstreamDemand += downstream.receive(input)
 			_ = buffer.popFirst()
 			downstreamDemand -= 1

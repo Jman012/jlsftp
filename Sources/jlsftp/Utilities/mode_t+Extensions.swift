@@ -1,6 +1,11 @@
 import Foundation
 
 extension mode_t {
+
+	/**
+	 Creates a `mode_t` from the jlsftp Permissions struct, performing the
+	 needed tranformations.
+	 */
 	init(fromPermissions permissions: Permissions) {
 		let userMode = permissions.user.map({ perm -> mode_t in
 			switch perm {

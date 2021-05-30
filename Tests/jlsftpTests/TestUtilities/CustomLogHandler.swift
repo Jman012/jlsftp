@@ -9,9 +9,7 @@ class CustomLogHandler: LogHandler {
 		get {
 			return .none
 		}
-		set(newValue) {
-
-		}
+		set(newValue) {}
 	}
 
 	var metadata: Logger.Metadata
@@ -30,13 +28,13 @@ class CustomLogHandler: LogHandler {
 		logLevel = .trace
 	}
 
-	func log(level: Logger.Level,
-			 message: Logger.Message,
-			 metadata: Logger.Metadata?,
-			 source: String,
-			 file: String,
-			 function: String,
-			 line: UInt) {
+	func log(level _: Logger.Level,
+			 message _: Logger.Message,
+			 metadata _: Logger.Metadata?,
+			 source _: String,
+			 file _: String,
+			 function _: String,
+			 line _: UInt) {
 //		print(message)
 		handler?()
 	}
