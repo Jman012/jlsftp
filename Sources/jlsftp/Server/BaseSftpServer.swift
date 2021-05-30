@@ -48,7 +48,7 @@ extension BaseSftpServer {
 		let nfio = NonBlockingFileIO(threadPool: threadPool)
 		let future = nfio.openFile(path: packet.filename,
 								   mode: NIOFileHandle.Mode(fromOpenFlags: packet.pflags),
-								   flags: NIOFileHandle.Flags.jlsftp(fileAttributes: packet.fileAttributes, openFlags: packet.pflags),
+								   flags: NIOFileHandle.Flags.jlsftp(permissions: packet.fileAttributes.permissions, openFlags: packet.pflags),
 								   eventLoop: eventLoop)
 		future.whenSuccess({ nioFileHandle in
 			let sftpHandle = "test"

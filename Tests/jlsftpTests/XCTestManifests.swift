@@ -54,6 +54,7 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(SftpVersionTests.allTests),
 		// Utilities
 		testCase(mode_tExtensionsTests.allTests),
+		(NIOFileHandleExtensionsTests.allTests),
 		testCase(ResultExtensionTests.allTests),
 		testCase(SequenceExtensionTests.allTests),
 		//

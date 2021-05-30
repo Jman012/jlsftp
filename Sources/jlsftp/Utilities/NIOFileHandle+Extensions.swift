@@ -23,13 +23,13 @@ extension NIOFileHandle.Mode {
 extension NIOFileHandle.Flags {
 
 	/**
-	 Given both a jlsftp `FileAttributes` and `OpenFlags`, this creates the
+	 Given both a jlsftp `Permissions` and `OpenFlags`, this creates the
 	 `NIOFileHandle.Flags` struct for NIO to handle file operations.
 	 */
-	static func jlsftp(fileAttributes: FileAttributes, openFlags: OpenFlags) -> NIOFileHandle.Flags {
+	static func jlsftp(permissions fileAttrPerms: Permissions?, openFlags: OpenFlags) -> NIOFileHandle.Flags {
 		var flags: CInt = 0
 		var mode: mode_t = 0
-		if let permissions = fileAttributes.permissions {
+		if let permissions = fileAttrPerms {
 			mode = mode_t(fromPermissions: permissions)
 		}
 
@@ -38,7 +38,7 @@ extension NIOFileHandle.Flags {
 			flags |= O_RDWR
 		} else if openFlags.contains(.read) && !openFlags.contains(.write) {
 			flags |= O_RDONLY
-		} else if openFlags.contains(.read) && !openFlags.contains(.write) {
+		} else if !openFlags.contains(.read) && openFlags.contains(.write) {
 			flags |= O_WRONLY
 		}
 
