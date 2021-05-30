@@ -15,6 +15,7 @@ public class SftpServerInitialization {
 	let logger: Logger
 	/// Guaranteed in the init to start at 3 and be contiguous
 	let versionedServers: [jlsftp.SftpProtocol.SftpVersion: SftpServer]
+	var bootstrappedServer: SftpServer?
 
 	public init?(logger: Logger, versionedServers: [jlsftp.SftpProtocol.SftpVersion: SftpServer]) {
 		if versionedServers.isEmpty {
@@ -35,11 +36,11 @@ public class SftpServerInitialization {
 	}
 
 	func minimumSupportedVersion() -> jlsftp.SftpProtocol.SftpVersion {
-		return versionedServers.keys.sorted().min()!
+		return versionedServers.keys.min()!
 	}
 
 	func maximumSupportedVersion() -> jlsftp.SftpProtocol.SftpVersion {
-		return versionedServers.keys.sorted().max()!
+		return versionedServers.keys.max()!
 	}
 }
 
@@ -52,7 +53,7 @@ extension SftpServerInitialization: SftpServer {
 		}
 	}
 
-	public func handle(message: SftpMessage, on _: EventLoop) {
+	public func handle(message: SftpMessage, on eventLoop: EventLoop) {
 		logger.trace("\(Self.Type.self) handling packet: \(message.packet)")
 
 		switch message.packet {
@@ -64,6 +65,7 @@ extension SftpServerInitialization: SftpServer {
 				let lowestVersion = min(initializePacketV3.version, maximumSupportedVersion())
 				self.state = .initialized(version: lowestVersion, handler: self.versionedServers[lowestVersion]!)
 				logger.info("Initiated SFTP session at version \(lowestVersion.rawValue) (client=\(initializePacketV3.version.rawValue), server=\(maximumSupportedVersion().rawValue))")
+				self.bootstrappedServer = versionedServers[lowestVersion]
 				self.replyHandler?(.version(VersionPacket(version: lowestVersion, extensionData: [])))
 
 			case .initialized(version: _):
@@ -72,7 +74,7 @@ extension SftpServerInitialization: SftpServer {
 				// Do nothing, since we shouldn't reply with a version packet.
 			}
 		default:
-
+			self.bootstrappedServer?.handle(message: message, on: eventLoop)
 			break
 		}
 	}

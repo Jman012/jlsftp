@@ -3,8 +3,8 @@ import Combine
 import NIO
 
 public class SftpMessage {
-	let packet: Packet
-	let data: AnyPublisher<ByteBuffer, Never>
+	public let packet: Packet
+	public let data: AnyPublisher<ByteBuffer, Never>
 
 	private let totalBytes: UInt32
 	private var subject: DemandBridgeSubject<ByteBuffer, Never>

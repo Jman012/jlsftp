@@ -4,22 +4,6 @@ import XCTest
 
 final class PacketSerializerTests: XCTestCase {
 
-	class MockHandler: PacketSerializationHandler {
-		var isDeserializeCalled = false
-		var isSerializeCalled = false
-		var serializeReturn: PacketSerializationHandlerError?
-
-		func deserialize(from _: inout ByteBuffer) -> Result<Packet, PacketDeserializationHandlerError> {
-			isDeserializeCalled = true
-			return .failure(.needMoreData)
-		}
-
-		func serialize(packet _: Packet, to _: inout ByteBuffer) -> PacketSerializationHandlerError? {
-			isSerializeCalled = true
-			return serializeReturn
-		}
-	}
-
 	func testCreateSerializer() {
 		let v3 = BasePacketSerializer.createSerializer(fromSftpVersion: .v3)
 		_ = BasePacketSerializer.createSerializer(fromSftpVersion: .v4)

@@ -9,6 +9,8 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(SftpPacketEncoderTests.allTests),
 		// Packets
 		testCase(PacketTests.allTests),
+		// Server
+		testCase(SftpServerInitializationTests.allTests),
 		// SftpProtocol > Version_3 > Reply Handlers
 		testCase(DataReplyPacketSerializationHandlerTests.allTests),
 		testCase(ExtendedReplyPacketSerializationHandlerTests.allTests),
@@ -49,7 +51,9 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(PacketSerializationHandlerTests.allTests),
 		testCase(PacketSerializerTests.allTests),
 		testCase(PacketTypeTests.allTests),
+		testCase(SftpVersionTests.allTests),
 		// Utilities
+		testCase(mode_tExtensionsTests.allTests),
 		testCase(ResultExtensionTests.allTests),
 		testCase(SequenceExtensionTests.allTests),
 		//

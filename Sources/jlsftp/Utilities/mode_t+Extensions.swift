@@ -18,7 +18,7 @@ extension mode_t {
 			}
 		})
 
-		let otherMode = permissions.user.map({ perm -> mode_t in
+		let otherMode = permissions.other.map({ perm -> mode_t in
 			switch perm {
 			case .read: return S_IROTH
 			case .write: return S_IWOTH
