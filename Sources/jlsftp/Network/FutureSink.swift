@@ -15,15 +15,15 @@ extension Publisher {
 		maxConcurrent: UInt,
 		receiveCompletion: @escaping (Subscribers.Completion<Failure>) -> Void,
 		receiveValue: @escaping FutureSink<Self.Output, Self.Failure>.Handler
-	) -> FutureSink<Self.Output, Self.Failure> {
+	) -> AnyCancellable {
 		let futureSink = FutureSink(maxConcurrent: maxConcurrent, receiveCompletion: receiveCompletion, receiveValue: receiveValue)
 		// Immediately subscribe the futureSink to this publisher.
 		subscribe(futureSink)
-		return futureSink
+		return AnyCancellable(futureSink)
 	}
 }
 
-public class FutureSink<Input, Failure: Error> {
+public class FutureSink<Input, Failure: Error>: Cancellable {
 
 	public typealias Handler = (Input) -> EventLoopFuture<Void>
 

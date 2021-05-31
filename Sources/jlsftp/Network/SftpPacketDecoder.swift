@@ -153,7 +153,7 @@ public class SftpPacketDecoder: ByteToMessageDecoder {
 				// large, but the cap above isn't too large for this to be a
 				// problem.
 				buffer.moveReaderIndex(forwardBy: Int(payloadLength))
-				let result = MessagePart.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '\(packetTypeInt)'")))
+				let result = MessagePart.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '\(packetTypeInt)'")), 0)
 				context.fireChannelRead(self.wrapInboundOut(result))
 				return .continue
 			} else {
@@ -205,12 +205,13 @@ public class SftpPacketDecoder: ByteToMessageDecoder {
 			}
 		case let .success(packet):
 			// Pass the packet along as the header
-			let message = MessagePart.header(packet)
+			let bodyBytes = payloadLength - UInt32(bytesRead)
+			let message = MessagePart.header(packet, bodyBytes)
 			context.fireChannelRead(self.wrapInboundOut(message))
 
 			// And set the state accordingly
 			if packetType.hasBody {
-				state = .readingBody(remaining: payloadLength - UInt32(bytesRead))
+				state = .readingBody(remaining: bodyBytes)
 				return .continue
 			} else {
 				// Ensure there are no leftover bytes in the buffer. This may

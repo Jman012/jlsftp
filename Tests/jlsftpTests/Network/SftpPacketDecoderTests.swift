@@ -18,7 +18,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 			// Version (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
 		]), [
-			.header(.initializeV3(InitializePacketV3(version: .v3, extensionData: []))),
+			.header(.initializeV3(InitializePacketV3(version: .v3, extensionData: [])), 0),
 		]))
 
 		// Init then version packets (wouldn't happen but it's simpler to test)
@@ -39,8 +39,8 @@ final class SftpPacketDecoderTests: XCTestCase {
 			// Version (UInt32 Network Order: 4)
 			0x00, 0x00, 0x00, 0x04,
 		]), [
-			.header(.initializeV3(InitializePacketV3(version: .v3, extensionData: []))),
-			.header(.version(VersionPacket(version: .v4, extensionData: []))),
+			.header(.initializeV3(InitializePacketV3(version: .v3, extensionData: [])), 0),
+			.header(.version(VersionPacket(version: .v4, extensionData: [])), 0),
 		]))
 
 		XCTAssertNoThrow(try ByteToMessageDecoderVerifier.verifyDecoder(inputOutputPairs: expectedInOuts,
@@ -103,7 +103,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 		]), [
-			.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '0'"))),
+			.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '0'")), 0),
 		]))
 
 		// Invalid packet type with recoverable length (alternate)
@@ -113,7 +113,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 			// Packet Type (UInt8: 255)
 			0xFF,
 		]), [
-			.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '255'"))),
+			.header(.nopDebug(NOPDebugPacket(message: "Unknown packet type '255'")), 0),
 		]))
 
 		XCTAssertNoThrow(try ByteToMessageDecoderVerifier.verifyDecoder(inputOutputPairs: expectedInOuts,
@@ -172,7 +172,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 
 		channel.pipeline.fireChannelRead(NIOAny(buffer))
 		let messagePart: MessagePart? = try channel.readInbound()
-		XCTAssertEqual(messagePart, .header(.close(ClosePacket(id: 2, handle: "a"))))
+		XCTAssertEqual(messagePart, .header(.close(ClosePacket(id: 2, handle: "a")), 1))
 		XCTAssertThrowsError(try channel.throwIfErrorCaught()) { error in
 			XCTAssert(error is SftpPacketDecoder.DecoderError)
 			XCTAssertEqual(error as! SftpPacketDecoder.DecoderError, SftpPacketDecoder.DecoderError.leftoverPacketBytes(mismatchLength: 1))
@@ -205,7 +205,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 		channel.pipeline.fireChannelRead(NIOAny(buffer))
 
 		let messagePartHeader: MessagePart? = try channel.readInbound()
-		XCTAssertEqual(messagePartHeader, .header(.write(WritePacket(id: 2, handle: "a", offset: 10))))
+		XCTAssertEqual(messagePartHeader, .header(.write(WritePacket(id: 2, handle: "a", offset: 10)), 16))
 		XCTAssertNoThrow(try channel.throwIfErrorCaught())
 
 		let messagePartBody: MessagePart? = try channel.readInbound()
@@ -238,7 +238,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 
 		channel.pipeline.fireChannelRead(NIOAny(buffer))
 		let messagePartHeader: MessagePart? = try channel.readInbound()
-		XCTAssertEqual(messagePartHeader, .header(.write(WritePacket(id: 2, handle: "a", offset: 10))))
+		XCTAssertEqual(messagePartHeader, .header(.write(WritePacket(id: 2, handle: "a", offset: 10)), 16))
 		XCTAssertNoThrow(try channel.throwIfErrorCaught())
 
 		buffer.moveWriterIndex(to: 0)

@@ -18,7 +18,7 @@ public class SftpPacketEncoder: MessageToByteEncoder {
 
 	public func encode(data: OutboundIn, out: inout ByteBuffer) throws {
 		switch data {
-		case let .header(packet):
+		case let .header(packet, bodyLength):
 			// Serialize and write a packet
 
 			// Ignore packets that aren't meant to go over the wire
@@ -32,11 +32,13 @@ public class SftpPacketEncoder: MessageToByteEncoder {
 			switch serializer.serialize(packet: packet, to: &payloadBuffer) {
 			case .none:
 				// Successful serialization. Write payload to buffer with packet information
-				precondition(UInt32(exactly: payloadBuffer.readableBytes + 1) != nil)
-				let packetLength: UInt32 = UInt32(exactly: payloadBuffer.readableBytes + 1)!
+				let packetTypeAndHeaderLength = UInt32(exactly: 1 + payloadBuffer.readableBytes)
+				precondition(packetTypeAndHeaderLength != nil)
+				let packetLength = UInt32(exactly: packetTypeAndHeaderLength! + bodyLength)
+				precondition(packetLength != nil)
 				let packetTypeInt: UInt8 = packetType.rawValue
 
-				out.writeInteger(packetLength, endianness: .big, as: UInt32.self)
+				out.writeInteger(packetLength!, endianness: .big, as: UInt32.self)
 				out.writeInteger(packetTypeInt, endianness: .big, as: UInt8.self)
 				out.writeBuffer(&payloadBuffer)
 				return
