@@ -60,7 +60,7 @@ class ClientChannelHandler: ChannelInboundHandler {
 	public func channelActive(context: ChannelHandlerContext) {
 		print("channelActive. sending init")
 		let request = InitializePacketV3(version: .v3, extensionData: [])
-		_ = context.write(self.wrapOutboundOut(.header(.initializeV3(request))))
+		_ = context.write(self.wrapOutboundOut(.header(.initializeV3(request), 0)))
 		context.flush()
 	}
 

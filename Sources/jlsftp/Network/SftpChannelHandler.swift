@@ -27,10 +27,16 @@ public class SftpChannelHandler: ChannelDuplexHandler {
 
 	private var state: State
 	private var shouldRead: Bool = false
+	internal var context: ChannelHandlerContext?
+	private var replyCancellable: AnyCancellable?
 
 	public init(server: SftpServer) {
 		self.server = server
 		self.state = .awaitingHeader
+
+		self.server.register(replyHandler: { message in
+			return self.reply(withMessage: message)
+		})
 	}
 
 	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
@@ -83,5 +89,57 @@ public class SftpChannelHandler: ChannelDuplexHandler {
 		if shouldRead {
 			context.read()
 		}
+	}
+
+	public func channelRegistered(context: ChannelHandlerContext) {
+		self.context = context
+		context.fireChannelRegistered()
+	}
+
+	public func channelUnregistered(context: ChannelHandlerContext) {
+		self.context = nil
+		context.fireChannelUnregistered()
+	}
+
+	private func reply(withMessage message: SftpMessage) -> EventLoopFuture<Void> {
+		guard let context = context else {
+			precondition(false)
+		}
+
+		// First, write the header to the wire.
+		let data = self.wrapOutboundOut(.header(message.packet, message.totalBodyBytes))
+		let headerFuture = context.write(data)
+
+		// Next, set up the Combine sink for data to write to the wire, if any.
+		let endPromise = context.eventLoop.makePromise(of: Void.self)
+		if message.totalBodyBytes > 0 {
+			var bodyFutures: [EventLoopFuture<Void>] = []
+
+			let cancellable = message.data.futureSink(
+				maxConcurrent: 10,
+				receiveCompletion: { completion in
+					// When the sink completed, send a .end, add a new future for
+					// this operation, and succeed the aforementioned promise so
+					// that the fold can complete when endFuture finishes.
+					let endFuture = context.write(self.wrapOutboundOut(.end))
+					_ = endFuture.fold(bodyFutures, with: { _, _ in self.context!.eventLoop.makeSucceededFuture(()) }).always { _ in
+						endPromise.succeed(())
+					}
+				},
+				receiveValue: { buffer in
+					// When data arrives from the message, send it over the wire
+					// and track the future.
+					let future = context.write(self.wrapOutboundOut(.body(buffer)))
+					bodyFutures.append(future)
+					return future
+				})
+			// Store the cancellable so it doesn't self-cancel when this returns
+			self.replyCancellable = cancellable
+		} else {
+			endPromise.succeed(())
+		}
+
+		// Send a folded future for when all writes to the context finish.
+		return headerFuture.and(endPromise.futureResult).map({ _ in () })
 	}
 }

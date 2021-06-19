@@ -16,7 +16,7 @@ class ServerChannelHandler: ChannelDuplexHandler {
 
 		let reply = StatusReplyPacket(id: 3, statusCode: .ok, errorMessage: "", languageTag: "en-US")
 
-		_ = context.write(self.wrapOutboundOut(.header(.statusReply(reply))))
+		_ = context.write(self.wrapOutboundOut(.header(.statusReply(reply), 0)))
 		context.flush()
 	}
 

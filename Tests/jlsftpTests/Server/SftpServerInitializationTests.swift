@@ -133,11 +133,14 @@ final class SftpServerInitializationTests: XCTestCase {
 		let serverV3 = CustomSftpServer(registerReplyHandlerHandler: { didRegisterReplyHandlerV3 = true })
 		let serverV4 = CustomSftpServer(registerReplyHandlerHandler: { didRegisterReplyHandlerV4 = true })
 		let logger = Logger(label: "test", factory: { _ in CustomLogHandler() })
+		let channel = EmbeddedChannel()
 
 		let initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3, .v4: serverV4])
 		XCTAssert(initialization != nil)
 
-		initialization!.register(replyHandler: { _ in })
+		initialization!.register(replyHandler: { _ in
+			return channel.eventLoop.makeSucceededFuture(())
+		})
 		XCTAssertEqual(didRegisterReplyHandlerV3, true)
 		XCTAssertEqual(didRegisterReplyHandlerV4, true)
 	}
@@ -155,7 +158,10 @@ final class SftpServerInitializationTests: XCTestCase {
 		var initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3, .v4: serverV4])
 		XCTAssert(initialization != nil)
 		var lastReplyMessage: Packet?
-		initialization!.register(replyHandler: { lastReplyMessage = $0 })
+		initialization!.register(replyHandler: {
+			lastReplyMessage = $0.packet
+			return channel.eventLoop.makeSucceededFuture(())
+		})
 
 		initialization!.handle(message: .init(packet: initV3Packet, dataLength: 0, shouldReadHandler: { _ in }), on: channel.eventLoop)
 		XCTAssertEqual(lastReplyMessage, .version(VersionPacket(version: .v3, extensionData: [])))
@@ -163,7 +169,10 @@ final class SftpServerInitializationTests: XCTestCase {
 		// V3-V4 with V4
 		lastReplyMessage = nil
 		initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3, .v4: serverV4])
-		initialization!.register(replyHandler: { lastReplyMessage = $0 })
+		initialization!.register(replyHandler: {
+			lastReplyMessage = $0.packet
+			return channel.eventLoop.makeSucceededFuture(())
+		})
 
 		initialization!.handle(message: .init(packet: initV4Packet, dataLength: 0, shouldReadHandler: { _ in }), on: channel.eventLoop)
 		XCTAssertEqual(lastReplyMessage, .version(VersionPacket(version: .v4, extensionData: [])))
@@ -171,7 +180,10 @@ final class SftpServerInitializationTests: XCTestCase {
 		// V3-V4 with V5
 		lastReplyMessage = nil
 		initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3, .v4: serverV4])
-		initialization!.register(replyHandler: { lastReplyMessage = $0 })
+		initialization!.register(replyHandler: {
+			lastReplyMessage = $0.packet
+			return channel.eventLoop.makeSucceededFuture(())
+		})
 
 		initialization!.handle(message: .init(packet: initV5Packet, dataLength: 0, shouldReadHandler: { _ in }), on: channel.eventLoop)
 		XCTAssertEqual(lastReplyMessage, .version(VersionPacket(version: .v4, extensionData: [])))
@@ -189,7 +201,10 @@ final class SftpServerInitializationTests: XCTestCase {
 		let initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3, .v4: serverV4])
 		XCTAssert(initialization != nil)
 		var lastReplyMessage: Packet?
-		initialization!.register(replyHandler: { lastReplyMessage = $0 })
+		initialization!.register(replyHandler: {
+			lastReplyMessage = $0.packet
+			return channel.eventLoop.makeSucceededFuture(())
+		})
 
 		initialization!.handle(message: .init(packet: initV3Packet, dataLength: 0, shouldReadHandler: { _ in }), on: channel.eventLoop)
 		XCTAssertEqual(lastReplyMessage, .version(VersionPacket(version: .v3, extensionData: [])))
@@ -218,7 +233,10 @@ final class SftpServerInitializationTests: XCTestCase {
 		XCTAssertEqual(didHandleMessageV4, false)
 		XCTAssert(lastReplyMessage == nil)
 
-		initialization!.register(replyHandler: { lastReplyMessage = $0 })
+		initialization!.register(replyHandler: {
+			lastReplyMessage = $0.packet
+			return channel.eventLoop.makeSucceededFuture(())
+		})
 		initialization!.handle(message: .init(packet: initV3Packet, dataLength: 0, shouldReadHandler: { _ in }), on: channel.eventLoop)
 		XCTAssertEqual(didHandleMessageV3, false)
 		XCTAssertEqual(didHandleMessageV4, false)
@@ -237,7 +255,10 @@ final class SftpServerInitializationTests: XCTestCase {
 		XCTAssertEqual(didHandleMessageV4, false)
 		XCTAssert(lastReplyMessage == nil)
 
-		initialization!.register(replyHandler: { lastReplyMessage = $0 })
+		initialization!.register(replyHandler: {
+			lastReplyMessage = $0.packet
+			return channel.eventLoop.makeSucceededFuture(())
+		})
 		initialization!.handle(message: .init(packet: initV4Packet, dataLength: 0, shouldReadHandler: { _ in }), on: channel.eventLoop)
 		XCTAssertEqual(didHandleMessageV3, false)
 		XCTAssertEqual(didHandleMessageV4, false)
@@ -256,7 +277,10 @@ final class SftpServerInitializationTests: XCTestCase {
 		XCTAssertEqual(didHandleMessageV4, false)
 		XCTAssert(lastReplyMessage == nil)
 
-		initialization!.register(replyHandler: { lastReplyMessage = $0 })
+		initialization!.register(replyHandler: {
+			lastReplyMessage = $0.packet
+			return channel.eventLoop.makeSucceededFuture(())
+		})
 		initialization!.handle(message: .init(packet: initV5Packet, dataLength: 0, shouldReadHandler: { _ in }), on: channel.eventLoop)
 		XCTAssertEqual(didHandleMessageV3, false)
 		XCTAssertEqual(didHandleMessageV4, false)

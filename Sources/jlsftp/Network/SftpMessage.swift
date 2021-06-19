@@ -9,20 +9,20 @@ import NIO
  */
 public class SftpMessage {
 
-	public enum SendDataError: Error {
+	public enum SendDataError: Error, Equatable {
 		case tooMuchData(String)
 	}
 
 	public let packet: Packet
 	public let data: AnyPublisher<ByteBuffer, Never>
-
-	private let totalBytes: UInt32
+	public let totalBodyBytes: UInt32
+	
 	private var remainingBytes: UInt32
 	private var subject: DemandBridgeSubject<ByteBuffer, Never>
 
 	public init(packet: Packet, dataLength: UInt32, shouldReadHandler: @escaping DemandBridgeSubject<ByteBuffer, Never>.DemandHandler) {
 		self.packet = packet
-		self.totalBytes = dataLength
+		self.totalBodyBytes = dataLength
 		self.remainingBytes = dataLength
 		self.subject = DemandBridgeSubject<ByteBuffer, Never>(handler: shouldReadHandler)
 		self.data = subject
@@ -30,13 +30,13 @@ public class SftpMessage {
 			.eraseToAnyPublisher()
 	}
 
-	public func sendData(_ buffer: ByteBuffer) -> Result<Bool, Error> {
-		subject.send(buffer)
-
+	public func sendData(_ buffer: ByteBuffer) -> Result<Bool, SendDataError> {
 		if buffer.readableBytes > remainingBytes {
 			subject.send(completion: .finished)
 			return .failure(SendDataError.tooMuchData("Unexpected error: Too many bytes encountered in body of sftp packet"))
 		}
+
+		subject.send(buffer)
 
 		remainingBytes -= UInt32(buffer.readableBytes)
 		if remainingBytes == 0 {

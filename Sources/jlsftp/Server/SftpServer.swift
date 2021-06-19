@@ -1,7 +1,7 @@
 import Foundation
 import NIO
 
-public typealias ReplyHandler = (Packet) -> ()
+public typealias ReplyHandler = (SftpMessage) -> EventLoopFuture<Void>
 
 public protocol SftpServer {
 	func register(replyHandler: @escaping ReplyHandler)

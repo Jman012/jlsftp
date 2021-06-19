@@ -6,6 +6,8 @@ class CustomSftpServer: SftpServer {
 	var registerReplyHandlerHandler: (() -> Void)?
 	var handleMessageHandler: ((SftpMessage) -> ())?
 
+	var registeredReplyHandler: ReplyHandler?
+
 	var replyHandler: ReplyHandler?
 
 	init() {
@@ -29,6 +31,7 @@ class CustomSftpServer: SftpServer {
 	}
 
 	func register(replyHandler: @escaping ReplyHandler) {
+		registeredReplyHandler = replyHandler
 		registerReplyHandlerHandler?()
 		self.replyHandler = replyHandler
 	}

@@ -60,12 +60,12 @@ final class SftpPacketDecoderTests: XCTestCase {
 			0x00, 0x00, 0x00, 0x00,
 		])
 
-		channel.pipeline.fireChannelRead(NIOAny(buffer))
-		XCTAssertNoThrow(XCTAssertNil(try channel.readInbound()))
-		XCTAssertThrowsError(try channel.throwIfErrorCaught()) { error in
+		XCTAssertThrowsError(try channel.writeInbound(buffer)) { error in
 			XCTAssert(error is SftpPacketDecoder.DecoderError)
 			XCTAssertEqual(error as! SftpPacketDecoder.DecoderError, SftpPacketDecoder.DecoderError.emptyPacketPossiblyCorrupt)
 		}
+		XCTAssertNoThrow(XCTAssertNil(try channel.readInbound()))
+		XCTAssert(try! channel.finish().isClean)
 	}
 
 	/// Tests that malicious lengths with unknown types are handled correctly.
@@ -81,12 +81,12 @@ final class SftpPacketDecoderTests: XCTestCase {
 			0x00,
 		])
 
-		channel.pipeline.fireChannelRead(NIOAny(buffer))
-		XCTAssertNoThrow(XCTAssertNil(try channel.readInbound()))
-		XCTAssertThrowsError(try channel.throwIfErrorCaught()) { error in
+		XCTAssertThrowsError(try channel.writeInbound(buffer)) { error in
 			XCTAssert(error is SftpPacketDecoder.DecoderError)
 			XCTAssertEqual(error as! SftpPacketDecoder.DecoderError, SftpPacketDecoder.DecoderError.unknownPacketTypePossiblyMalicious(packetLength: 10001, packetTypeInt: 0))
 		}
+		XCTAssertNoThrow(XCTAssertNil(try channel.readInbound()))
+		XCTAssert(try! channel.finish().isClean)
 	}
 
 	/// Tests that unknown packet types with lenient payloads are passed on.
@@ -141,12 +141,12 @@ final class SftpPacketDecoderTests: XCTestCase {
 			0xFF,
 		])
 
-		channel.pipeline.fireChannelRead(NIOAny(buffer))
-		XCTAssertNoThrow(XCTAssertNil(try channel.readInbound()))
-		XCTAssertThrowsError(try channel.throwIfErrorCaught()) { error in
+		XCTAssertThrowsError(try channel.writeInbound(buffer)) { error in
 			XCTAssert(error is SftpPacketDecoder.DecoderError)
 			XCTAssertEqual(error as! SftpPacketDecoder.DecoderError, SftpPacketDecoder.DecoderError.deserializationError(errorMessage: "Failed to deserialize handle: Invalid UTF8 string data"))
 		}
+		XCTAssertNoThrow(XCTAssertNil(try channel.readInbound()))
+		XCTAssert(try! channel.finish().isClean)
 	}
 
 	/// Tests that leftover bytes are handled correctly.
@@ -170,13 +170,13 @@ final class SftpPacketDecoderTests: XCTestCase {
 			0xFF,
 		])
 
-		channel.pipeline.fireChannelRead(NIOAny(buffer))
-		let messagePart: MessagePart? = try channel.readInbound()
-		XCTAssertEqual(messagePart, .header(.close(ClosePacket(id: 2, handle: "a")), 1))
-		XCTAssertThrowsError(try channel.throwIfErrorCaught()) { error in
+		XCTAssertThrowsError(try channel.writeInbound(buffer)) { error in
 			XCTAssert(error is SftpPacketDecoder.DecoderError)
 			XCTAssertEqual(error as! SftpPacketDecoder.DecoderError, SftpPacketDecoder.DecoderError.leftoverPacketBytes(mismatchLength: 1))
 		}
+		let messagePart: MessagePart? = try channel.readInbound()
+		XCTAssertEqual(messagePart, .header(.close(ClosePacket(id: 2, handle: "a")), 1))
+		XCTAssert(try! channel.finish().isClean)
 	}
 
 	func testValidBodyAllAtOnce() throws {
@@ -202,7 +202,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 			0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
 		])
 
-		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		try! channel.writeInbound(buffer)
 
 		let messagePartHeader: MessagePart? = try channel.readInbound()
 		XCTAssertEqual(messagePartHeader, .header(.write(WritePacket(id: 2, handle: "a", offset: 10)), 16))
@@ -214,6 +214,11 @@ final class SftpPacketDecoderTests: XCTestCase {
 			0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
 		])))
 		XCTAssertNoThrow(try channel.throwIfErrorCaught())
+
+		let messagePartEnd: MessagePart? = try channel.readInbound()
+		XCTAssertEqual(messagePartEnd, .end)
+
+		XCTAssert(try! channel.finish().isClean)
 	}
 
 	func testValidBodyIncremental() throws {
@@ -236,7 +241,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A,
 		])
 
-		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		try! channel.writeInbound(buffer)
 		let messagePartHeader: MessagePart? = try channel.readInbound()
 		XCTAssertEqual(messagePartHeader, .header(.write(WritePacket(id: 2, handle: "a", offset: 10)), 16))
 		XCTAssertNoThrow(try channel.throwIfErrorCaught())
@@ -245,7 +250,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 		buffer.writeBytes([
 			0x00,
 		])
-		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		try! channel.writeInbound(buffer)
 		var messagePartBody: MessagePart? = try channel.readInbound()
 		XCTAssertEqual(messagePartBody, .body(ByteBuffer(bytes: [
 			0x00,
@@ -255,7 +260,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 		buffer.writeBytes([
 			0x11, 0x22,
 		])
-		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		try! channel.writeInbound(buffer)
 		messagePartBody = try channel.readInbound()
 		XCTAssertEqual(messagePartBody, .body(ByteBuffer(bytes: [
 			0x11, 0x22,
@@ -265,12 +270,12 @@ final class SftpPacketDecoderTests: XCTestCase {
 		buffer.writeBytes([
 			0x33, 0x44,
 		])
-		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		try! channel.writeInbound(buffer)
 		buffer.moveWriterIndex(to: 0)
 		buffer.writeBytes([
 			0x55, 0x66,
 		])
-		channel.pipeline.fireChannelRead(NIOAny(buffer))
+		try! channel.writeInbound(buffer)
 		messagePartBody = try channel.readInbound()
 		XCTAssertEqual(messagePartBody, .body(ByteBuffer(bytes: [
 			0x33, 0x44,
@@ -279,6 +284,21 @@ final class SftpPacketDecoderTests: XCTestCase {
 		XCTAssertEqual(messagePartBody, .body(ByteBuffer(bytes: [
 			0x55, 0x66,
 		])))
+
+		buffer.moveWriterIndex(to: 0)
+		buffer.writeBytes([
+			0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
+		])
+		try! channel.writeInbound(buffer)
+		messagePartBody = try channel.readInbound()
+		XCTAssertEqual(messagePartBody, .body(ByteBuffer(bytes: [
+			0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
+		])))
+
+		let messagePartEnd: MessagePart? = try channel.readInbound()
+		XCTAssertEqual(messagePartEnd, .end)
+		
+		XCTAssert(try channel.finish().isClean)
 	}
 
 	func testDecoderError() {

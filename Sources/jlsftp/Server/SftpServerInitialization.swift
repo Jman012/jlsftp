@@ -66,7 +66,7 @@ extension SftpServerInitialization: SftpServer {
 				self.state = .initialized(version: lowestVersion, handler: self.versionedServers[lowestVersion]!)
 				logger.info("Initiated SFTP session at version \(lowestVersion.rawValue) (client=\(initializePacketV3.version.rawValue), server=\(maximumSupportedVersion().rawValue))")
 				self.bootstrappedServer = versionedServers[lowestVersion]
-				self.replyHandler?(.version(VersionPacket(version: lowestVersion, extensionData: [])))
+				_ = self.replyHandler?(SftpMessage(packet: .version(VersionPacket(version: lowestVersion, extensionData: [])), dataLength: 0, shouldReadHandler: { _ in }))
 
 			case .initialized(version: _):
 				// Client sent initialized packet when we're already initialized.

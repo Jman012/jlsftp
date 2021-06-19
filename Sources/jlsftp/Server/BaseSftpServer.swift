@@ -53,10 +53,10 @@ extension BaseSftpServer {
 		future.whenSuccess({ nioFileHandle in
 			let sftpHandle = "test"
 			self.fileHandles[sftpHandle] = OpenFileHandle(path: packet.filename, handle: nioFileHandle)
-			self.replyHandler?(.handleReply(HandleReplyPacket(id: packet.id, handle: sftpHandle)))
+			_ = self.replyHandler?(SftpMessage(packet: .handleReply(HandleReplyPacket(id: packet.id, handle: sftpHandle)), dataLength: 0, shouldReadHandler: { _ in }))
 		})
 		future.whenFailure({ _ in
-			self.replyHandler?(.statusReply(StatusReplyPacket(id: packet.id, statusCode: .noSuchFile, errorMessage: "test", languageTag: "en-US")))
+			_ = self.replyHandler?(SftpMessage(packet: .statusReply(StatusReplyPacket(id: packet.id, statusCode: .noSuchFile, errorMessage: "test", languageTag: "en-US")), dataLength: 0, shouldReadHandler: { _ in }))
 		})
 	}
 
