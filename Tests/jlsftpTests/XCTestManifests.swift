@@ -5,7 +5,7 @@ public func allTests() -> [XCTestCaseEntry] {
 	return [
 		// Fields
 		// Network
-		testCase(SftpChannelHandlerTests.allTests),
+		testCase(SftpServerChannelHandlerTests.allTests),
 		testCase(SftpPacketDecoderTests.allTests),
 		testCase(SftpPacketEncoderTests.allTests),
 		// Packets

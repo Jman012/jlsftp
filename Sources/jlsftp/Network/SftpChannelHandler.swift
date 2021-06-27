@@ -8,7 +8,7 @@ import NIO
  `SftpServer` handler.
  This also ports the Combine backpressure to the NIO backpressure mechanisms.
  */
-public class SftpChannelHandler: ChannelDuplexHandler {
+public class SftpServerChannelHandler: ChannelDuplexHandler {
 	public typealias InboundIn = MessagePart
 	public typealias InboundOut = Never
 	public typealias OutboundIn = Never

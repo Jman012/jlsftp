@@ -5,7 +5,7 @@ import NIO
 
 /// Tests that the handler passes on message parts to the server as messages
 /// correctly.
-final class SftpChannelHandlerTests: XCTestCase {
+final class SftpServerChannelHandlerTests: XCTestCase {
 
 	func testValid() {
 		let channel = EmbeddedChannel()
@@ -16,7 +16,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 				lastHandledMessage = message
 				return currentHandleMessagePromise.futureResult
 		})
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 		// Test a single header-only packet
@@ -78,7 +78,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 				lastHandledMessage = message
 				return currentHandleMessagePromise.futureResult
 		})
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -102,7 +102,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 				lastHandledMessage = message
 				return currentHandleMessagePromise.futureResult
 		})
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -117,8 +117,8 @@ final class SftpChannelHandlerTests: XCTestCase {
 		lastHandledMessage = nil
 		messagePart = .header(.status(StatusPacket(id: 2, path: "a")), 0)
 		XCTAssertThrowsError(try channel.writeInbound(messagePart)) { error in
-			XCTAssert(error is SftpChannelHandler.HandlerError)
-			switch error as! SftpChannelHandler.HandlerError {
+			XCTAssert(error is SftpServerChannelHandler.HandlerError)
+			switch error as! SftpServerChannelHandler.HandlerError {
 			case .unexpected(messagePart, .processingMessage(_)):
 				break
 			default:
@@ -140,7 +140,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 				lastHandledMessage = message
 				return currentHandleMessagePromise.futureResult
 		})
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -154,8 +154,8 @@ final class SftpChannelHandlerTests: XCTestCase {
 		// Next, put in another header, expecting the error.
 		messagePart = .header(.close(.init(id: 2, handle: "b")), 0)
 		XCTAssertThrowsError(try channel.writeInbound(messagePart)) { error in
-			XCTAssert(error is SftpChannelHandler.HandlerError)
-			switch error as! SftpChannelHandler.HandlerError {
+			XCTAssert(error is SftpServerChannelHandler.HandlerError)
+			switch error as! SftpServerChannelHandler.HandlerError {
 			case .unexpected(messagePart, .awaitingFinishedReply(_)):
 				break
 			default:
@@ -177,7 +177,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 				lastHandledMessage = message
 				return currentHandleMessagePromise.futureResult
 		})
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -185,8 +185,8 @@ final class SftpChannelHandlerTests: XCTestCase {
 		let messagePart: MessagePart = .body(ByteBuffer(bytes: [0x01]))
 
 		XCTAssertThrowsError(try channel.writeInbound(messagePart)) { error in
-			XCTAssert(error is SftpChannelHandler.HandlerError)
-			switch error as! SftpChannelHandler.HandlerError {
+			XCTAssert(error is SftpServerChannelHandler.HandlerError)
+			switch error as! SftpServerChannelHandler.HandlerError {
 			case .unexpected(messagePart, .awaitingHeader):
 				break
 			default:
@@ -207,7 +207,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 				lastHandledMessage = message
 				return currentHandleMessagePromise.futureResult
 		})
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -220,8 +220,8 @@ final class SftpChannelHandlerTests: XCTestCase {
 		// Second, send random body data while it's unexpected (still awaiting header to finish)
 		messagePart = .body(ByteBuffer(bytes: [0x01]))
 		XCTAssertThrowsError(try channel.writeInbound(messagePart)) { error in
-			XCTAssert(error is SftpChannelHandler.HandlerError)
-			switch error as! SftpChannelHandler.HandlerError {
+			XCTAssert(error is SftpServerChannelHandler.HandlerError)
+			switch error as! SftpServerChannelHandler.HandlerError {
 			case .unexpected(messagePart, .awaitingFinishedReply(_)):
 				break
 			default:
@@ -243,7 +243,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 				lastHandledMessage = message
 				return currentHandleMessagePromise.futureResult
 		})
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -293,15 +293,15 @@ final class SftpChannelHandlerTests: XCTestCase {
 				lastHandledMessage = message
 				return currentHandleMessagePromise.futureResult
 		})
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
 		// Send a Body MessagePart when the channel is expecting a header
 		let messagePart: MessagePart = .end
 		XCTAssertThrowsError(try channel.writeInbound(messagePart)) { error in
-			XCTAssert(error is SftpChannelHandler.HandlerError)
-			switch error as! SftpChannelHandler.HandlerError {
+			XCTAssert(error is SftpServerChannelHandler.HandlerError)
+			switch error as! SftpServerChannelHandler.HandlerError {
 			case .unexpected(messagePart, .awaitingHeader):
 				break
 			default:
@@ -322,7 +322,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 				lastHandledMessage = message
 				return currentHandleMessagePromise.futureResult
 		})
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -335,8 +335,8 @@ final class SftpChannelHandlerTests: XCTestCase {
 		// Second, send a random end marker while it's unexpected (still awaiting header to finish)
 		messagePart = .end
 		XCTAssertThrowsError(try channel.writeInbound(messagePart)) { error in
-			XCTAssert(error is SftpChannelHandler.HandlerError)
-			switch error as! SftpChannelHandler.HandlerError {
+			XCTAssert(error is SftpServerChannelHandler.HandlerError)
+			switch error as! SftpServerChannelHandler.HandlerError {
 			case .unexpected(messagePart, .awaitingFinishedReply(_)):
 				break
 			default:
@@ -352,7 +352,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 	func testValidReplyHeader() {
 		let channel = EmbeddedChannel()
 		let customServer = CustomSftpServer()
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 		XCTAssertNoThrow(try channel.pipeline.register().wait())
 
@@ -370,7 +370,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 	func testValidReplyBody() {
 		let channel = EmbeddedChannel()
 		let customServer = CustomSftpServer()
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 		XCTAssertNoThrow(try channel.pipeline.register().wait())
 
@@ -407,7 +407,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 	func testValidReplyBodyVariant() {
 		let channel = EmbeddedChannel()
 		let customServer = CustomSftpServer()
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 		XCTAssertNoThrow(try channel.pipeline.register().wait())
 
@@ -442,7 +442,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 	}
 
 	func testErrorMessageCustom() {
-		let data: [SftpChannelHandler.HandlerError] = [
+		let data: [SftpServerChannelHandler.HandlerError] = [
 			//.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .awaitingHeader),
 			.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .processingMessage(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
 			.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .awaitingFinishedReply(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
@@ -463,7 +463,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 	}
 
 	func testErrorMessageDefault() {
-		let dataDefault: [SftpChannelHandler.HandlerError] = [
+		let dataDefault: [SftpServerChannelHandler.HandlerError] = [
 			.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .awaitingHeader),
 			//.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .processingMessage(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
 			//.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .awaitingFinishedReply(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
