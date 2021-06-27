@@ -4,7 +4,7 @@ import NIO
 
 class CustomSftpServer: SftpServer {
 	var registerReplyHandlerHandler: (() -> Void)?
-	var handleMessageHandler: ((SftpMessage) -> ())?
+	var handleMessageHandler: ((SftpMessage) -> EventLoopFuture<Void>)?
 
 	var registeredReplyHandler: ReplyHandler?
 
@@ -20,12 +20,12 @@ class CustomSftpServer: SftpServer {
 		self.handleMessageHandler = nil
 	}
 
-	init(handleMessageHandler: @escaping (SftpMessage) -> Void) {
+	init(handleMessageHandler: @escaping (SftpMessage) -> EventLoopFuture<Void>) {
 		self.registerReplyHandlerHandler = nil
 		self.handleMessageHandler = handleMessageHandler
 	}
 
-	init(registerReplyHandlerHandler: @escaping () -> Void, handleMessageHandler: @escaping (SftpMessage) -> Void) {
+	init(registerReplyHandlerHandler: @escaping () -> Void, handleMessageHandler: @escaping (SftpMessage) -> EventLoopFuture<Void>) {
 		self.registerReplyHandlerHandler = registerReplyHandlerHandler
 		self.handleMessageHandler = handleMessageHandler
 	}
@@ -36,7 +36,7 @@ class CustomSftpServer: SftpServer {
 		self.replyHandler = replyHandler
 	}
 
-	func handle(message: SftpMessage, on _: EventLoop) {
-		handleMessageHandler?(message)
+	func handle(message: SftpMessage, on eventLoop: EventLoop) -> EventLoopFuture<Void> {
+		return handleMessageHandler?(message) ?? eventLoop.makeSucceededFuture(())
 	}
 }

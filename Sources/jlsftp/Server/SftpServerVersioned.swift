@@ -7,19 +7,23 @@ public class SftpServerVersioned: BaseSftpServer {
 
 	public init(version: jlsftp.SftpProtocol.SftpVersion, threadPool: NIOThreadPool) {
 		supportedPacketTypes = jlsftp.SftpProtocol.PacketType.allPacketTypes(for: version)
-		super.init(threadPool: threadPool)
+		super.init(forVersion: version, threadPool: threadPool)
 	}
 
-	override public func handle(message: SftpMessage, on eventLoop: EventLoop) {
-		guard let packetType = message.packet.packetType else {
-			// TODO: Error handle
-			return
-		}
-		guard supportedPacketTypes.contains(packetType) else {
-			// TODO: Error handle
-			return
+	override public func handle(message: SftpMessage, on eventLoop: EventLoop) -> EventLoopFuture<Void> {
+		guard let replyHandler = replyHandler else {
+			preconditionFailure("In order to handle incoming sftp messages, a reply handler must be setup first, or else the server can not reply to the client.")
 		}
 
-		super.handle(message: message, on: eventLoop)
+		guard let packetType = message.packet.packetType else {
+			let errorReplyPacket: Packet = .statusReply(.init(id: 0 /* TODO? */, statusCode: .badMessage, errorMessage: "No-OP detected.", languageTag: "en-US"))
+			return replyHandler(SftpMessage(packet: errorReplyPacket, dataLength: 0, shouldReadHandler: { _ in }))
+		}
+		guard supportedPacketTypes.contains(packetType) else {
+			let errorReplyPacket: Packet = .statusReply(.init(id: 0 /* TODO? */, statusCode: .operationUnsupported, errorMessage: "The message is unsupported for sftp \(self.version)", languageTag: "en-US"))
+			return replyHandler(SftpMessage(packet: errorReplyPacket, dataLength: 0, shouldReadHandler: { _ in }))
+		}
+
+		return super.handle(message: message, on: eventLoop)
 	}
 }

@@ -12,5 +12,8 @@ extension jlsftp.SftpProtocol {
 		public static func < (lhs: Self, rhs: Self) -> Bool {
 			return lhs.rawValue < rhs.rawValue
 		}
+
+		public static let min: SftpVersion = .v3
+		public static let max: SftpVersion = .v6
 	}
 }

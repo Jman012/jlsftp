@@ -146,13 +146,14 @@ final class SftpServerInitializationTests: XCTestCase {
 	}
 
 	func testInitializationVersion() {
-		let serverV3 = CustomSftpServer(handleMessageHandler: { _ in })
-		let serverV4 = CustomSftpServer(handleMessageHandler: { _ in })
+		let channel = EmbeddedChannel()
+		let completedFuture = channel.eventLoop.makeSucceededFuture(())
+		let serverV3 = CustomSftpServer(handleMessageHandler: { _ in completedFuture })
+		let serverV4 = CustomSftpServer(handleMessageHandler: { _ in completedFuture })
 		let logger = Logger(label: "test", factory: { _ in CustomLogHandler() })
 		let initV3Packet: Packet = .initializeV3(InitializePacketV3(version: .v3, extensionData: []))
 		let initV4Packet: Packet = .initializeV3(InitializePacketV3(version: .v4, extensionData: []))
 		let initV5Packet: Packet = .initializeV3(InitializePacketV3(version: .v5, extensionData: []))
-		let channel = EmbeddedChannel()
 
 		// V3-V4 with V3
 		var initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3, .v4: serverV4])
@@ -190,12 +191,13 @@ final class SftpServerInitializationTests: XCTestCase {
 	}
 
 	func testMultipleInitialization() {
-		let serverV3 = CustomSftpServer(handleMessageHandler: { _ in })
-		let serverV4 = CustomSftpServer(handleMessageHandler: { _ in })
+		let channel = EmbeddedChannel()
+		let completedFuture = channel.eventLoop.makeSucceededFuture(())
+		let serverV3 = CustomSftpServer(handleMessageHandler: { _ in completedFuture })
+		let serverV4 = CustomSftpServer(handleMessageHandler: { _ in completedFuture })
 		let logger = Logger(label: "test", factory: { _ in CustomLogHandler() })
 		let initV3Packet: Packet = .initializeV3(InitializePacketV3(version: .v3, extensionData: []))
 		let initV4Packet: Packet = .initializeV3(InitializePacketV3(version: .v4, extensionData: []))
-		let channel = EmbeddedChannel()
 
 		// V3-V4 with V3 then V4
 		let initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3, .v4: serverV4])
@@ -215,16 +217,23 @@ final class SftpServerInitializationTests: XCTestCase {
 	}
 
 	func testValid() {
+		let channel = EmbeddedChannel()
+		let completedFuture = channel.eventLoop.makeSucceededFuture(())
 		var didHandleMessageV3 = false, didHandleMessageV4 = false
 		var lastReplyMessage: Packet?
-		let serverV3 = CustomSftpServer(handleMessageHandler: { _ in didHandleMessageV3 = true })
-		let serverV4 = CustomSftpServer(handleMessageHandler: { _ in didHandleMessageV4 = true })
+		let serverV3 = CustomSftpServer(handleMessageHandler: { _ in
+			didHandleMessageV3 = true
+			return completedFuture
+		})
+		let serverV4 = CustomSftpServer(handleMessageHandler: { _ in
+			didHandleMessageV4 = true
+			return completedFuture
+		})
 		let logger = Logger(label: "test", factory: { _ in CustomLogHandler() })
 		let initV3Packet: Packet = .initializeV3(InitializePacketV3(version: .v3, extensionData: []))
 		let initV4Packet: Packet = .initializeV3(InitializePacketV3(version: .v4, extensionData: []))
 		let initV5Packet: Packet = .initializeV3(InitializePacketV3(version: .v5, extensionData: []))
 		let regularPacket: Packet = .status(.init(id: 1, path: "test"))
-		let channel = EmbeddedChannel()
 
 		// V3-V4 with V3
 		var initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3, .v4: serverV4])

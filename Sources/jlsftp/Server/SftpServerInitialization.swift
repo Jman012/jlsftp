@@ -22,7 +22,7 @@ public class SftpServerInitialization {
 			logger.critical("Could not initialize \(Self.Type.self): versionedServers is empty")
 			return nil
 		}
-		if versionedServers.keys.min()! != .v3 {
+		if versionedServers.keys.min()! != jlsftp.SftpProtocol.SftpVersion.min {
 			logger.critical("Could not initialize \(Self.Type.self): versionedServers does not have a minimum version of 3")
 			return nil
 		}
@@ -53,7 +53,11 @@ extension SftpServerInitialization: SftpServer {
 		}
 	}
 
-	public func handle(message: SftpMessage, on eventLoop: EventLoop) {
+	public func handle(message: SftpMessage, on eventLoop: EventLoop) -> EventLoopFuture<Void> {
+		guard let replyHandler = replyHandler else {
+			preconditionFailure("In order to handle incoming sftp messages, a reply handler must be setup first, or else the server can not reply to the client.")
+		}
+
 		logger.trace("\(Self.Type.self) handling packet: \(message.packet)")
 
 		switch message.packet {
@@ -66,15 +70,21 @@ extension SftpServerInitialization: SftpServer {
 				self.state = .initialized(version: lowestVersion, handler: self.versionedServers[lowestVersion]!)
 				logger.info("Initiated SFTP session at version \(lowestVersion.rawValue) (client=\(initializePacketV3.version.rawValue), server=\(maximumSupportedVersion().rawValue))")
 				self.bootstrappedServer = versionedServers[lowestVersion]
-				_ = self.replyHandler?(SftpMessage(packet: .version(VersionPacket(version: lowestVersion, extensionData: [])), dataLength: 0, shouldReadHandler: { _ in }))
+				let versionReplyPacket: Packet = .version(VersionPacket(version: lowestVersion, extensionData: []))
+				return replyHandler(SftpMessage(packet: versionReplyPacket, dataLength: 0, shouldReadHandler: { _ in }))
 
 			case .initialized(version: _):
 				// Client sent initialized packet when we're already initialized.
 				logger.warning("Client sent initialization request after initialization was already complete. Requested version = \(initializePacketV3.version.rawValue)")
 				// Do nothing, since we shouldn't reply with a version packet.
+				return eventLoop.makeSucceededFuture(())
 			}
 		default:
-			self.bootstrappedServer?.handle(message: message, on: eventLoop)
+			guard let server = self.bootstrappedServer else {
+				let errorReplyPacket: Packet = .statusReply(.init(id: 0 /* TODO? */, statusCode: .badMessage, errorMessage: "An sftp message was received before proper sftp initialization was handled.", languageTag: "en-US"))
+				return replyHandler(SftpMessage(packet: errorReplyPacket, dataLength: 0, shouldReadHandler: { _ in }))
+			}
+			return server.handle(message: message, on: eventLoop)
 		}
 	}
 }

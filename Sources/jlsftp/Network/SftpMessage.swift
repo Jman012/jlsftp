@@ -16,7 +16,7 @@ public class SftpMessage {
 	public let packet: Packet
 	public let data: AnyPublisher<ByteBuffer, Never>
 	public let totalBodyBytes: UInt32
-	
+
 	private var remainingBytes: UInt32
 	private var subject: DemandBridgeSubject<ByteBuffer, Never>
 

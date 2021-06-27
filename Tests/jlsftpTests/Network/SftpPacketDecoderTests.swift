@@ -297,7 +297,7 @@ final class SftpPacketDecoderTests: XCTestCase {
 
 		let messagePartEnd: MessagePart? = try channel.readInbound()
 		XCTAssertEqual(messagePartEnd, .end)
-		
+
 		XCTAssert(try channel.finish().isClean)
 	}
 

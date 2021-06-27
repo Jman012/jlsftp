@@ -23,9 +23,9 @@ final class SftpMessageTests: XCTestCase {
 		var sinkHistory: [[UInt8]] = []
 		var customSink: CustomDemandSink<ByteBuffer, Never>!
 		withExtendedLifetime(SftpMessage(
-								packet: .initializeV3(.init(version: .v3, extensionData: [])),
-								dataLength: 20,
-								shouldReadHandler: { read in shouldReadHistory.append(read) })) { message in
+			packet: .initializeV3(.init(version: .v3, extensionData: [])),
+			dataLength: 20,
+			shouldReadHandler: { read in shouldReadHistory.append(read) })) { message in
 			// No change yet
 			XCTAssertEqual(shouldReadHistory, [])
 			XCTAssertEqual(sinkHistory, [])
