@@ -441,19 +441,46 @@ final class SftpChannelHandlerTests: XCTestCase {
 		XCTAssert(try! channel.finish().isClean)
 	}
 
-	func testReadState() {
-		let channel = EmbeddedChannel()
-		var currentHandleMessagePromise: EventLoopPromise<Void>!
-		var lastHandledMessage: SftpMessage?
-		let customServer = CustomSftpServer(
-			handleMessageHandler: { message in
-				lastHandledMessage = message
-				return currentHandleMessagePromise.futureResult
-		})
-		let sftpChannelHandler = SftpChannelHandler(server: customServer)
+	func testErrorMessageCustom() {
+		let data: [SftpChannelHandler.HandlerError] = [
+			//.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .awaitingHeader),
+			.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .processingMessage(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+			.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .awaitingFinishedReply(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
 
-		let messagePart: MessagePart = .header(.close(.init(id: 1, handle: "a")), 0)
-		channel.read()
+			.unexpected(.body(ByteBuffer(bytes: [0x01])), .awaitingHeader),
+			//.unexpected(.body(ByteBuffer(bytes: [0x01])), .processingMessage(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+			.unexpected(.body(ByteBuffer(bytes: [0x01])), .awaitingFinishedReply(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+
+			.unexpected(.end, .awaitingHeader),
+			//.unexpected(.end, .processingMessage(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+			.unexpected(.end, .awaitingFinishedReply(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+		]
+
+		for datum in data {
+			XCTAssertNotEqual(datum.description, "An unexpected error occurred, but the state does not make sense.")
+			XCTAssert(datum.description.count > 0)
+		}
+	}
+
+	func testErrorMessageDefault() {
+		let dataDefault: [SftpChannelHandler.HandlerError] = [
+			.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .awaitingHeader),
+			//.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .processingMessage(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+			//.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .awaitingFinishedReply(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+
+			//.unexpected(.body(ByteBuffer(bytes: [0x01])), .awaitingHeader),
+			.unexpected(.body(ByteBuffer(bytes: [0x01])), .processingMessage(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+			//.unexpected(.body(ByteBuffer(bytes: [0x01])), .awaitingFinishedReply(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+
+			//.unexpected(.end, .awaitingHeader),
+			.unexpected(.end, .processingMessage(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+			//.unexpected(.end, .awaitingFinishedReply(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
+		]
+
+		for datum in dataDefault {
+			XCTAssertEqual(datum.description, "An unexpected error occurred, but the state does not make sense.")
+			XCTAssert(datum.description.count > 0)
+		}
 	}
 
 	static var allTests = [
@@ -469,6 +496,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 		("testValidReplyHeader", testValidReplyHeader),
 		("testValidReplyBody", testValidReplyBody),
 		("testValidReplyBodyVariant", testValidReplyBodyVariant),
-		("testReadState", testReadState),
+		("testErrorMessageCustom", testErrorMessageCustom),
+		("testErrorMessageDefault", testErrorMessageDefault),
 	]
 }
