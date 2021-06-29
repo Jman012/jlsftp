@@ -483,6 +483,44 @@ final class SftpServerChannelHandlerTests: XCTestCase {
 		}
 	}
 
+	func testRead() {
+		var lastMessagReceived: SftpMessage!
+		var currentHandleMessagePromise: EventLoopPromise<Void>!
+		let customServer = CustomSftpServer(handleMessageHandler: { message in
+			lastMessagReceived = message
+			return currentHandleMessagePromise.futureResult
+		})
+		let sftpChannelHandler = SftpServerChannelHandler(server: customServer)
+		let readEventHitHandler = ReadEventHitHandler()
+		let channel = EmbeddedChannel()
+		XCTAssertNoThrow(try channel.pipeline.addHandlers([readEventHitHandler, sftpChannelHandler]).wait())
+		XCTAssertEqual(readEventHitHandler.readHitCounter, 0)
+
+		// State = awaitingHeader. Read should occur.
+		channel.read()
+		XCTAssertEqual(readEventHitHandler.readHitCounter, 1)
+
+		// State = awaitingFinishedReply. Read should not occur.
+		var messagePart: MessagePart = .header(.close(.init(id: 1, handle: "a")), 0)
+		currentHandleMessagePromise = channel.eventLoop.makePromise()
+		XCTAssertNoThrow(try channel.writeInbound(messagePart))
+		channel.read()
+		XCTAssertEqual(readEventHitHandler.readHitCounter, 1)
+		currentHandleMessagePromise.completeWith(.success(()))
+
+		// State = processingHeader and shouldRead = false
+		messagePart = .header(.dataReply(.init(id: 1)), 3)
+		currentHandleMessagePromise = channel.eventLoop.makePromise()
+		XCTAssertNoThrow(try channel.writeInbound(messagePart))
+		channel.read()
+		XCTAssertEqual(readEventHitHandler.readHitCounter, 1)
+
+		// State = processingHeader and shouldRead = true
+		_ = lastMessagReceived.data.sink(receiveValue: { _ in })
+		channel.read()
+		XCTAssertEqual(readEventHitHandler.readHitCounter, 2)
+	}
+
 	static var allTests = [
 		("testValid", testValid),
 		("testValidNop", testValidNop),
@@ -498,5 +536,6 @@ final class SftpServerChannelHandlerTests: XCTestCase {
 		("testValidReplyBodyVariant", testValidReplyBodyVariant),
 		("testErrorMessageCustom", testErrorMessageCustom),
 		("testErrorMessageDefault", testErrorMessageDefault),
+		("testRead", testRead),
 	]
 }

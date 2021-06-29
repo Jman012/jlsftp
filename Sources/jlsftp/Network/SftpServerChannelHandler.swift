@@ -101,6 +101,7 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 		case let .header(packet, bodyLength):
 			switch state {
 			case .awaitingHeader:
+				self.shouldRead = false
 				let sftpMessage = SftpMessage(
 					packet: packet,
 					dataLength: bodyLength,
@@ -180,6 +181,14 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 		context.fireChannelUnregistered()
 	}
 
+	/**
+	 From the `SftpServer`, sends an outbound reply to the client via the socket
+	 with the contents of the `SftpMessage` and any body data written to the
+	 message's Combine subject.
+
+	 - Returns: A future that completes when the header and body data, if any,
+	   are completely written to the outbound.
+	*/
 	private func reply(withMessage message: SftpMessage) -> EventLoopFuture<Void> {
 		guard let context = context else {
 			precondition(false)
