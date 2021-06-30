@@ -458,7 +458,7 @@ final class SftpServerChannelHandlerTests: XCTestCase {
 
 		for datum in data {
 			XCTAssertNotEqual(datum.description, "An unexpected error occurred, but the state does not make sense.")
-			XCTAssert(datum.description.count > 0)
+			XCTAssert(!datum.description.isEmpty)
 		}
 	}
 
@@ -479,7 +479,7 @@ final class SftpServerChannelHandlerTests: XCTestCase {
 
 		for datum in dataDefault {
 			XCTAssertEqual(datum.description, "An unexpected error occurred, but the state does not make sense.")
-			XCTAssert(datum.description.count > 0)
+			XCTAssert(!datum.description.isEmpty)
 		}
 	}
 

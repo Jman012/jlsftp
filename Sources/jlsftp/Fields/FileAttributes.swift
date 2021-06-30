@@ -8,6 +8,15 @@ public struct FileAttributes {
 	let accessDate: Date?
 	let modifyDate: Date?
 	let extensionData: [ExtensionData]
+
+	static let empty: FileAttributes = .init(
+		sizeBytes: nil,
+		userId: nil,
+		groupId: nil,
+		permissions: nil,
+		accessDate: nil,
+		modifyDate: nil,
+		extensionData: [])
 }
 
 extension FileAttributes: Equatable {}
