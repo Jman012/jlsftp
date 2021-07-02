@@ -4,12 +4,16 @@ import NIO
 
 public class BaseSftpServer: SftpServer {
 
+	public enum HandleError: Error {
+		case noReplyHandlerSetup
+	}
+
+	let version: jlsftp.SftpProtocol.SftpVersion
 	let threadPool: NIOThreadPool
+	let allocator = ByteBufferAllocator()
 
 	var sftpFileHandles = SftpFileHandleCollection()
 	var replyHandler: ReplyHandler?
-	let version: jlsftp.SftpProtocol.SftpVersion
-	let allocator = ByteBufferAllocator()
 
 	public init(forVersion version: jlsftp.SftpProtocol.SftpVersion, threadPool: NIOThreadPool) {
 		self.threadPool = threadPool
@@ -22,18 +26,73 @@ public class BaseSftpServer: SftpServer {
 
 	public func handle(message: SftpMessage, on eventLoop: EventLoop) -> EventLoopFuture<Void> {
 		guard let replyHandler = replyHandler else {
-			preconditionFailure("In order to handle incoming sftp messages, a reply handler must be setup first, or else the server can not reply to the client.")
+			return eventLoop.makeFailedFuture(HandleError.noReplyHandlerSetup)
+		}
+
+		let operationNotSupported: (UInt32) -> EventLoopFuture<Void> = { id in
+			let statusReply: Packet = .statusReply(.init(id: id, statusCode: .operationUnsupported, errorMessage: "The operation is not supported", languageTag: "en-US"))
+			return replyHandler(SftpMessage(packet: statusReply, dataLength: 0, shouldReadHandler: { _ in }))
 		}
 
 		switch message.packet {
+		case .initializeV3:
+			return operationNotSupported(0)
+		case .initializeV4:
+			return operationNotSupported(0)
+		case .version:
+			return operationNotSupported(0)
 		case let .open(packet):
 			return handleOpen(packet: packet, on: eventLoop, using: replyHandler)
 		case let .close(packet):
 			return handleClose(packet: packet, on: eventLoop, using: replyHandler)
+		case let .read(packet):
+			return handleRead(packet: packet, on: eventLoop, using: replyHandler)
 		case let .write(packet):
 			return handleWrite(packet: packet, dataPublisher: message.data, on: eventLoop, using: replyHandler)
-		default:
-			preconditionFailure() // TODO: Complete all packet handlers above, and remove default case.
+		case let .linkStatus(packet):
+			return operationNotSupported(packet.id)
+		case let .handleStatus(packet):
+			return operationNotSupported(packet.id)
+		case let .setStatus(packet):
+			return operationNotSupported(packet.id)
+		case let .setHandleStatus(packet):
+			return operationNotSupported(packet.id)
+		case let .openDirectory(packet):
+			return operationNotSupported(packet.id)
+		case let .readDirectory(packet):
+			return operationNotSupported(packet.id)
+		case let .remove(packet):
+			return operationNotSupported(packet.id)
+		case let .makeDirectory(packet):
+			return operationNotSupported(packet.id)
+		case let .removeDirectory(packet):
+			return operationNotSupported(packet.id)
+		case let .realPath(packet):
+			return operationNotSupported(packet.id)
+		case let .status(packet):
+			return operationNotSupported(packet.id)
+		case let .rename(packet):
+			return operationNotSupported(packet.id)
+		case let .readLink(packet):
+			return operationNotSupported(packet.id)
+		case let .createSymbolicLink(packet):
+			return operationNotSupported(packet.id)
+		case let .statusReply(packet):
+			return operationNotSupported(packet.id)
+		case let .handleReply(packet):
+			return operationNotSupported(packet.id)
+		case let .dataReply(packet):
+			return operationNotSupported(packet.id)
+		case let .nameReply(packet):
+			return operationNotSupported(packet.id)
+		case let .attributesReply(packet):
+			return operationNotSupported(packet.id)
+		case let .extended(packet):
+			return operationNotSupported(packet.id)
+		case let .extendedReply(packet):
+			return operationNotSupported(packet.id)
+		case .nopDebug:
+			return operationNotSupported(0)
 		}
 	}
 }
@@ -84,7 +143,7 @@ extension BaseSftpServer {
 		return replyHandler(SftpMessage(packet: successReply, dataLength: 0, shouldReadHandler: { _ in }))
 	}
 
-	public func handleRead(packet: ReadPacket, dataPublisher _: AnyPublisher<ByteBuffer, Never>, on eventLoop: EventLoop, using replyHandler: @escaping ReplyHandler) -> EventLoopFuture<Void> {
+	public func handleRead(packet: ReadPacket, on eventLoop: EventLoop, using replyHandler: @escaping ReplyHandler) -> EventLoopFuture<Void> {
 		guard let sftpFileHandle = self.sftpFileHandles.getHandle(handleIdentifier: packet.handle) else {
 			let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .noSuchFile, errorMessage: "The handle being closed is not tracked by the server. Was it already closed?", languageTag: "en-US"))
 			return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
@@ -120,8 +179,8 @@ extension BaseSftpServer {
 			// But, cascate the replyHandler future to the future that we need to
 			// return now, to mark the end of the overall server handler call.
 			return nfio.readChunked(fileHandle: sftpFileHandle.nioHandle,
-									fromOffset: Int64(packet.offset), // TODO:
-									byteCount: Int(packet.length), // TODO:
+									fromOffset: Int64(packet.offset), // TODO: Handle this cast better. Possible overflow.
+									byteCount: Int(packet.length), // TODO: Handle this cast better. Possible overflow.
 									allocator: self.allocator,
 									eventLoop: eventLoop,
 									chunkHandler: { buffer in

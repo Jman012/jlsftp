@@ -11,6 +11,7 @@ public func allTests() -> [XCTestCaseEntry] {
 		// Packets
 		testCase(PacketTests.allTests),
 		// Server
+		testCase(BaseSftpServerTests.allTests),
 		testCase(SftpServerInitializationTests.allTests),
 		// SftpProtocol > Version_3 > Reply Handlers
 		testCase(DataReplyPacketSerializationHandlerTests.allTests),
