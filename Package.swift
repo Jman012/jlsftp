@@ -32,6 +32,7 @@ let package = Package(
 			name: "jlsftp",
 			dependencies: [
 				.product(name: "NIO", package: "swift-nio"),
+				.product(name: "NIOConcurrencyHelpers", package: "swift-nio"),
 				.product(name: "NIOExtras", package: "swift-nio-extras"),
 				.product(name: "NIOSSH", package: "swift-nio-ssh"),
 				.product(name: "Logging", package: "swift-log"),

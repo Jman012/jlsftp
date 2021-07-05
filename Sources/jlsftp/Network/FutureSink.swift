@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import NIO
+import NIOConcurrencyHelpers
 
 extension Publisher {
 
@@ -13,7 +14,7 @@ extension Publisher {
 	 */
 	func futureSink(
 		maxConcurrent: UInt,
-		receiveCompletion: @escaping (Subscribers.Completion<Failure>) -> Void,
+		receiveCompletion: @escaping (Subscribers.Completion<Failure>, [EventLoopFuture<Void>]) -> Void,
 		receiveValue: @escaping FutureSink<Self.Output, Self.Failure>.Handler
 	) -> AnyCancellable {
 		let futureSink = FutureSink(maxConcurrent: maxConcurrent, receiveCompletion: receiveCompletion, receiveValue: receiveValue)
@@ -32,24 +33,26 @@ public class FutureSink<Input, Failure: Error>: Cancellable {
 	/// The sink input value handler that returns a Future.
 	private let receiveValue: Handler
 	/// The sink completion handler.
-	private let receiveCompletion: (Subscribers.Completion<Failure>) -> Void
+	private let receiveCompletion: (Subscribers.Completion<Failure>, [EventLoopFuture<Void>]) -> Void
 
-	/// Internal tracker for how many Futures are current outstanding.
-	private var currentConcurrent: UInt = 0
+	/// Internal tracker for outstanding Futures.
+	private var currentFutures: [EventLoopFutureWrapper<Void>] = []
+	private var nextFutureId: UInt = 0
 	/// The subscription to the upstream publisher.
 	private var subscription: Subscription?
+	private var lock = NIOConcurrencyHelpers.Lock()
 
 	/**
 	 The current amount of demand for the upstream publisher, based on
 	 max and current Futures.
 	 */
 	private var currentDemand: Subscribers.Demand {
-		.max(Int(maxConcurrent - currentConcurrent))
+		.max(Int(maxConcurrent) - currentFutures.count)
 	}
 
 	public init(
 		maxConcurrent: UInt,
-		receiveCompletion: @escaping (Subscribers.Completion<Failure>) -> Void,
+		receiveCompletion: @escaping (Subscribers.Completion<Failure>, [EventLoopFuture<Void>]) -> Void,
 		receiveValue: @escaping Handler
 	) {
 		self.maxConcurrent = maxConcurrent
@@ -73,18 +76,47 @@ extension FutureSink: Subscriber {
 	public func receive(_ input: Input) -> Subscribers.Demand {
 		// If so, then send the input to the handler and track
 		// the returned Future.
-		currentConcurrent += 1
-		receiveValue(input).whenComplete { _ in
-			// When a Future is resolved, stop tracking it
-			self.currentConcurrent -= 1
+		let future = receiveValue(input)
+		var wrapper: EventLoopFutureWrapper<Void>!
+		lock.withLock {
+			let futureId = nextFutureId
+			nextFutureId &+= 1 // Ignore overflow.
+			wrapper = EventLoopFutureWrapper(future: future, id: futureId)
+			currentFutures.append(wrapper)
+		}
+		future.whenComplete { result in
+			self.lock.withLock {
+				// When a Future is resolved, stop tracking it
+				let index = self.currentFutures.firstIndex(of: wrapper)
+				self.currentFutures.remove(at: index!) // TODO
+			}
+
 			// And ask for the additional demand from upstream
 			self.subscription?.request(.max(1))
+
+			// Upon error, cancel sink
+			switch result {
+			case let .failure(error):
+				self.receive(completion: .failure(error as! Failure)) // TODO: fix force cast somehow.
+				self.cancel()
+			default:
+				break
+			}
 		}
 		// No additional demand.
 		return .none
 	}
 
 	public func receive(completion: Subscribers.Completion<Failure>) {
-		receiveCompletion(completion)
+		receiveCompletion(completion, self.currentFutures.map { $0.future })
+	}
+}
+
+fileprivate struct EventLoopFutureWrapper<T>: Equatable {
+	public let future: EventLoopFuture<T>
+	public let id: UInt
+
+	static func == (lhs: Self, rhs: Self) -> Bool {
+		return lhs.id == rhs.id
 	}
 }

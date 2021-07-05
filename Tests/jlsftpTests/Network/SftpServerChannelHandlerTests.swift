@@ -255,7 +255,7 @@ final class SftpServerChannelHandlerTests: XCTestCase {
 		XCTAssertNoThrow(try channel.throwIfErrorCaught())
 
 		XCTAssertNoThrow(
-			try withExtendedLifetime(lastHandledMessage!.data.sink(receiveValue: { _ in })) {
+			try withExtendedLifetime(lastHandledMessage!.data.sink(receiveCompletion: { _ in }, receiveValue: { _ in })) {
 				// Send a body of 2 bytes. Other tests ensure the bytes come through correctly.
 				messagePart = .body(ByteBuffer(bytes: [0x01, 0x02]))
 				XCTAssertNoThrow(try channel.writeInbound(messagePart))
@@ -516,9 +516,10 @@ final class SftpServerChannelHandlerTests: XCTestCase {
 		XCTAssertEqual(readEventHitHandler.readHitCounter, 1)
 
 		// State = processingHeader and shouldRead = true
-		_ = lastMessagReceived.data.sink(receiveValue: { _ in })
-		channel.read()
-		XCTAssertEqual(readEventHitHandler.readHitCounter, 2)
+		withExtendedLifetime(lastMessagReceived.data.sink(receiveCompletion: { _ in }, receiveValue: { _ in })) {
+			channel.read()
+			XCTAssertEqual(readEventHitHandler.readHitCounter, 2)
+		}
 	}
 
 	static var allTests = [

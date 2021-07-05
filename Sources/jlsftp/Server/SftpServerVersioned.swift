@@ -1,13 +1,14 @@
 import Foundation
 import NIO
+import Logging
 
 public class SftpServerVersioned: BaseSftpServer {
 
 	let supportedPacketTypes: Set<jlsftp.SftpProtocol.PacketType>
 
-	public init(version: jlsftp.SftpProtocol.SftpVersion, threadPool: NIOThreadPool) {
+	public init(version: jlsftp.SftpProtocol.SftpVersion, threadPool: NIOThreadPool, logger: Logger) {
 		supportedPacketTypes = jlsftp.SftpProtocol.PacketType.allPacketTypes(for: version)
-		super.init(forVersion: version, threadPool: threadPool)
+		super.init(forVersion: version, threadPool: threadPool, logger: logger)
 	}
 
 	override public func handle(message: SftpMessage, on eventLoop: EventLoop) -> EventLoopFuture<Void> {
