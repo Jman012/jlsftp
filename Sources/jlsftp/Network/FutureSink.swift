@@ -108,7 +108,9 @@ extension FutureSink: Subscriber {
 	}
 
 	public func receive(completion: Subscribers.Completion<Failure>) {
-		receiveCompletion(completion, self.currentFutures.map { $0.future })
+		lock.withLock {
+			receiveCompletion(completion, self.currentFutures.map { $0.future })
+		}
 	}
 }
 
