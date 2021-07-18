@@ -205,14 +205,16 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 
 			let cancellable = message.data.futureSink(
 				maxConcurrent: 10,
-				receiveCompletion: { _, _ in
+				eventLoop: context.eventLoop,
+				receiveCompletion: { _ in
 					// When the sink completed, send a .end, add a new future for
 					// this operation, and succeed the aforementioned promise so
 					// that the fold can complete when endFuture finishes.
 					let endFuture = context.write(self.wrapOutboundOut(.end))
-					_ = endFuture.fold(bodyFutures, with: { _, _ in self.context!.eventLoop.makeSucceededFuture(()) }).always { _ in
-						endPromise.succeed(())
-					}
+					context.flush()
+					endFuture
+						.fold(bodyFutures, with: { _, _ in self.context!.eventLoop.makeSucceededFuture(()) })
+						.cascade(to: endPromise)
 				},
 				receiveValue: { buffer in
 					// When data arrives from the message, send it over the wire

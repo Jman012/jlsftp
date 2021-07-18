@@ -35,7 +35,7 @@ extension BaseSftpServer {
 			let successMessage = SftpMessage(packet: .dataReply(.init(id: packet.id)),
 											 dataLength: effectiveReplyLength,
 											 shouldReadHandler: shouldReadHandler)
-			let overallSuccessPromise: EventLoopPromise<Void> = eventLoop.makePromise()
+			var overallSuccessPromise: EventLoopPromise<Void>!
 
 			var isFirstChunkRead = true
 			// This will call the chunkHandler 0 or more times, and then complete
@@ -54,6 +54,7 @@ extension BaseSftpServer {
 										// Begin sending the header on the first call.
 										if isFirstChunkRead {
 											isFirstChunkRead = false
+											overallSuccessPromise = eventLoop.makePromise()
 											replyHandler(successMessage).cascade(to: overallSuccessPromise)
 										}
 
@@ -79,7 +80,7 @@ extension BaseSftpServer {
 					return overallSuccessPromise.futureResult
 				}.flatMapError { error in
 					self.logger.warning("[\(packet.id)] Encountered error attempting to read file contents of handle '\(packet.handle)' ('\(sftpFileHandle.path)'): \(error)")
-					let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .failure, errorMessage: "Could not read from file", languageTag: "en-US"))
+					let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .failure, errorMessage: "Could not read from file: \(error)", languageTag: "en-US"))
 					return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
 				}
 		}.flatMapError { error in

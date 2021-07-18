@@ -19,7 +19,7 @@ final class FutureSinkTests: XCTestCase {
 		var receivedValues: [Int] = []
 
 		let passthroughSubj = PassthroughSubject<Int, Never>()
-		let futureSink = FutureSink<Int, Never>(maxConcurrent: 3, receiveCompletion: { _, _ in }, receiveValue: {
+		let futureSink = FutureSink<Int, Never>(maxConcurrent: 3, eventLoop: eventLoop, receiveCompletion: { _ in }, receiveValue: {
 			// Record the value
 			receivedValues.append($0)
 			// Make a new promise and track it
@@ -69,7 +69,8 @@ final class FutureSinkTests: XCTestCase {
 		var didComplete = false
 		let futureSink = FutureSink<Int, Error>(
 			maxConcurrent: 3,
-			receiveCompletion: { completion, outstandingFutures in
+			eventLoop: eventLoop,
+			receiveCompletion: { completion in
 				didComplete = true
 				switch completion {
 				case .finished:
@@ -77,7 +78,6 @@ final class FutureSinkTests: XCTestCase {
 				default:
 					XCTFail()
 				}
-				XCTAssert(outstandingFutures.isEmpty)
 			},
 			receiveValue: {
 				// Record the value
@@ -124,7 +124,7 @@ final class FutureSinkTests: XCTestCase {
 		XCTAssertEqual(promises.count, 0)
 	}
 
-	func testErrorCancelsOutstanding() { // TODO: duplicate. one with outstanding, one without.
+	func testErrorCancelsOutstanding() {
 		// Need an event loop for Futures
 		let eventLoop = EmbeddedEventLoop()
 		// Store received promises/futures in here
@@ -136,7 +136,8 @@ final class FutureSinkTests: XCTestCase {
 		var didComplete = false
 		let futureSink = FutureSink<Int, Error>(
 			maxConcurrent: 3,
-			receiveCompletion: { completion, outstandingFutures in
+			eventLoop: eventLoop,
+			receiveCompletion: { completion in
 				didComplete = true
 				switch completion {
 				case .finished:
@@ -146,7 +147,6 @@ final class FutureSinkTests: XCTestCase {
 				default:
 					XCTFail()
 				}
-				XCTAssertEqual(outstandingFutures.count, 1)
 			},
 			receiveValue: {
 				// Record the value

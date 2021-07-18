@@ -58,6 +58,66 @@ final class BaseSftpServerTests: XCTestCase {
 		}
 	}
 
+	func testHandleUnknownFile() {
+		__withServer { eventLoop, server in
+			// Open temporary file
+			let openPacket: OpenPacket = .init(
+				id: 1,
+				filename: "/nonexistent.txt",
+				pflags: [.read], // Use exclusive without create.
+				fileAttributes: .empty)
+			var lastReplyMessage: SftpMessage?
+			let replyHandler: ReplyHandler = { message in
+				lastReplyMessage = message
+				return eventLoop.makeSucceededVoidFuture()
+			}
+			server.register(replyHandler: replyHandler)
+			let message = SftpMessage(packet: .open(openPacket), dataLength: 0, shouldReadHandler: { _ in })
+			XCTAssertNoThrow(try server.handle(message: message, on: eventLoop).wait())
+
+			// Assert correct reply, extract handle
+			guard let openReply = lastReplyMessage else {
+				XCTFail()
+				return
+			}
+
+			switch openReply.packet {
+			case let .statusReply(statusReply):
+				XCTAssertEqual(statusReply.id, 1)
+				XCTAssertEqual(statusReply.statusCode, .noSuchFile)
+			default:
+				XCTFail()
+			}
+		}
+	}
+
+	func testHandleCloseBadHandle() {
+		__withServer { eventLoop, server in
+			// Use handle to close temporary file
+			var lastReplyMessage: SftpMessage? = nil
+			server.register(replyHandler: { message in
+				lastReplyMessage = message
+				return eventLoop.makeSucceededVoidFuture()
+			})
+			let closePacket: ClosePacket = .init(id: 2, handle: "this handle does not exist")
+			let message = SftpMessage(packet: .close(closePacket), dataLength: 0, shouldReadHandler: { _ in })
+			XCTAssertNoThrow(try server.handle(message: message, on: eventLoop).wait())
+
+			// Assert correct reply
+			guard let closeReply = lastReplyMessage else {
+				XCTFail()
+				return
+			}
+			switch closeReply.packet {
+			case let .statusReply(statusReply):
+				XCTAssertEqual(statusReply.id, 2)
+				XCTAssertEqual(statusReply.statusCode, .noSuchFile)
+			default:
+				XCTFail()
+			}
+		}
+	}
+
 	func testHandleReadSimple() {
 		_testHandleRead(content: "abc", offset: 0, length: 3, expect: "abc")
 	}
@@ -86,10 +146,13 @@ final class BaseSftpServerTests: XCTestCase {
 			let promiseLock = DispatchSemaphore(value: 1)
 			let replyHandler: ReplyHandler = { message in
 				lastReplyMessage = message
-				cancellable = message.data.futureSink(maxConcurrent: 10, receiveCompletion: { completion, outstanding in
-					EventLoopFuture
-						.reduce((), outstanding, on: eventLoop, { _, _ in () })
-						.cascade(to: lastReplyPromise)
+				cancellable = message.data.futureSink(maxConcurrent: 10, eventLoop: eventLoop, receiveCompletion: { completion in
+					switch completion {
+					case .finished:
+						lastReplyPromise.succeed(())
+					case let .failure(error):
+						lastReplyPromise.fail(error)
+					}
 				}, receiveValue: { byteBuffer in
 					let promise: EventLoopPromise<Void> = eventLoop.makePromise()
 					promiseLock.wait()
@@ -125,7 +188,7 @@ final class BaseSftpServerTests: XCTestCase {
 			// Assert correct reply
 			guard let readReply = lastReplyMessage else {
 				XCTFail()
-				assert(false)
+				return
 			}
 			switch readReply.packet {
 			case let .dataReply(dataReply):
@@ -137,6 +200,65 @@ final class BaseSftpServerTests: XCTestCase {
 			XCTAssertNotNil(cancellable)
 			XCTAssertEqual(accumulatedBuffer.getString(at: 0, length: accumulatedBuffer.readableBytes), expect)
 
+		}
+	}
+
+	func testHandleReadBadHandle() {
+		XCTAssertNoThrow(__withServer { eventLoop, server in
+			var lastMessage: SftpMessage?
+			let replyHandler: ReplyHandler = { message in
+				lastMessage = message
+				return eventLoop.makeSucceededVoidFuture()
+			}
+			server.register(replyHandler: replyHandler)
+			let packet: Packet = .read(.init(id: 2, handle: "doesn't exist", offset: 0, length: 1))
+			let message = SftpMessage(packet: packet, dataLength: 0, shouldReadHandler: { _ in })
+			XCTAssertNoThrow(try server.handle(message: message, on: eventLoop).wait())
+
+			guard let readReply = lastMessage else {
+				XCTFail()
+				return
+			}
+
+			switch readReply.packet {
+			case let .statusReply(statusPacket):
+				XCTAssertEqual(statusPacket.statusCode, .noSuchFile)
+			default:
+				XCTFail()
+			}
+		})
+	}
+
+	func testHandleReadDirectoryFail() {
+		__withServer { eventLoop, server in
+			XCTAssertNoThrow(try withTemporaryDirectory { folderPath in
+				let sftpHandleString = __openFile(filePath: folderPath,
+												  openFlags: [.read],
+												  eventLoop: eventLoop,
+												  server: server)
+
+				var lastMessage: SftpMessage?
+				let replyHandler: ReplyHandler = { message in
+					lastMessage = message
+					return eventLoop.makeSucceededVoidFuture()
+				}
+				server.register(replyHandler: replyHandler)
+				let packet: Packet = .read(.init(id: 2, handle: sftpHandleString, offset: 0, length: 1))
+				let message = SftpMessage(packet: packet, dataLength: 0, shouldReadHandler: { _ in })
+				XCTAssertNoThrow(try server.handle(message: message, on: eventLoop).wait())
+
+				guard let readReply = lastMessage else {
+					XCTFail()
+					return
+				}
+
+				switch readReply.packet {
+				case let .statusReply(statusPacket):
+					XCTAssertEqual(statusPacket.statusCode, .failure)
+				default:
+					XCTFail()
+				}
+			})
 		}
 	}
 
@@ -204,7 +326,7 @@ final class BaseSftpServerTests: XCTestCase {
 			// Ensure the server responded correctly.
 			guard let writeReply = lastReplyMessage else {
 				XCTFail()
-				assert(false)
+				return
 			}
 			switch writeReply.packet {
 			case let .statusReply(packet):
@@ -223,12 +345,86 @@ final class BaseSftpServerTests: XCTestCase {
 		}
 	}
 
+	func testHandleWriteBadHandle() {
+		XCTAssertNoThrow(__withServer { eventLoop, server in
+			var lastMessage: SftpMessage?
+			let replyHandler: ReplyHandler = { message in
+				lastMessage = message
+				return eventLoop.makeSucceededVoidFuture()
+			}
+			server.register(replyHandler: replyHandler)
+			let packet: Packet = .write(.init(id: 2, handle: "doesn't exist", offset: 0))
+			let message = SftpMessage(packet: packet, dataLength: 0, shouldReadHandler: { _ in })
+			XCTAssertNoThrow(try server.handle(message: message, on: eventLoop).wait())
+
+			guard let writeReply = lastMessage else {
+				XCTFail()
+				return
+			}
+
+			switch writeReply.packet {
+			case let .statusReply(statusPacket):
+				XCTAssertEqual(statusPacket.statusCode, .noSuchFile)
+			default:
+				XCTFail()
+			}
+		})
+	}
+
+//	func testHandleWriteDirectoryFail() {
+//		__withServer { eventLoop, server in
+//			XCTAssertNoThrow(try withTemporaryDirectory { folderPath in
+//				let sftpHandleString = __openFile(filePath: folderPath,
+//												  openFlags: [.read],
+//												  eventLoop: eventLoop,
+//												  server: server)
+//
+//				var lastMessage: SftpMessage?
+//				let replyHandler: ReplyHandler = { message in
+//					lastMessage = message
+//					return eventLoop.makeSucceededVoidFuture()
+//				}
+//				server.register(replyHandler: replyHandler)
+//				let packet: Packet = .write(.init(id: 2, handle: sftpHandleString, offset: 0))
+//				let message = SftpMessage(packet: packet, dataLength: 1, shouldReadHandler: { _ in })
+//				let replyFuture = server.handle(message: message, on: eventLoop)
+//				_ = message.sendData(ByteBuffer(bytes: [0x97]))
+//				message.completeData()
+//				XCTAssertNoThrow(try replyFuture.wait())
+//
+//				guard let writeReply = lastMessage else {
+//					XCTFail()
+//					return
+//				}
+//
+//				switch writeReply.packet {
+//				case let .statusReply(statusPacket):
+//					XCTAssertEqual(statusPacket.statusCode, .failure)
+//				default:
+//					XCTFail()
+//				}
+//			})
+//		}
+//	}
+
 	static var allTests = [
+		("testRegisterReplyHandler", testRegisterReplyHandler),
+		("testHandleNoReplyHandler", testHandleNoReplyHandler),
 		("testHandleOpenClose", testHandleOpenClose),
+		("testHandleUnknownFile", testHandleUnknownFile),
+		("testHandleCloseBadHandle", testHandleCloseBadHandle),
 		("testHandleReadSimple", testHandleReadSimple),
 		("testHandleReadOffset", testHandleReadOffset),
 		("testHandleReadEof", testHandleReadEof),
 		("testHandleReadLargeFile", testHandleReadLargeFile),
+		("testHandleReadBadHandle", testHandleReadBadHandle),
+		("testHandleReadDirectoryFail", testHandleReadDirectoryFail),
+		("testHandleWriteSimple", testHandleWriteSimple),
+		("testHandleWriteOffset", testHandleWriteOffset),
+		("testHandleWriteOverwrite", testHandleWriteOverwrite),
+		("testHandleWriteLargeFile", testHandleWriteLargeFile),
+		("testHandleWriteBadHandle", testHandleWriteBadHandle),
+//		("testHandleWriteDirectoryFail", testHandleWriteDirectoryFail),
 	]
 }
 
@@ -254,7 +450,7 @@ extension BaseSftpServerTests {
 		// Assert correct reply, extract handle
 		guard let openReply = lastReplyMessage else {
 			XCTFail()
-			assert(false)
+			return ""
 		}
 		var sftpHandle: String?
 		switch openReply.packet {
@@ -266,7 +462,7 @@ extension BaseSftpServerTests {
 		}
 		guard let sftpHandleString = sftpHandle else {
 			XCTFail()
-			assert(false)
+			return ""
 		}
 
 		return sftpHandleString
@@ -286,7 +482,7 @@ extension BaseSftpServerTests {
 		// Assert correct reply
 		guard let closeReply = lastReplyMessage else {
 			XCTFail()
-			assert(false)
+			return
 		}
 		switch closeReply.packet {
 		case let .statusReply(statusReply):

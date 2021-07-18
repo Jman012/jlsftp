@@ -16,13 +16,27 @@ extension BaseSftpServer {
 
 		let nfio = NonBlockingFileIO(threadPool: threadPool)
 		var currentOffset = packet.offset
-		self.cancellableWriteFuture = dataPublisher.futureSink(maxConcurrent: 10, receiveCompletion: { completion, outstandingFutures in
+		self.cancellableWriteFuture = dataPublisher.futureSink(maxConcurrent: 10, eventLoop: eventLoop, receiveCompletion: { completion in
 			switch completion {
 			case .finished:
-				self.logger.trace("[\(packet.id)] Writing data has completed with \(outstandingFutures.count) oustanding write futures")
+//				self.logger.trace("[\(packet.id)] Writing data has completed with \(outstandingFutures.count) oustanding write futures")
+//				let successReply: Packet = .statusReply(.init(id: packet.id, statusCode: .ok, errorMessage: "", languageTag: "en-US"))
+//				replyHandler(SftpMessage(packet: successReply, dataLength: 0, shouldReadHandler: { _ in }))
+//					.cascade(to: overallPromise)
+//				self.cancellableWriteFuture = nil
+//						case let .failure(error):
+//							self.logger.trace("[\(packet.id)] Writing data has failed with error: \(error)")
+//							let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .failure, errorMessage: "Error encountered writing to file: \(error)", languageTag: "en-US"))
+//							replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
+//								.cascade(to: overallPromise)
+//							self.cancellableWriteFuture?.cancel()
+//							self.cancellableWriteFuture = nil
+//						}
+//					}
+
+				self.logger.trace("[\(packet.id)] Writing data has completed")
 				let successReply: Packet = .statusReply(.init(id: packet.id, statusCode: .ok, errorMessage: "", languageTag: "en-US"))
 				replyHandler(SftpMessage(packet: successReply, dataLength: 0, shouldReadHandler: { _ in }))
-					.fold(outstandingFutures, with: { _, _ in eventLoop.makeSucceededFuture(()) })
 					.cascade(to: overallPromise)
 				self.cancellableWriteFuture = nil
 			case let .failure(error):

@@ -14,10 +14,14 @@ extension Publisher {
 	 */
 	func futureSink(
 		maxConcurrent: UInt,
-		receiveCompletion: @escaping (Subscribers.Completion<Failure>, [EventLoopFuture<Void>]) -> Void,
+		eventLoop: EventLoop,
+		receiveCompletion: @escaping (Subscribers.Completion<Failure>) -> Void,
 		receiveValue: @escaping FutureSink<Self.Output, Self.Failure>.Handler
 	) -> AnyCancellable {
-		let futureSink = FutureSink(maxConcurrent: maxConcurrent, receiveCompletion: receiveCompletion, receiveValue: receiveValue)
+		let futureSink = FutureSink(maxConcurrent: maxConcurrent,
+									eventLoop: eventLoop,
+									receiveCompletion: receiveCompletion,
+									receiveValue: receiveValue)
 		// Immediately subscribe the futureSink to this publisher.
 		subscribe(futureSink)
 		return AnyCancellable(futureSink)
@@ -30,10 +34,11 @@ public class FutureSink<Input, Failure: Error>: Cancellable {
 
 	/// The maximum number of oustanding Futures this sink can hold.
 	private let maxConcurrent: UInt
+	private let eventLoop: EventLoop
 	/// The sink input value handler that returns a Future.
 	private let receiveValue: Handler
 	/// The sink completion handler.
-	private let receiveCompletion: (Subscribers.Completion<Failure>, [EventLoopFuture<Void>]) -> Void
+	private let receiveCompletion: (Subscribers.Completion<Failure>) -> Void
 
 	/// Internal tracker for outstanding Futures.
 	private var currentFutures: [EventLoopFutureWrapper<Void>] = []
@@ -52,10 +57,12 @@ public class FutureSink<Input, Failure: Error>: Cancellable {
 
 	public init(
 		maxConcurrent: UInt,
-		receiveCompletion: @escaping (Subscribers.Completion<Failure>, [EventLoopFuture<Void>]) -> Void,
+		eventLoop: EventLoop,
+		receiveCompletion: @escaping (Subscribers.Completion<Failure>) -> Void,
 		receiveValue: @escaping Handler
 	) {
 		self.maxConcurrent = maxConcurrent
+		self.eventLoop = eventLoop
 		self.receiveCompletion = receiveCompletion
 		self.receiveValue = receiveValue
 	}
@@ -109,7 +116,20 @@ extension FutureSink: Subscriber {
 
 	public func receive(completion: Subscribers.Completion<Failure>) {
 		lock.withLock {
-			receiveCompletion(completion, self.currentFutures.map { $0.future })
+			switch completion {
+			case .finished:
+				EventLoopFuture.andAllSucceed(self.currentFutures.map { $0.future }, on: self.eventLoop)
+					.whenComplete { result in
+						switch result {
+						case .success:
+							self.receiveCompletion(.finished)
+						case let .failure(error):
+							self.receiveCompletion(.failure(error as! Failure)) // TODO: fix force cast somehow.
+						}
+					}
+			case let .failure(error):
+				self.receiveCompletion(.failure(error))
+			}
 		}
 	}
 }
