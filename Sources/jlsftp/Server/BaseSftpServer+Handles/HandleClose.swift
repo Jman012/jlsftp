@@ -2,7 +2,11 @@ import Foundation
 import NIO
 
 extension BaseSftpServer {
-	public func handleClose(packet: ClosePacket, on _: EventLoop, using replyHandler: ReplyHandler) -> EventLoopFuture<Void> {
+	public func handleClose(
+		packet: ClosePacket,
+		on _: EventLoop,
+		using replyHandler: ReplyHandler
+	) -> EventLoopFuture<Void> {
 		logger.debug("[\(packet.id)] Handling close packet: \(packet)")
 
 		guard let sftpFileHandle = self.sftpFileHandles.getHandle(handleIdentifier: packet.handle) else {

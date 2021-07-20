@@ -67,7 +67,7 @@ public class BaseSftpServer: SftpServer {
 		case let .readDirectory(packet):
 			return operationNotSupported(packet.id)
 		case let .remove(packet):
-			return operationNotSupported(packet.id)
+			return handleRemove(packet: packet, on: eventLoop, using: replyHandler)
 		case let .makeDirectory(packet):
 			return operationNotSupported(packet.id)
 		case let .removeDirectory(packet):
@@ -98,6 +98,17 @@ public class BaseSftpServer: SftpServer {
 			return operationNotSupported(packet.id)
 		case .nopDebug:
 			return operationNotSupported(0)
+		}
+	}
+
+	@inline(__always)
+	internal func syscall<T: FixedWidthInteger>(
+		where function: String = #function,
+		_ body: () throws -> T) throws {
+		let res = try body()
+		if res == -1 {
+			let err = errno
+			throw IOError(errnoCode: err, reason: function)
 		}
 	}
 }

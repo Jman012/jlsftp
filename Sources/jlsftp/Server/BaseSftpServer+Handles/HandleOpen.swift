@@ -2,7 +2,11 @@ import Foundation
 import NIO
 
 extension BaseSftpServer {
-	public func handleOpen(packet: OpenPacket, on eventLoop: EventLoop, using replyHandler: @escaping ReplyHandler) -> EventLoopFuture<Void> {
+	public func handleOpen(
+		packet: OpenPacket,
+		on eventLoop: EventLoop,
+		using replyHandler: @escaping ReplyHandler
+	) -> EventLoopFuture<Void> {
 		logger.debug("[\(packet.id)] Handling open packet: \(packet)")
 
 		// Prepare data

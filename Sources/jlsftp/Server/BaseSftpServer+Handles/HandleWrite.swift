@@ -3,7 +3,12 @@ import NIO
 import Combine
 
 extension BaseSftpServer {
-	public func handleWrite(packet: WritePacket, dataPublisher: AnyPublisher<ByteBuffer, Error>, on eventLoop: EventLoop, using replyHandler: @escaping ReplyHandler) -> EventLoopFuture<Void> {
+	public func handleWrite(
+		packet: WritePacket,
+		dataPublisher: AnyPublisher<ByteBuffer, Error>,
+		on eventLoop: EventLoop,
+		using replyHandler: @escaping ReplyHandler
+	) -> EventLoopFuture<Void> {
 		logger.debug("[\(packet.id)] Handling write packet: \(packet)")
 
 		guard let sftpFileHandle = self.sftpFileHandles.getHandle(handleIdentifier: packet.handle) else {
