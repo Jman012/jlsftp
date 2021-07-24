@@ -29,15 +29,32 @@ func withTemporaryFile<T>(content: String? = nil, _ body: (NIO.NIOFileHandle, St
 					toWrite -= res
 					start = start + res
 				}
-//				let res = try Posix.write(descriptor: fd, pointer: start, size: toWrite)
-//				switch res {
-//				case .processed(let written):
-//					toWrite -= written
-//					start = start + written
-//				case .wouldBlock:
-//					XCTFail("unexpectedly got .wouldBlock from a file")
-//					continue
-//				}
+			}
+			XCTAssertEqual(0, lseek(fd, 0, SEEK_SET))
+		}
+	}
+	return try body(fileHandle, path)
+}
+
+func withTemporaryFileNoUnlink<T>(content: String? = nil, _ body: (NIO.NIOFileHandle, String) throws -> T) rethrows -> T {
+	let (fd, path) = openTemporaryFile()
+	let fileHandle = NIOFileHandle(descriptor: fd)
+	defer {
+		XCTAssertNoThrow(try fileHandle.close())
+		//XCTAssertEqual(0, unlink(path))
+	}
+	if let content = content {
+		Array(content.utf8).withUnsafeBufferPointer { ptr in
+			var toWrite = ptr.count
+			var start = ptr.baseAddress!
+			while toWrite > 0 {
+				let res = write(fd, start, toWrite)
+				if res < 0 {
+					XCTFail("Unexpected failure in creating file: \(errno)")
+				} else {
+					toWrite -= res
+					start = start + res
+				}
 			}
 			XCTAssertEqual(0, lseek(fd, 0, SEEK_SET))
 		}
