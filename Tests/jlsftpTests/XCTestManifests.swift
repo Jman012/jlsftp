@@ -18,6 +18,7 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(HandleOpenTests.allTests),
 		testCase(HandleReadTests.allTests),
 		testCase(HandleRemoveTests.allTests),
+		testCase(HandleRenameTests.allTests),
 		testCase(HandleWriteTests.allTests),
 		// SftpProtocol > Version_3 > Reply Handlers
 		testCase(DataReplyPacketSerializationHandlerTests.allTests),

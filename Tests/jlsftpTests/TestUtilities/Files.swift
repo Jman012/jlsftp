@@ -10,6 +10,18 @@ func withTemporaryDirectory<T>(_ body: (String) throws -> T) rethrows -> T {
 	return try body(dir)
 }
 
+func withTemporaryDirectoryNoRemove<T>(_ body: (String) throws -> T) rethrows -> T {
+	let dir = createTemporaryDirectory()
+	defer {
+		try? FileManager.default.removeItem(atPath: dir)
+	}
+	return try body(dir)
+}
+
+func removeTemporaryDirectory(dir: String) {
+	try? FileManager.default.removeItem(atPath: dir)
+}
+
 func withTemporaryFile<T>(content: String? = nil, _ body: (NIO.NIOFileHandle, String) throws -> T) rethrows -> T {
 	let (fd, path) = openTemporaryFile()
 	let fileHandle = NIOFileHandle(descriptor: fd)

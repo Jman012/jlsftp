@@ -77,7 +77,7 @@ public class BaseSftpServer: SftpServer {
 		case let .status(packet):
 			return operationNotSupported(packet.id)
 		case let .rename(packet):
-			return operationNotSupported(packet.id)
+			return handleRename(packet: packet, on: eventLoop, using: replyHandler)
 		case let .readLink(packet):
 			return operationNotSupported(packet.id)
 		case let .createSymbolicLink(packet):
