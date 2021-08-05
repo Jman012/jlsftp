@@ -14,7 +14,7 @@ public class BaseSftpServer: SftpServer {
 	let logger: Logger
 	let allocator = ByteBufferAllocator()
 
-	var sftpFileHandles = SftpFileHandleCollection()
+	var sftpFileHandles = SftpHandleCollection()
 	var replyHandler: ReplyHandler?
 	var cancellableWriteFuture: AnyCancellable?
 
@@ -98,17 +98,6 @@ public class BaseSftpServer: SftpServer {
 			return operationNotSupported(packet.id)
 		case .nopDebug:
 			return operationNotSupported(0)
-		}
-	}
-
-	@inline(__always)
-	internal func syscall<T: FixedWidthInteger>(
-		where function: String = #function,
-		_ body: () throws -> T) throws {
-		let res = try body()
-		if res == -1 {
-			let err = errno
-			throw IOError(errnoCode: err, reason: function)
 		}
 	}
 }

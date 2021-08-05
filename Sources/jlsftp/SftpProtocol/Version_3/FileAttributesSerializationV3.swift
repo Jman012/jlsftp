@@ -90,7 +90,14 @@ extension jlsftp.SftpProtocol.Version_3 {
 				}
 			}
 
-			let fileAttributes = FileAttributes(sizeBytes: size, userId: userId, groupId: groupId, permissions: permissions?.permission, accessDate: accessDate, modifyDate: modifyDate, extensionData: extensionDataResults)
+			let fileAttributes = FileAttributes(sizeBytes: size,
+												userId: userId,
+												groupId: groupId,
+												permissions: permissions?.permission,
+												accessDate: accessDate,
+												modifyDate: modifyDate,
+												linkCount: nil,
+												extensionData: extensionDataResults)
 			return .success(fileAttributes)
 		}
 

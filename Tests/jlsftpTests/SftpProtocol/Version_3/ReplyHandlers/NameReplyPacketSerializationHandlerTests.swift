@@ -147,7 +147,7 @@ final class NameReplyPacketSerializationHandlerTests: XCTestCase {
 			NameReplyPacket.Name(
 				filename: "a",
 				longName: "b",
-				fileAttributes: FileAttributes(sizeBytes: nil, userId: nil, groupId: nil, permissions: nil, accessDate: nil, modifyDate: nil, extensionData: [])),
+				fileAttributes: .empty),
 		])
 		var buffer = ByteBuffer()
 

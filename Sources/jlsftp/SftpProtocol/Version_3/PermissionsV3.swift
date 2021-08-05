@@ -20,72 +20,100 @@ extension jlsftp.SftpProtocol.Version_3 {
 			if self.contains(.read) { perms.insert(.read) }
 			return perms
 		}
+
+		var permissionMode: Set<PermissionMode> {
+			var perms = Set<PermissionMode>()
+			if self.contains(.execute) { perms.insert(.stickyBit) }
+			if self.contains(.write) { perms.insert(.setGroupId) }
+			if self.contains(.read) { perms.insert(.setUserId) }
+			return perms
+		}
 	}
 
 	public struct PermissionsV3: Equatable {
 		let user: PermissionV3
 		let group: PermissionV3
 		let other: PermissionV3
+		/// Re-use PermissionV3 for S_ISUID, S_ISGID, and S_ISVTX.
+		let mode: PermissionV3
 
 		var binaryRepresentation: UInt16 {
 			return (UInt16(user.rawValue) << 6)
 				| (UInt16(group.rawValue) << 3)
 				| (UInt16(other.rawValue) << 0)
+				| (UInt16(mode.rawValue) << 9)
 		}
 
 		var permission: Permissions {
-			return Permissions(user: user.permission, group: group.permission, other: other.permission)
+			return Permissions(user: user.permission,
+							   group: group.permission,
+							   other: other.permission,
+							   mode: mode.permissionMode)
 		}
 
-		public init(user: PermissionV3, group: PermissionV3, other: PermissionV3) {
+		public init(user: PermissionV3, group: PermissionV3, other: PermissionV3, mode: PermissionV3) {
 			self.user = user
 			self.group = group
 			self.other = other
+			self.mode = mode
 		}
 
 		public init(from permissions: Permissions) {
 			var userPerm = PermissionV3()
 			if permissions.user.contains(.read) {
-				userPerm.formUnion(.read)
+				userPerm.insert(.read)
 			}
 			if permissions.user.contains(.write) {
-				userPerm.formUnion(.write)
+				userPerm.insert(.write)
 			}
 			if permissions.user.contains(.execute) {
-				userPerm.formUnion(.execute)
+				userPerm.insert(.execute)
 			}
 
 			var groupPerm = PermissionV3()
 			if permissions.group.contains(.read) {
-				groupPerm.formUnion(.read)
+				groupPerm.insert(.read)
 			}
 			if permissions.group.contains(.write) {
-				groupPerm.formUnion(.write)
+				groupPerm.insert(.write)
 			}
 			if permissions.group.contains(.execute) {
-				groupPerm.formUnion(.execute)
+				groupPerm.insert(.execute)
 			}
 
 			var otherPerm = PermissionV3()
 			if permissions.other.contains(.read) {
-				otherPerm.formUnion(.read)
+				otherPerm.insert(.read)
 			}
 			if permissions.other.contains(.write) {
-				otherPerm.formUnion(.write)
+				otherPerm.insert(.write)
 			}
 			if permissions.other.contains(.execute) {
-				otherPerm.formUnion(.execute)
+				otherPerm.insert(.execute)
+			}
+
+			var modePerm = PermissionV3()
+			if permissions.mode.contains(.setUserId) {
+				modePerm.insert(.read)
+			}
+			if permissions.mode.contains(.setGroupId) {
+				modePerm.insert(.write)
+			}
+			if permissions.mode.contains(.stickyBit) {
+				modePerm.insert(.execute)
 			}
 
 			self.user = userPerm
 			self.group = groupPerm
 			self.other = otherPerm
+			self.mode = modePerm
 		}
 
 		public init(fromBinary binary: UInt16) {
-			user = PermissionV3(rawValue: UInt8((binary & 0o700) >> 6))
-			group = PermissionV3(rawValue: UInt8((binary & 0o070) >> 3))
-			other = PermissionV3(rawValue: UInt8((binary & 0o007) >> 0))
+			user = PermissionV3(rawValue: UInt8((binary & 0o0700) >> 6))
+			group = PermissionV3(rawValue: UInt8((binary & 0o0070) >> 3))
+			other = PermissionV3(rawValue: UInt8((binary & 0o0007) >> 0))
+			mode = PermissionV3(rawValue: UInt8((binary & 0o7000) >> 9))
 		}
 	}
 }

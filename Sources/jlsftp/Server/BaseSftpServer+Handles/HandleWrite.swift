@@ -11,9 +11,14 @@ extension BaseSftpServer {
 	) -> EventLoopFuture<Void> {
 		logger.debug("[\(packet.id)] Handling write packet: \(packet)")
 
-		guard let sftpFileHandle = self.sftpFileHandles.getHandle(handleIdentifier: packet.handle) else {
+		guard let sftpHandle = self.sftpFileHandles.getHandle(handleIdentifier: packet.handle) else {
 			logger.warning("[\(packet.id)] The handle identifier '\(packet.handle)' was not found")
-			let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .noSuchFile, errorMessage: "The handle being closed is not tracked by the server. Was it already closed?", languageTag: "en-US"))
+			let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .noSuchFile, errorMessage: "The handle being written to is not tracked by the server. Was it already closed?", languageTag: "en-US"))
+			return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
+		}
+		guard case let .file(sftpFileHandle) = sftpHandle else {
+			logger.warning("[\(packet.id)] The handle identifier '\(packet.handle)' was not for a file")
+			let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .noSuchFile, errorMessage: "The handle being written to is not tracked by the server. Was it already closed?", languageTag: "en-US"))
 			return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
 		}
 

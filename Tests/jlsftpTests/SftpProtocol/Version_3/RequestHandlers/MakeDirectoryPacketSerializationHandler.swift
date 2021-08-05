@@ -76,7 +76,7 @@ final class MakeDirectoryPacketSerializationHandlerTests: XCTestCase {
 
 	func testSerializeValid() {
 		let handler = getHandler()
-		let packet = MakeDirectoryPacket(id: 3, path: "a", fileAttributes: FileAttributes(sizeBytes: nil, userId: nil, groupId: nil, permissions: nil, accessDate: nil, modifyDate: nil, extensionData: []))
+		let packet = MakeDirectoryPacket(id: 3, path: "a", fileAttributes: .empty)
 		var buffer = ByteBuffer()
 
 		XCTAssertNil(handler.serialize(packet: .makeDirectory(packet), to: &buffer))

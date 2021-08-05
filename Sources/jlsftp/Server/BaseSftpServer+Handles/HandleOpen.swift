@@ -26,7 +26,7 @@ extension BaseSftpServer {
 
 			// Create a file handle and reply to the client
 			let newSftpFileHandle = OpenFileHandle(path: packet.filename, nioHandle: nioFileHandle)
-			let newSftpFileHandleId = self.sftpFileHandles.insertFileHandle(handle: newSftpFileHandle)
+			let newSftpFileHandleId = self.sftpFileHandles.insertHandle(handle: .file(newSftpFileHandle))
 			let replyPacket: Packet = .handleReply(HandleReplyPacket(id: packet.id, handle: newSftpFileHandleId))
 			return replyHandler(SftpMessage(packet: replyPacket, dataLength: 0, shouldReadHandler: { _ in }))
 		}.flatMapError { error in

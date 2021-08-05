@@ -10,11 +10,25 @@ public class OpenFileHandle {
 	}
 }
 
-public class SftpFileHandleCollection {
-	private var handles: [String: OpenFileHandle] = [:]
+public class OpenDirHandle {
+	let path: String
+	let dir: UnsafeMutablePointer<DIR>
+	init(path: String, dir: UnsafeMutablePointer<DIR>) {
+		self.path = path
+		self.dir = dir
+	}
+}
 
-	/// Tracks a new `OpenFileHandle` and returns the string handle for sftp
-	public func insertFileHandle(handle: OpenFileHandle) -> String {
+public enum OpenHandle {
+	case file(OpenFileHandle)
+	case dir(OpenDirHandle)
+}
+
+public class SftpHandleCollection {
+	private var handles: [String: OpenHandle] = [:]
+
+	/// Tracks a new `OpenHandle` and returns the string handle for sftp
+	public func insertHandle(handle: OpenHandle) -> String {
 		let handleIdentifier = generateNewUniqueHandle()
 		handles[handleIdentifier] = handle
 		return handleIdentifier
@@ -24,11 +38,11 @@ public class SftpFileHandleCollection {
 		return handles.keys.contains(handleIdentifier)
 	}
 
-	public func getHandle(handleIdentifier: String) -> OpenFileHandle? {
+	public func getHandle(handleIdentifier: String) -> OpenHandle? {
 		return handles[handleIdentifier]
 	}
 
-	public func removeHandle(handleIdentifier: String) -> OpenFileHandle? {
+	public func removeHandle(handleIdentifier: String) -> OpenHandle? {
 		return handles.removeValue(forKey: handleIdentifier)
 	}
 
@@ -47,8 +61,13 @@ public class SftpFileHandleCollection {
 	}
 
 	deinit {
-		for fileHandle in handles.values {
-			try? fileHandle.nioHandle.close()
+		for handle in handles.values {
+			switch handle {
+			case let .file(fileHandle):
+				try? fileHandle.nioHandle.close()
+			case let .dir(dirHandle):
+				closedir(dirHandle.dir)
+			}
 		}
 	}
 }

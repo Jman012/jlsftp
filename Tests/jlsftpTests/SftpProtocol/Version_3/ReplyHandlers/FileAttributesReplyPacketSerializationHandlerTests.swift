@@ -68,7 +68,7 @@ final class FileAttributesReplyPacketSerializationHandlerTests: XCTestCase {
 
 	func testSerializeValid() {
 		let handler = getHandler()
-		let packet = FileAttributesReplyPacket(id: 3, fileAttributes: FileAttributes(sizeBytes: nil, userId: nil, groupId: nil, permissions: nil, accessDate: nil, modifyDate: nil, extensionData: []))
+		let packet = FileAttributesReplyPacket(id: 3, fileAttributes: .empty)
 		var buffer = ByteBuffer()
 
 		XCTAssertNil(handler.serialize(packet: .attributesReply(packet), to: &buffer))

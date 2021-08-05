@@ -45,6 +45,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   permissions: nil,
 											   accessDate: nil,
 											   modifyDate: nil,
+											   linkCount: nil,
 											   extensionData: [])
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
@@ -69,6 +70,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   permissions: nil,
 											   accessDate: nil,
 											   modifyDate: nil,
+											   linkCount: nil,
 											   extensionData: [])
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
@@ -95,6 +97,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   permissions: nil,
 											   accessDate: nil,
 											   modifyDate: nil,
+											   linkCount: nil,
 											   extensionData: [])
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
@@ -116,9 +119,10 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		let expectedFileAttrs = FileAttributes(sizeBytes: nil,
 											   userId: nil,
 											   groupId: nil,
-											   permissions: Permissions(user: [.read, .write, .execute], group: [.read, .execute], other: [.write]),
+											   permissions: Permissions(user: [.read, .write, .execute], group: [.read, .execute], other: [.write], mode: []),
 											   accessDate: nil,
 											   modifyDate: nil,
+											   linkCount: nil,
 											   extensionData: [])
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
@@ -140,9 +144,10 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		let expectedFileAttrs = FileAttributes(sizeBytes: nil,
 											   userId: nil,
 											   groupId: nil,
-											   permissions: Permissions(user: [.read, .write, .execute], group: [.read, .execute], other: [.write]),
+											   permissions: Permissions(user: [.read, .write, .execute], group: [.read, .execute], other: [.write], mode: []),
 											   accessDate: nil,
 											   modifyDate: nil,
+											   linkCount: nil,
 											   extensionData: [])
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
@@ -169,6 +174,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   permissions: nil,
 											   accessDate: Date(timeIntervalSince1970: 1),
 											   modifyDate: Date(timeIntervalSince1970: 2),
+											   linkCount: nil,
 											   extensionData: [])
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
@@ -201,6 +207,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 											   permissions: nil,
 											   accessDate: nil,
 											   modifyDate: nil,
+											   linkCount: nil,
 											   extensionData: [ExtensionData(name: "Ab", data: "cDe")])
 		XCTAssertEqual(expectedFileAttrs, fileAttrs)
 	}
@@ -342,6 +349,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   permissions: nil,
 									   accessDate: nil,
 									   modifyDate: nil,
+									   linkCount: nil,
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
@@ -362,6 +370,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   permissions: nil,
 									   accessDate: nil,
 									   modifyDate: nil,
+									   linkCount: nil,
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
@@ -384,6 +393,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   permissions: nil,
 									   accessDate: nil,
 									   modifyDate: nil,
+									   linkCount: nil,
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
@@ -408,6 +418,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   permissions: nil,
 									   accessDate: nil,
 									   modifyDate: nil,
+									   linkCount: nil,
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
@@ -432,6 +443,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   permissions: nil,
 									   accessDate: nil,
 									   modifyDate: nil,
+									   linkCount: nil,
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
@@ -453,9 +465,10 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 		let fileAttrs = FileAttributes(sizeBytes: nil,
 									   userId: nil,
 									   groupId: nil,
-									   permissions: Permissions(user: Set([.read]), group: Set([.write]), other: Set([.execute])),
+									   permissions: Permissions(user: [.read], group: [.write], other: [.execute], mode: []),
 									   accessDate: nil,
 									   modifyDate: nil,
+									   linkCount: nil,
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
@@ -478,6 +491,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   permissions: nil,
 									   accessDate: Date(timeIntervalSince1970: 4),
 									   modifyDate: Date(timeIntervalSince1970: 5),
+									   linkCount: nil,
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
@@ -502,6 +516,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   permissions: nil,
 									   accessDate: nil,
 									   modifyDate: Date(timeIntervalSince1970: 5),
+									   linkCount: nil,
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
@@ -526,6 +541,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   permissions: nil,
 									   accessDate: Date(timeIntervalSince1970: 4),
 									   modifyDate: nil,
+									   linkCount: nil,
 									   extensionData: [])
 		var buffer = ByteBuffer()
 
@@ -550,6 +566,7 @@ final class FileAttributesSerializationV3Tests: XCTestCase {
 									   permissions: nil,
 									   accessDate: nil,
 									   modifyDate: nil,
+									   linkCount: nil,
 									   extensionData: [ExtensionData(name: "a", data: "bc"), ExtensionData(name: "de", data: "f")])
 		var buffer = ByteBuffer()
 

@@ -8,22 +8,23 @@ final class mode_tExtensionsTests: XCTestCase {
 	func testValid() {
 		let data = [
 			(
-				Permissions(user: [], group: [], other: []),
+				Permissions(user: [], group: [], other: [], mode: []),
 				0
 			),
 			(
-				Permissions(user: [.read], group: [.write], other: [.execute]),
+				Permissions(user: [.read], group: [.write], other: [.execute], mode: []),
 				S_IRUSR | S_IWGRP | S_IXOTH
 			),
 			(
-				Permissions(user: [.read, .write], group: [.write, .execute], other: [.execute, .read]),
+				Permissions(user: [.read, .write], group: [.write, .execute], other: [.execute, .read], mode: []),
 				S_IRUSR | S_IWUSR | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH
 			),
 			(
 				Permissions(
 					user: [.read, .write, .execute],
 					group: [.read, .write, .execute],
-					other: [.read, .write, .execute]
+					other: [.read, .write, .execute],
+					mode: []
 				),
 				S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH
 			),
@@ -31,7 +32,8 @@ final class mode_tExtensionsTests: XCTestCase {
 				Permissions(
 					user: [.read],
 					group: [],
-					other: []
+					other: [],
+					mode: []
 				),
 				S_IRUSR
 			),
@@ -39,7 +41,8 @@ final class mode_tExtensionsTests: XCTestCase {
 				Permissions(
 					user: [.write],
 					group: [],
-					other: []
+					other: [],
+					mode: []
 				),
 				S_IWUSR
 			),
@@ -47,7 +50,8 @@ final class mode_tExtensionsTests: XCTestCase {
 				Permissions(
 					user: [.execute],
 					group: [],
-					other: []
+					other: [],
+					mode: []
 				),
 				S_IXUSR
 			),
@@ -55,7 +59,8 @@ final class mode_tExtensionsTests: XCTestCase {
 				Permissions(
 					user: [],
 					group: [.read],
-					other: []
+					other: [],
+					mode: []
 				),
 				S_IRGRP
 			),
@@ -63,7 +68,8 @@ final class mode_tExtensionsTests: XCTestCase {
 				Permissions(
 					user: [],
 					group: [.write],
-					other: []
+					other: [],
+					mode: []
 				),
 				S_IWGRP
 			),
@@ -71,7 +77,8 @@ final class mode_tExtensionsTests: XCTestCase {
 				Permissions(
 					user: [],
 					group: [.execute],
-					other: []
+					other: [],
+					mode: []
 				),
 				S_IXGRP
 			),
@@ -79,7 +86,8 @@ final class mode_tExtensionsTests: XCTestCase {
 				Permissions(
 					user: [],
 					group: [],
-					other: [.read]
+					other: [.read],
+					mode: []
 				),
 				S_IROTH
 			),
@@ -87,7 +95,8 @@ final class mode_tExtensionsTests: XCTestCase {
 				Permissions(
 					user: [],
 					group: [],
-					other: [.write]
+					other: [.write],
+					mode: []
 				),
 				S_IWOTH
 			),
@@ -95,9 +104,26 @@ final class mode_tExtensionsTests: XCTestCase {
 				Permissions(
 					user: [],
 					group: [],
-					other: [.execute]
+					other: [.execute],
+					mode: []
 				),
 				S_IXOTH
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [.setUserId]),
+				S_ISUID
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [.setGroupId]),
+				S_ISGID
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [.stickyBit]),
+				S_ISVTX
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [.setUserId, .setGroupId, .stickyBit]),
+				S_ISUID | S_ISGID | S_ISVTX
 			),
 		]
 

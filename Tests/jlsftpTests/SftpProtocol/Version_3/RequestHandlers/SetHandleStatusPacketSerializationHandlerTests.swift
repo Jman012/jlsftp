@@ -76,7 +76,7 @@ final class SetHandleStatusPacketSerializationHandlerTests: XCTestCase {
 
 	func testSerializeValid() {
 		let handler = getHandler()
-		let packet = SetHandleStatusPacket(id: 3, handle: "a", fileAttributes: FileAttributes(sizeBytes: nil, userId: nil, groupId: nil, permissions: nil, accessDate: nil, modifyDate: nil, extensionData: []))
+		let packet = SetHandleStatusPacket(id: 3, handle: "a", fileAttributes: .empty)
 		var buffer = ByteBuffer()
 
 		XCTAssertNil(handler.serialize(packet: .setHandleStatus(packet), to: &buffer))

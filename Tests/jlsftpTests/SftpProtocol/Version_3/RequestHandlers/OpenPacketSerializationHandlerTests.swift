@@ -87,7 +87,7 @@ final class OpenPacketSerializationHandlerTests: XCTestCase {
 
 	func testSerializeValid() {
 		let handler = getHandler()
-		let packet = OpenPacket(id: 3, filename: "a", pflags: OpenFlags([.read]), fileAttributes: FileAttributes(sizeBytes: nil, userId: nil, groupId: nil, permissions: nil, accessDate: nil, modifyDate: nil, extensionData: []))
+		let packet = OpenPacket(id: 3, filename: "a", pflags: OpenFlags([.read]), fileAttributes: .empty)
 		var buffer = ByteBuffer()
 
 		XCTAssertNil(handler.serialize(packet: .open(packet), to: &buffer))
