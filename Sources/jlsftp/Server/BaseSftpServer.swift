@@ -55,33 +55,33 @@ public class BaseSftpServer: SftpServer {
 		case let .write(packet):
 			return handleWrite(packet: packet, dataPublisher: message.data, on: eventLoop, using: replyHandler)
 		case let .linkStatus(packet):
-			return operationNotSupported(packet.id)
+			return handleLinkStatus(packet: packet, on: eventLoop, using: replyHandler)
 		case let .handleStatus(packet):
-			return operationNotSupported(packet.id)
+			return handleHandleStatus(packet: packet, on: eventLoop, using: replyHandler)
 		case let .setStatus(packet):
-			return operationNotSupported(packet.id)
+			return handleSetStatus(packet: packet, on: eventLoop, using: replyHandler)
 		case let .setHandleStatus(packet):
-			return operationNotSupported(packet.id)
+			return handleSetHandleStatus(packet: packet, on: eventLoop, using: replyHandler)
 		case let .openDirectory(packet):
-			return operationNotSupported(packet.id)
+			return handleOpenDirectory(packet: packet, on: eventLoop, using: replyHandler)
 		case let .readDirectory(packet):
-			return operationNotSupported(packet.id)
+			return handleReadDirectory(packet: packet, on: eventLoop, using: replyHandler)
 		case let .remove(packet):
 			return handleRemove(packet: packet, on: eventLoop, using: replyHandler)
 		case let .makeDirectory(packet):
-			return operationNotSupported(packet.id)
+			return handleMakeDirectory(packet: packet, on: eventLoop, using: replyHandler)
 		case let .removeDirectory(packet):
-			return operationNotSupported(packet.id)
+			return handleRemoveDirectory(packet: packet, on: eventLoop, using: replyHandler)
 		case let .realPath(packet):
-			return operationNotSupported(packet.id)
+			return handleRealPath(packet: packet, on: eventLoop, using: replyHandler)
 		case let .status(packet):
-			return operationNotSupported(packet.id)
+			return handleStatus(packet: packet, on: eventLoop, using: replyHandler)
 		case let .rename(packet):
 			return handleRename(packet: packet, on: eventLoop, using: replyHandler)
 		case let .readLink(packet):
-			return operationNotSupported(packet.id)
+			return handleReadLink(packet: packet, on: eventLoop, using: replyHandler)
 		case let .createSymbolicLink(packet):
-			return operationNotSupported(packet.id)
+			return handleCreateSymbolicLink(packet: packet, on: eventLoop, using: replyHandler)
 		case let .statusReply(packet):
 			return operationNotSupported(packet.id)
 		case let .handleReply(packet):
