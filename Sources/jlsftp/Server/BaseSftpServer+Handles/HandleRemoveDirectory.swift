@@ -4,7 +4,7 @@ import NIO
 extension BaseSftpServer {
 	public func handleRemoveDirectory(
 		packet: RemoveDirectoryPacket,
-		on eventLoop: EventLoop,
+		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
 		logger.debug("[\(packet.id)] Handling remove directory packet: \(packet)")

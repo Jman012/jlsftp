@@ -7,7 +7,6 @@ import Logging
 
 final class HandleWriteTests: XCTestCase {
 
-
 	func testHandleWriteSimple() {
 		_testHandleWrite(initialContent: "", contentToWrite: "abc", offset: 0, expect: "abc")
 	}
@@ -21,14 +20,14 @@ final class HandleWriteTests: XCTestCase {
 	}
 
 	func testHandleWriteLargeFile() {
-		let largeFileContent: String = String(repeating: "Hello ", count: 1_000)
+		let largeFileContent: String = String(repeating: "Hello ", count: 1000)
 		_testHandleWrite(initialContent: "", contentToWrite: largeFileContent, offset: 0, expect: largeFileContent)
 	}
 
 	func _testHandleWrite(initialContent: String, contentToWrite: String, offset: UInt64, expect: String) {
 		BaseSftpServerTests._testWithTemporaryFile(content: initialContent, openFlags: [.write]) { sftpHandleString, filePath, eventLoop, server in
 			// Use handle to write to temporary file
-			var lastReplyMessage: SftpMessage? = nil
+			var lastReplyMessage: SftpMessage?
 			let lastReplyPromise: EventLoopPromise<Void> = eventLoop.makePromise()
 			lastReplyPromise.succeed(())
 			let replyHandler: ReplyHandler = { message in
@@ -41,8 +40,8 @@ final class HandleWriteTests: XCTestCase {
 			let message = SftpMessage(packet: .write(writePacket),
 									  dataLength: UInt32(contentToWrite.utf8.count),
 									  shouldReadHandler: { should in
-										shouldWrite = should
-									  })
+									  	shouldWrite = should
+			})
 
 			let replyFuture = server.handle(message: message, on: eventLoop)
 
@@ -153,7 +152,6 @@ final class HandleWriteTests: XCTestCase {
 	//		}
 	//	}
 
-
 	static var allTests = [
 		("testHandleWriteSimple", testHandleWriteSimple),
 		("testHandleWriteOffset", testHandleWriteOffset),
@@ -163,4 +161,3 @@ final class HandleWriteTests: XCTestCase {
 //		("testHandleWriteDirectoryFail", testHandleWriteDirectoryFail),
 	]
 }
-

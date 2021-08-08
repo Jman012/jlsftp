@@ -27,7 +27,7 @@ final class HandleReadTests: XCTestCase {
 	func _testHandleRead(content: String, offset: UInt64, length: UInt32, expect: String) {
 		BaseSftpServerTests._testWithTemporaryFile(content: content, openFlags: [.read]) { sftpHandleString, _, eventLoop, server in
 			// Use handle to read temporary file
-			var lastReplyMessage: SftpMessage? = nil
+			var lastReplyMessage: SftpMessage?
 			let lastReplyPromise: EventLoopPromise<Void> = eventLoop.makePromise()
 			var accumulatedBuffer = ByteBuffer()
 			var cancellable: AnyCancellable?
@@ -73,7 +73,6 @@ final class HandleReadTests: XCTestCase {
 			XCTAssertNoThrow(try server.handle(message: message, on: eventLoop).wait())
 			queueScheduleCancellabe.cancel()
 
-
 			// Assert correct reply
 			guard let readReply = lastReplyMessage else {
 				XCTFail()
@@ -88,7 +87,6 @@ final class HandleReadTests: XCTestCase {
 
 			XCTAssertNotNil(cancellable)
 			XCTAssertEqual(accumulatedBuffer.getString(at: 0, length: accumulatedBuffer.readableBytes), expect)
-
 		}
 	}
 

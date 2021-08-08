@@ -8,7 +8,7 @@ import Logging
 final class HandleCloseTests: XCTestCase {
 
 	func testHandleOpenClose() {
-		BaseSftpServerTests._testWithTemporaryFile(content:"abc", openFlags: [.read]) { _, _, _, _ in
+		BaseSftpServerTests._testWithTemporaryFile(content: "abc", openFlags: [.read]) { _, _, _, _ in
 			// Do nothing. Just open and close the file.
 		}
 	}
@@ -16,7 +16,7 @@ final class HandleCloseTests: XCTestCase {
 	func testHandleCloseBadHandle() {
 		BaseSftpServerTests.__withServer { eventLoop, server in
 			// Use handle to close temporary file
-			var lastReplyMessage: SftpMessage? = nil
+			var lastReplyMessage: SftpMessage?
 			server.register(replyHandler: { message in
 				lastReplyMessage = message
 				return eventLoop.makeSucceededVoidFuture()

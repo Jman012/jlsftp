@@ -4,7 +4,7 @@ import NIO
 extension BaseSftpServer {
 	public func handleCreateSymbolicLink(
 		packet: CreateSymbolicLinkPacket,
-		on eventLoop: EventLoop,
+		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
 		logger.debug("[\(packet.id)] Handling create symbolic link packet: \(packet)")

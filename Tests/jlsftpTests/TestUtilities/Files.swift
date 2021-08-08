@@ -75,23 +75,23 @@ func withTemporaryFileNoUnlink<T>(content: String? = nil, _ body: (NIO.NIOFileHa
 }
 
 var temporaryDirectory: String {
-#if targetEnvironment(simulator)
+	#if targetEnvironment(simulator)
 	// Simulator temp directories are so long (and contain the user name) that they're not usable
 	// for UNIX Domain Socket paths (which are limited to 103 bytes).
 	return "/tmp"
-#else
-#if os(Android)
+	#else
+	#if os(Android)
 	return "/data/local/tmp"
-#elseif os(Linux)
+	#elseif os(Linux)
 	return "/tmp"
-#else
+	#else
 	if #available(macOS 10.12, iOS 10, tvOS 10, watchOS 3, *) {
 		return FileManager.default.temporaryDirectory.path
 	} else {
 		return "/tmp"
 	}
-#endif // os
-#endif // targetEnvironment
+	#endif // os
+	#endif // targetEnvironment
 }
 
 func createTemporaryDirectory() -> String {

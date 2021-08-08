@@ -4,7 +4,7 @@ import NIO
 extension BaseSftpServer {
 	public func handleSetStatus(
 		packet: SetStatusPacket,
-		on eventLoop: EventLoop,
+		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
 		logger.debug("[\(packet.id)] Handling set status packet: \(packet)")
@@ -47,7 +47,7 @@ extension BaseSftpServer {
 				// 0: Access Time
 				statResult.st_atimespec,
 				// 1: Modify Time
-				statResult.st_mtimespec
+				statResult.st_mtimespec,
 			]
 			if let accessDate = packet.fileAttributes.accessDate {
 				dates[0] = accessDate.timespec

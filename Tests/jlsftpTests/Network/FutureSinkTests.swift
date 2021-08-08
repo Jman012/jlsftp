@@ -86,7 +86,7 @@ final class FutureSinkTests: XCTestCase {
 				let p: EventLoopPromise<Void> = eventLoop.makePromise()
 				promises.append(p)
 				return p.futureResult
-			})
+		})
 		passthroughSubj.subscribe(futureSink)
 
 		// First, some standard tracking of received values and promises after
@@ -155,7 +155,7 @@ final class FutureSinkTests: XCTestCase {
 				let p: EventLoopPromise<Void> = eventLoop.makePromise()
 				promises.append(p)
 				return p.futureResult
-			})
+		})
 		passthroughSubj.subscribe(futureSink)
 
 		// First, some standard tracking of received values and promises after
@@ -186,6 +186,6 @@ final class FutureSinkTests: XCTestCase {
 	static var allTests = [
 		("testValid", testValid),
 		("testErrorCancelsClean", testErrorCancelsClean),
-		("testErrorCancelsOutstanding", testErrorCancelsOutstanding)
+		("testErrorCancelsOutstanding", testErrorCancelsOutstanding),
 	]
 }

@@ -4,7 +4,7 @@ import NIO
 extension BaseSftpServer {
 	public func handleRename(
 		packet: RenamePacket,
-		on eventLoop: EventLoop,
+		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
 		logger.debug("[\(packet.id)] Handling rename packet: \(packet)")

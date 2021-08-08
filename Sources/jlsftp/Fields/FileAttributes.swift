@@ -55,12 +55,12 @@ public struct FileAttributes {
 
 	public func longName(shortName: String) -> String {
 		/*
-		The recommended format of this string is:
-		```
-		-rwxr-xr-x   1 mjos     staff      348911 Mar 25 14:29 t-filexfer
-		1234567890 123 12345678 12345678 12345678 123456789012
-		```
-		*/
+		 The recommended format of this string is:
+		 ```
+		 -rwxr-xr-x   1 mjos     staff      348911 Mar 25 14:29 t-filexfer
+		 1234567890 123 12345678 12345678 12345678 123456789012
+		 ```
+		 */
 
 		var permissionCharacters: [Character] = .init(repeating: "-", count: 10)
 		if let permissions = self.permissions {

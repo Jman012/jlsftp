@@ -66,8 +66,8 @@ extension BaseSftpServer {
 							  toOffset: Int64(writeOffset), // TODO: Fix potential error
 							  buffer: buffer,
 							  eventLoop: eventLoop).always { _ in
-								self.logger.trace("[\(packet.id)] Write to offset \(writeOffset) with \(buffer.readableBytes) bytes complete")
-							}
+				self.logger.trace("[\(packet.id)] Write to offset \(writeOffset) with \(buffer.readableBytes) bytes complete")
+			}
 		})
 
 		return overallPromise.futureResult

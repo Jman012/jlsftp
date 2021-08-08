@@ -35,7 +35,7 @@ final class BaseSftpServerTests: XCTestCase {
 		let server = BaseSftpServer(forVersion: .min, threadPool: threadPool, logger: Logger(label: "test"))
 
 		// Purposefully do not register a ReplyHandler
-		let message = SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in})
+		let message = SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in })
 		let future = server.handle(message: message, on: eventLoop)
 		var didCall = false
 		_ = future.always {
@@ -100,7 +100,7 @@ extension BaseSftpServerTests {
 
 	static func __closeFile(sftpHandleString: String, eventLoop: EventLoop, server: BaseSftpServer) {
 		// Use handle to close temporary file
-		var lastReplyMessage: SftpMessage? = nil
+		var lastReplyMessage: SftpMessage?
 		server.register(replyHandler: { message in
 			lastReplyMessage = message
 			return eventLoop.makeSucceededVoidFuture()

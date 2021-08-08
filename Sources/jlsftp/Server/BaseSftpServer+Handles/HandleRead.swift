@@ -81,7 +81,7 @@ extension BaseSftpServer {
 											lastPromise = promise
 											return promise.futureResult
 										}
-									})
+			})
 				.flatMap { _ in
 					self.logger.trace("[\(packet.id)] Finished reading contents of file")
 					// Finish the data and end when all the data gets written.

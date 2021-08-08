@@ -95,7 +95,7 @@ extension FutureSink: Subscriber {
 			self.lock.withLock {
 				// When a Future is resolved, stop tracking it
 				let index = self.currentFutures.firstIndex(of: wrapper)
-				self.currentFutures.remove(at: index!) // TODO
+				self.currentFutures.remove(at: index!) // TODO:
 			}
 
 			// And ask for the additional demand from upstream

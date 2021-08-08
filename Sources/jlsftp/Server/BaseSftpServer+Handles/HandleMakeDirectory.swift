@@ -4,7 +4,7 @@ import NIO
 extension BaseSftpServer {
 	public func handleMakeDirectory(
 		packet: MakeDirectoryPacket,
-		on eventLoop: EventLoop,
+		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
 		logger.debug("[\(packet.id)] Handling make directory packet: \(packet)")
