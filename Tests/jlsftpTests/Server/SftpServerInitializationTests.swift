@@ -300,6 +300,34 @@ final class SftpServerInitializationTests: XCTestCase {
 		XCTAssertEqual(didHandleMessageV4, true)
 	}
 
+	func testNoServer() {
+		let logger = Logger(label: "test", factory: { _ in CustomLogHandler() })
+		let eventLoop = EmbeddedEventLoop()
+		let completedFuture = eventLoop.makeSucceededVoidFuture()
+		let serverV3 = CustomSftpServer(handleMessageHandler: { _ in completedFuture })
+		let initialization = SftpServerInitialization(logger: logger, versionedServers: [.v3: serverV3])
+
+		var lastReply: SftpMessage?
+		initialization?.register(replyHandler: { message in
+			lastReply = message
+			return completedFuture
+		})
+
+		let message = SftpMessage(packet: .status(.init(id: 1, path: "/")), dataLength: 0, shouldReadHandler: { _ in })
+		XCTAssertNoThrow(try initialization?.handle(message: message, on: eventLoop).wait())
+
+		guard let reply = lastReply else {
+			XCTFail()
+			return
+		}
+		switch reply.packet {
+		case let .statusReply(packet):
+			XCTAssertEqual(packet.statusCode, .badMessage)
+		default:
+			XCTFail()
+		}
+	}
+
 	static var allTests = [
 		("testInvalidInit", testInvalidInit),
 		("testValidInit", testValidInit),
