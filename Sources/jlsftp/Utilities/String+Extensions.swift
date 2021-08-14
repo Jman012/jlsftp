@@ -5,7 +5,7 @@ extension String {
 		if self.count > leftToLength {
 			return self
 		} else {
-			return String(repeating: pad, count: self.count - leftToLength) + self
+			return String(repeating: pad, count: leftToLength - self.count) + self
 		}
 	}
 }

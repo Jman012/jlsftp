@@ -4,12 +4,16 @@ import XCTest
 public func allTests() -> [XCTestCaseEntry] {
 	return [
 		// Fields
+		testCase(FileAttributesTests.allTests),
 		// Network
-		testCase(SftpServerChannelHandlerTests.allTests),
+		testCase(BufferedDataPublisherTests.allTests),
+		testCase(DemandBridgeSubjectTests.allTests),
+		testCase(FutureSinkTests.allTests),
+		testCase(NetworkingPublisherChainTests.allTests),
+		testCase(SftpMessageTests.allTests),
 		testCase(SftpPacketDecoderTests.allTests),
 		testCase(SftpPacketEncoderTests.allTests),
-		// Packets
-		testCase(PacketTests.allTests),
+		testCase(SftpServerChannelHandlerTests.allTests),
 		// Server
 		testCase(BaseSftpServerTests.allTests),
 		testCase(SftpServerInitializationTests.allTests),
@@ -62,10 +66,16 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(PacketTypeTests.allTests),
 		testCase(SftpVersionTests.allTests),
 		// Utilities
+		testCase(ByteBufferExtenstionsTests.allTests),
+		testCase(DateExtensionsTests.allTests),
+		testCase(DateFormatterExtensionsTests.allTests),
 		testCase(mode_tExtensionsTests.allTests),
 		testCase(NIOFileHandleExtensionsTests.allTests),
 		testCase(ResultExtensionTests.allTests),
 		testCase(SequenceExtensionTests.allTests),
+		testCase(StringExtensionsTests.allTests),
+		testCase(SyscallTests.allTests),
+		testCase(TimeSpecExtensionsTests.allTests),
 		//
 		testCase(jlsftpTests.allTests),
 	]

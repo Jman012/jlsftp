@@ -2,7 +2,7 @@ import Foundation
 
 public struct FileAttributes {
 
-	private static let dateFormatter = DateFormatter(format: "MMM dd hh:mm")
+	private static let dateFormatter = DateFormatter(format: "MMM dd HH:mm")
 
 	let sizeBytes: UInt64?
 	let userId: UInt32?
