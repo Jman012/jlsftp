@@ -20,10 +20,11 @@ extension BaseSftpServer {
 			return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
 		}
 
-		let dirEntity: UnsafeMutablePointer<dirent>!
+		let dirEntity: UnsafeMutablePointer<dirent>?
 		do {
-			dirEntity = try syscall {
-				readdir(sftpDirHandle.dir)
+			dirEntity = try syscallAcceptableNil {
+				errno = 0
+				return readdir(sftpDirHandle.dir)
 			}
 		} catch let error as IOError where error.errnoCode == EOF {
 			let eofReply: Packet = .statusReply(StatusReplyPacket(id: packet.id, statusCode: .endOfFile, errorMessage: "", languageTag: "en-US"))
@@ -34,7 +35,7 @@ extension BaseSftpServer {
 			return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
 		}
 
-		if dirEntity == nil {
+		guard let dirEntity = dirEntity else {
 			let eofReply: Packet = .statusReply(StatusReplyPacket(id: packet.id, statusCode: .endOfFile, errorMessage: "", languageTag: "en-US"))
 			return replyHandler(SftpMessage(packet: eofReply, dataLength: 0, shouldReadHandler: { _ in }))
 		}
@@ -49,7 +50,7 @@ extension BaseSftpServer {
 		do {
 			try withUnsafeMutablePointer(to: &statResult) { statResultPtr in
 				try syscall {
-					stat(nameString, statResultPtr)
+					stat(sftpDirHandle.path + "/" + nameString, statResultPtr)
 				}
 			}
 		} catch {

@@ -14,18 +14,26 @@ extension BaseSftpServer {
 			let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .noSuchFile, errorMessage: "The handle being closed is not tracked by the server. Was it already closed?", languageTag: "en-US"))
 			return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
 		}
-		guard case let .file(sftpFileHandle) = sftpHandle else {
-			logger.warning("[\(packet.id)] The handle identifier '\(packet.handle)' was not for a file")
-			let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .noSuchFile, errorMessage: "The handle being closed is not tracked by the server. Was it already closed?", languageTag: "en-US"))
-			return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
-		}
 
-		do {
-			try sftpFileHandle.nioHandle.close()
-		} catch {
-			logger.warning("[\(packet.id)] Encountered error attempting to close file handle: \(error)")
-			let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .failure, errorMessage: "Error encountered when closing file: \(error)", languageTag: "en-US"))
-			return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
+		switch sftpHandle {
+		case let .file(sftpFileHandle):
+			do {
+				try sftpFileHandle.nioHandle.close()
+			} catch {
+				logger.warning("[\(packet.id)] Encountered error attempting to close file handle: \(error)")
+				let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .failure, errorMessage: "Error encountered when closing file: \(error)", languageTag: "en-US"))
+				return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
+			}
+		case let .dir(sftpFileHandle):
+			do {
+				try syscall {
+					closedir(sftpFileHandle.dir)
+				}
+			} catch {
+				logger.warning("[\(packet.id)] Encountered error attempting to close file handle: \(error)")
+				let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .failure, errorMessage: "Error encountered when closing file: \(error)", languageTag: "en-US"))
+				return replyHandler(SftpMessage(packet: errorReply, dataLength: 0, shouldReadHandler: { _ in }))
+			}
 		}
 
 		_ = self.sftpFileHandles.removeHandle(handleIdentifier: packet.handle)

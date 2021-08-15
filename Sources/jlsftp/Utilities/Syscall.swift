@@ -23,3 +23,18 @@ internal func syscall<T>(
 	}
 	return res
 }
+
+@inline(__always)
+internal func syscallAcceptableNil<T>(
+	where function: String = #function,
+	_ body: () throws -> UnsafeMutablePointer<T>?) throws -> UnsafeMutablePointer<T>? {
+	let res = try body()
+	if res == nil {
+		let err = errno
+		if err == 0 {
+			return nil
+		}
+		throw IOError(errnoCode: err, reason: function)
+	}
+	return res
+}

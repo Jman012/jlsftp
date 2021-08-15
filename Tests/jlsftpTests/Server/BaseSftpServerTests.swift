@@ -94,6 +94,7 @@ extension BaseSftpServerTests {
 			XCTFail()
 			return ""
 		}
+		XCTAssert(sftpHandleString.count > 0)
 
 		return sftpHandleString
 	}
@@ -123,6 +124,41 @@ extension BaseSftpServerTests {
 		}
 	}
 
+	static func __openDirectory(folderPath: String, eventLoop: EventLoop, server: BaseSftpServer) -> String {
+		// Open temporary file
+		let openDirPacket: OpenDirectoryPacket = .init(id: 1, path: folderPath)
+		var lastReplyMessage: SftpMessage?
+		let replyHandler: ReplyHandler = { message in
+			lastReplyMessage = message
+			return eventLoop.makeSucceededVoidFuture()
+		}
+		server.register(replyHandler: replyHandler)
+		let message = SftpMessage(packet: .openDirectory(openDirPacket), dataLength: 0, shouldReadHandler: { _ in })
+		XCTAssertNoThrow(try server.handle(message: message, on: eventLoop).wait())
+
+		// Assert correct reply, extract handle
+		guard let openDirReply = lastReplyMessage else {
+			XCTFail()
+			return ""
+		}
+		var sftpHandle: String?
+		switch openDirReply.packet {
+		case let .handleReply(handleReply):
+			XCTAssertEqual(handleReply.id, 1)
+			sftpHandle = handleReply.handle
+		default:
+			XCTFail()
+		}
+		guard let sftpHandleString = sftpHandle else {
+			XCTFail()
+			return ""
+		}
+		XCTAssert(sftpHandleString.count > 0)
+
+		return sftpHandleString
+	}
+
+
 	static func __withServer(_ body: (EventLoop, BaseSftpServer) throws -> Void) {
 		let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 		defer {
@@ -146,6 +182,19 @@ extension BaseSftpServerTests {
 				let sftpHandleString = __openFile(filePath: filePath, openFlags: openFlags, eventLoop: eventLoop, server: server)
 
 				XCTAssertNoThrow(try body(sftpHandleString, filePath, eventLoop, server))
+
+				__closeFile(sftpHandleString: sftpHandleString, eventLoop: eventLoop, server: server)
+			})
+		}
+	}
+
+	static func _testWithTemporaryDirectory(_ body: (String, String, EventLoop, BaseSftpServer) throws -> Void) {
+		__withServer { eventLoop, server in
+			XCTAssertNoThrow(try withTemporaryDirectory { folderPath in
+				// Open the temporary folder
+				let sftpHandleString = __openDirectory(folderPath: folderPath, eventLoop: eventLoop, server: server)
+
+				XCTAssertNoThrow(try body(sftpHandleString, folderPath, eventLoop, server))
 
 				__closeFile(sftpHandleString: sftpHandleString, eventLoop: eventLoop, server: server)
 			})
