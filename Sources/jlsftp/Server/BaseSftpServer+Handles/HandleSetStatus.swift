@@ -23,18 +23,10 @@ extension BaseSftpServer {
 		}
 
 		do {
-			if let userId = packet.fileAttributes.userId, let groupId = packet.fileAttributes.groupId {
-				try syscall {
-					chown(packet.path, userId, groupId)
-				}
-			} else if let userId = packet.fileAttributes.userId {
-				try syscall {
-					chown(packet.path, userId, statResult.st_gid)
-				}
-			} else if let groupId = packet.fileAttributes.groupId {
-				try syscall {
-					chown(packet.path, statResult.st_uid, groupId)
-				}
+			let uid = packet.fileAttributes.userId ?? statResult.st_uid
+			let gid = packet.fileAttributes.groupId ?? statResult.st_uid
+			try syscall {
+				chown(packet.path, uid, gid)
 			}
 
 			if let permissions = packet.fileAttributes.permissions {
@@ -43,19 +35,12 @@ extension BaseSftpServer {
 				}
 			}
 
-			var dates = [
+			let dates = [
 				// 0: Access Time
-				statResult.st_atimespec,
+				packet.fileAttributes.accessDate?.timespec ?? statResult.st_atimespec,
 				// 1: Modify Time
-				statResult.st_mtimespec,
+				packet.fileAttributes.modifyDate?.timespec ?? statResult.st_mtimespec,
 			]
-			if let accessDate = packet.fileAttributes.accessDate {
-				dates[0] = accessDate.timespec
-			}
-			if let modifyDate = packet.fileAttributes.modifyDate {
-				dates[1] = modifyDate.timespec
-			}
-
 			try dates.withUnsafeBufferPointer { datesPtr in
 				try syscall {
 					utimensat(AT_FDCWD, packet.path, datesPtr.baseAddress, 0)
