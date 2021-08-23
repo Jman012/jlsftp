@@ -8,16 +8,15 @@ import NIO
  `SftpServer` handler.
  This also ports the Combine backpressure to the NIO backpressure mechanisms.
  */
-public class SftpServerChannelHandler: ChannelDuplexHandler {
+public class SftpChannelHandler: ChannelDuplexHandler {
 	public typealias InboundIn = MessagePart
-	public typealias InboundOut = Never
-	public typealias OutboundIn = Never
+	public typealias InboundOut = SftpMessage
+	public typealias OutboundIn = SftpMessage
 	public typealias OutboundOut = MessagePart
 
 	public enum State {
 		case awaitingHeader
 		case processingMessage(SftpMessage)
-		case awaitingFinishedReply(SftpMessage)
 	}
 
 	public enum HandlerError: Error {
@@ -27,16 +26,10 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 			switch self {
 			case let .unexpected(.header(packet, _), .processingMessage(sftpMessage)):
 				return "An unexpected sftp packet header \(String(describing: packet.packetType)) was encountered when body data was expected (while processing \(String(describing: sftpMessage.packet.packetType)))"
-			case let .unexpected(.header(packet, _), .awaitingFinishedReply(_)):
-				return "An unexpected sftp packet header \(String(describing: packet.packetType)) was encountered when no reads should have occurred."
 			case .unexpected(.body(_), .awaitingHeader):
 				return "An unexpected sftp data chunk was encountered when an sftp packet header was expected."
-			case .unexpected(.body(_), .awaitingFinishedReply(_)):
-				return "An unexpected sftp data chunk was encountered when no reads should have occurred."
 			case .unexpected(.end, .awaitingHeader):
 				return "An unexpected sftp data end marker was encountered when an sftp packet header was expected."
-			case .unexpected(.end, .awaitingFinishedReply(_)):
-				return "An unexpected sftp data end marker was encountered when no reads should have occurred."
 			case .unexpected(.header(_, _), .awaitingHeader),
 				 .unexpected(.body(_), .processingMessage(_)),
 				 .unexpected(.end, .processingMessage(_)):
@@ -45,26 +38,17 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 		}
 	}
 
-	private let server: SftpServer
-
 	private var state: State
 	private var shouldRead: Bool = false
 	internal var context: ChannelHandlerContext?
 	private var replyCancellable: AnyCancellable?
 
-	public init(server: SftpServer) {
-		self.server = server
+	public init() {
 		self.state = .awaitingHeader
-
-		self.server.register(replyHandler: { message in
-			return self.reply(withMessage: message)
-		})
 	}
 
 	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
 		let messagePart = self.unwrapInboundIn(data)
-
-		// TODO: handle error if previous message is still awaiting bytes?
 
 		// There are two data streams we need to worry about: a potential incoming
 		// data stream (perhaps a file being sent to the server) and a potential
@@ -115,16 +99,11 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 				if packet.packetType?.hasBody ?? false {
 					state = .processingMessage(sftpMessage)
 				} else {
-					state = .awaitingFinishedReply(sftpMessage)
+					state = .awaitingHeader
 				}
 
-				let serverHandledFuture = server.handle(message: sftpMessage, on: context.eventLoop)
-				serverHandledFuture.whenComplete { _ in
-					self.state = .awaitingHeader
-				}
+				context.fireChannelRead(self.wrapInboundOut(sftpMessage))
 			case .processingMessage:
-				context.fireErrorCaught(HandlerError.unexpected(messagePart, self.state))
-			case .awaitingFinishedReply:
 				context.fireErrorCaught(HandlerError.unexpected(messagePart, self.state))
 			}
 		case let .body(buffer):
@@ -139,8 +118,6 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 				case let .failure(error):
 					context.fireErrorCaught(error)
 				}
-			case .awaitingFinishedReply:
-				context.fireErrorCaught(HandlerError.unexpected(messagePart, self.state))
 			}
 		case .end:
 			switch state {
@@ -148,9 +125,7 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 				context.fireErrorCaught(HandlerError.unexpected(messagePart, self.state))
 			case let .processingMessage(sftpMessage):
 				sftpMessage.completeData()
-				state = .awaitingFinishedReply(sftpMessage)
-			case .awaitingFinishedReply:
-				context.fireErrorCaught(HandlerError.unexpected(messagePart, self.state))
+				state = .awaitingHeader
 			}
 		}
 	}
@@ -165,9 +140,6 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 			if shouldRead {
 				context.read()
 			}
-		case .awaitingFinishedReply:
-			// Never allow reads while the previous message is still being processed.
-			return
 		}
 	}
 
@@ -189,10 +161,8 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 	  - Returns: A future that completes when the header and body data, if any,
 	    are completely written to the outbound.
 	 */
-	private func reply(withMessage message: SftpMessage) -> EventLoopFuture<Void> {
-		guard let context = context else {
-			precondition(false)
-		}
+	public func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
+		let message = self.unwrapOutboundIn(data)
 
 		// First, write the header to the wire.
 		let data = self.wrapOutboundOut(.header(message.packet, message.totalBodyBytes))
@@ -230,6 +200,9 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 		}
 
 		// Send a folded future for when all writes to the context finish.
-		return headerFuture.and(endPromise.futureResult).map({ _ in () })
+		headerFuture
+			.and(endPromise.futureResult)
+			.map({ _ in () })
+			.cascade(to: promise)
 	}
 }

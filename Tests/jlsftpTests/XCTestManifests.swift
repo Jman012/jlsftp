@@ -13,7 +13,7 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(SftpMessageTests.allTests),
 		testCase(SftpPacketDecoderTests.allTests),
 		testCase(SftpPacketEncoderTests.allTests),
-		testCase(SftpServerChannelHandlerTests.allTests),
+		testCase(SftpChannelHandlerTests.allTests),
 		// Server
 		testCase(BaseSftpServerTests.allTests),
 		testCase(SftpServerInitializationTests.allTests),
