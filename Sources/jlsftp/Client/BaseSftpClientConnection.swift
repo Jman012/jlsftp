@@ -7,11 +7,12 @@ public class BaseSftpClientConnection: SftpClientConnection {
 		case unsuported(String)
 	}
 
-	let version: jlsftp.SftpProtocol.SftpVersion
-	let supportedPacketTypes: Set<jlsftp.SftpProtocol.PacketType>
-	let channel: Channel
+	public let version: jlsftp.SftpProtocol.SftpVersion
+	private let supportedPacketTypes: Set<jlsftp.SftpProtocol.PacketType>
+	private let channel: Channel
 
-	var packetId: PacketId = 0
+	private var packetId: PacketId = 0
+	private var sftpHandles = SftpHandleCollection()
 
 	public init(version: jlsftp.SftpProtocol.SftpVersion, channel: Channel) {
 		self.version = version
@@ -24,10 +25,6 @@ public class BaseSftpClientConnection: SftpClientConnection {
 		return packetId
 	}
 
-	public func handleReply(message: SftpMessage) -> EventLoopFuture<Void> {
-		return channel.eventLoop.makeSucceededVoidFuture()
-	}
-
 	public func openFile(remotePath: String) -> EventLoopFuture<String> {
 		guard supportedPacketTypes.contains(.open) else {
 			return channel.eventLoop.makeFailedFuture(SftpClientError.unsuported("This operation is unsupported for this server (using sftp version \(self.version))"))
@@ -37,6 +34,8 @@ public class BaseSftpClientConnection: SftpClientConnection {
 		let message = SftpMessage(packet: packet, dataLength: 0, shouldReadHandler: { _ in })
 		let clientRequest = ClientRequest(message: message, eventLoop: channel.eventLoop)
 		channel.writeAndFlush(packet, promise: nil)
-		return clientRequest.promise.futureResult.map { _ in "test" }
+		return clientRequest.promise.futureResult.map { _ in
+			return "test"
+		}
 	}
 }

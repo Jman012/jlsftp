@@ -14,7 +14,7 @@ public class SftpClient {
 	public var serverAuthDelegate: NIOSSHClientServerAuthenticationDelegate
 	public let eventLoopGroup: EventLoopGroup
 
-	public init(host: String,
+	public init(host: String = "",
 				port: Int = 22,
 				userAuthDelegate: NIOSSHClientUserAuthenticationDelegate,
 				serverAuthDelegate: NIOSSHClientServerAuthenticationDelegate,
@@ -27,19 +27,23 @@ public class SftpClient {
 	}
 
 	public func connect() -> EventLoopFuture<SftpClientConnection> {
+		// Configure the bootstrapper for the base ssh connection
 		let bootstrap = ClientBootstrap(group: eventLoopGroup)
 			.channelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
 			.channelOption(ChannelOptions.allowRemoteHalfClosure, value: true)
 			.channelInitializer { channel in
+				// Use the injected delegates for authorization
 				let clientConfig = SSHClientConfiguration(userAuthDelegate: self.userAuthDelegate,
 														  serverAuthDelegate: self.serverAuthDelegate)
-				return channel.pipeline.addHandlers([
-					NIOSSHHandler(role: .client(clientConfig),
-								  allocator: channel.allocator,
-								  inboundChildChannelInitializer: nil),
-				])
+				// Add the ssh bootstrapping handler
+				let sshHandler = NIOSSHHandler(role: .client(clientConfig),
+											   allocator: channel.allocator,
+											   inboundChildChannelInitializer: nil)
+				return channel.pipeline.addHandler(sshHandler)
 			}
 
+		// Connect and, upon successful connection and ssh session, setup child
+		// channel and handlers
 		return bootstrap
 			.connect(host: host, port: port)
 			.flatMap { channel in
@@ -50,14 +54,25 @@ public class SftpClient {
 							return channel.eventLoop.makeFailedFuture(ClientError.invalidChannelType)
 						}
 
+						// Successfully created ssh session. Setup child
+						// channel handlers
 						return childChannel.pipeline.addHandlers([
-							ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
+							// To handle outgoing request encoding
 							MessageToByteHandler(SftpPacketEncoder(serializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3(), allocator: childChannel.allocator)),
+							// To handle incoming reply decoding
+							ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
+							// To handle MessagePart <-> SftpMessage conversion
 							SftpChannelHandler(),
+							// To bridge to the SftpClientConnection
 							SftpClientChannelHandler(),
 						])
 					}
+
+					// Once the child channel has been created, map it to a
+					// SftpClientConnection and inject the channel into it.
+					// This is what ultimately gets returned to the caller.
 					return promise.futureResult.map { channel in
+						// TODO: Change to init bootstrapper
 						return BaseSftpClientConnection(version: .v3, channel: channel)
 					}
 				}
