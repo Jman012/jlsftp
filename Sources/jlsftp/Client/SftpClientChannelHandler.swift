@@ -7,13 +7,23 @@ internal class SftpClientChannelHandler: ChannelDuplexHandler {
 	typealias OutboundIn = ClientRequest
 	typealias OutboundOut = SftpMessage
 
+	enum ClientHandlerError: Error {
+		case noRequestInQueue
+	}
+
 	private var context: ChannelHandlerContext?
 	private var requestQueue: [ClientRequest] = []
 
 	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+		guard let clientRequest = requestQueue.first else {
+			context.fireErrorCaught(ClientHandlerError.noRequestInQueue)
+			return
+		}
 		let message = self.unwrapInboundIn(data)
-		let clientRequest = requestQueue.removeFirst()
 		clientRequest.promise.succeed(message)
+		if clientRequest.shouldRemove(responseMessage: message) {
+			_ = requestQueue.removeFirst()
+		}
 	}
 
 	func errorCaught(context: ChannelHandlerContext, error: Error) {
