@@ -57,6 +57,9 @@ public class SftpClient {
 						// Successfully created ssh session. Setup child
 						// channel handlers
 						return childChannel.pipeline.addHandlers([
+							// To handle SSHChannelData <->ByteBuffer and
+							// and init the sftp subsystem for ssh.
+							SshSftpSubsystemClientHandler(),
 							// To handle outgoing request encoding
 							MessageToByteHandler(SftpPacketEncoder(serializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3(), allocator: childChannel.allocator)),
 							// To handle incoming reply decoding
