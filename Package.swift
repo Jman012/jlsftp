@@ -38,14 +38,6 @@ let package = Package(
 				.product(name: "Logging", package: "swift-log"),
 			]
 		),
-		.target(name: "jlsftpSimplePlaintextClient", dependencies: [
-			"jlsftp",
-			.product(name: "NIO", package: "swift-nio"),
-		]),
-		.target(name: "jlsftpSimplePlaintextServer", dependencies: [
-			"jlsftp",
-			.product(name: "NIO", package: "swift-nio"),
-		]),
 		.target(name: "jlsftpSimpleSSHClient", dependencies: [
 			"jlsftp",
 			.product(name: "NIO", package: "swift-nio"),
