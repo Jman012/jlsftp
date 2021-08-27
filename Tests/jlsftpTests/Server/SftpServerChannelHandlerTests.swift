@@ -76,7 +76,7 @@ final class SftpServerChannelHandlerTests: XCTestCase {
 	func testReadFires() {
 		let channel = EmbeddedChannel()
 		let promise = channel.eventLoop.makePromise(of: Void.self)
-		let server = CustomSftpServer(handleMessageHandler: { message in
+		let server = CustomSftpServer(handleMessageHandler: { _ in
 			return promise.futureResult
 		})
 		let readEventHitHandler = ReadEventHitHandler()

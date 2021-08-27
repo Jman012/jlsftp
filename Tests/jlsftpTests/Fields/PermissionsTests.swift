@@ -24,10 +24,10 @@ final class PermissionsTests: XCTestCase {
 				S_IRGRP | S_IWGRP | S_IXGRP |
 				S_IROTH | S_IWOTH | S_IXOTH |
 				S_ISUID | S_ISGID | S_ISVTX,
-			 Permissions(user: [.read, .write, .execute],
-						 group: [.read, .write, .execute],
-						 other: [.read, .write, .execute],
-						 mode: [.setUserId, .setGroupId, .stickyBit])),
+				Permissions(user: [.read, .write, .execute],
+							group: [.read, .write, .execute],
+							other: [.read, .write, .execute],
+							mode: [.setUserId, .setGroupId, .stickyBit])),
 		]
 
 		for datum in data {

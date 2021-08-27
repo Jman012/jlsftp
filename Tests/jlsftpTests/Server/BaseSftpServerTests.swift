@@ -94,7 +94,7 @@ extension BaseSftpServerTests {
 			XCTFail()
 			return ""
 		}
-		XCTAssert(sftpHandleString.count > 0)
+		XCTAssert(!sftpHandleString.isEmpty)
 
 		return sftpHandleString
 	}
@@ -153,11 +153,10 @@ extension BaseSftpServerTests {
 			XCTFail()
 			return ""
 		}
-		XCTAssert(sftpHandleString.count > 0)
+		XCTAssert(!sftpHandleString.isEmpty)
 
 		return sftpHandleString
 	}
-
 
 	static func __withServer(_ body: (EventLoop, BaseSftpServer) throws -> Void) {
 		let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)

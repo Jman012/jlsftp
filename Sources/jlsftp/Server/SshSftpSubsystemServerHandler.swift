@@ -56,7 +56,7 @@ internal class SshSftpSubsystemServerHandler: ChannelDuplexHandler {
 			context.fireErrorCaught(HandlerError.unexpectedDataBeforeInitialized)
 			return
 		}
-		
+
 		let buffer = self.unwrapOutboundIn(data)
 		let channelData = SSHChannelData(type: .channel, data: .byteBuffer(buffer))
 		context.write(self.wrapOutboundOut(channelData), promise: promise)

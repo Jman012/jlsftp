@@ -31,7 +31,7 @@ final class ByteBufferExtenstionsTests: XCTestCase {
 			(ByteBuffer(bytes: [0x00, 0x00, 0x00]), .needMoreData),
 			(ByteBuffer(bytes: [0x00, 0x00, 0x00, 0x01]), .needMoreData),
 			(ByteBuffer(bytes: [0x00, 0x00, 0x00, 0x02, 0x41]), .needMoreData),
-			(ByteBuffer(bytes: [0x00, 0x00, 0x00, 0x01, 0xff]), .invalidData(reason: "Invalid UTF8 string data")),
+			(ByteBuffer(bytes: [0x00, 0x00, 0x00, 0x01, 0xFF]), .invalidData(reason: "Invalid UTF8 string data")),
 		]
 
 		for datum in data {

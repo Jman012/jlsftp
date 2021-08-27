@@ -34,7 +34,7 @@ internal class SftpClientChannelHandler: ChannelDuplexHandler {
 		}
 	}
 
-	public func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
+	public func write(context: ChannelHandlerContext, data: NIOAny, promise _: EventLoopPromise<Void>?) {
 		let clientRequest = self.unwrapOutboundIn(data)
 		self.requestQueue.append(clientRequest)
 		let outboundOut = self.wrapOutboundOut(clientRequest.message)

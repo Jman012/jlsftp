@@ -9,7 +9,7 @@ final class HandleRemoveDirectoryTests: XCTestCase {
 
 	func testHandleRemoveDirectoryValid() {
 		BaseSftpServerTests.__withServer { eventLoop, server in
-			XCTAssertNoThrow(try withTemporaryDirectoryNoRemove() { folderPath in
+			XCTAssertNoThrow(try withTemporaryDirectoryNoRemove { folderPath in
 				var lastMessage: SftpMessage?
 				let replyHandler: ReplyHandler = { message in
 					lastMessage = message

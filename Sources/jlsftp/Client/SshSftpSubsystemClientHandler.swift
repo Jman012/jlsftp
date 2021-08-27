@@ -21,7 +21,7 @@ internal class SshSftpSubsystemClientHandler: ChannelDuplexHandler {
 		context.triggerUserOutboundEvent(sftpRequest, promise: nil)
 	}
 
-	func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
+	func userInboundEventTriggered(context _: ChannelHandlerContext, event: Any) {
 		switch event {
 		case _ as ChannelSuccessEvent:
 			isSftpSubsystemInitialized = true

@@ -40,7 +40,7 @@ final class HandleReadDirectoryTests: XCTestCase {
 	}
 
 	func testHandleReadDirectoryEmpty() {
-		BaseSftpServerTests._testWithTemporaryDirectory { sftpHandleString, folderPath, eventLoop, server in
+		BaseSftpServerTests._testWithTemporaryDirectory { sftpHandleString, _, eventLoop, server in
 			_runReadDir(expected: .name("."), sftpHandleString: sftpHandleString, eventLoop: eventLoop, server: server)
 			_runReadDir(expected: .name(".."), sftpHandleString: sftpHandleString, eventLoop: eventLoop, server: server)
 			_runReadDir(expected: .eof, sftpHandleString: sftpHandleString, eventLoop: eventLoop, server: server)
@@ -64,6 +64,6 @@ final class HandleReadDirectoryTests: XCTestCase {
 
 	static var allTests = [
 		("testHandleReadDirectoryEmpty", testHandleReadDirectoryEmpty),
-		("testHandleReadDirectorySingleItem", testHandleReadDirectorySingleItem)
+		("testHandleReadDirectorySingleItem", testHandleReadDirectorySingleItem),
 	]
 }

@@ -52,8 +52,6 @@ final class SftpChannelHandlerTests: XCTestCase {
 			XCTAssertEqual(lastValue, ByteBuffer(bytes: [0x01, 0x01, 0x01, 0x01]))
 		})
 
-		
-
 		XCTAssertNoThrow(try channel.throwIfErrorCaught())
 		XCTAssertNoThrow(XCTAssert(try channel.finish().isClean))
 	}

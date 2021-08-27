@@ -49,5 +49,4 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 		self.context = nil
 		context.fireChannelUnregistered()
 	}
-
 }

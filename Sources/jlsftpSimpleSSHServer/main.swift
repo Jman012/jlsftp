@@ -7,7 +7,7 @@ import jlsftp
 class ServerUserAuth: NIOSSHServerUserAuthenticationDelegate {
 	var supportedAuthenticationMethods: NIOSSHAvailableUserAuthenticationMethods = [.all]
 
-	func requestReceived(request: NIOSSHUserAuthenticationRequest, responsePromise: EventLoopPromise<NIOSSHUserAuthenticationOutcome>) {
+	func requestReceived(request _: NIOSSHUserAuthenticationRequest, responsePromise: EventLoopPromise<NIOSSHUserAuthenticationOutcome>) {
 		responsePromise.succeed(.success)
 	}
 }
@@ -17,6 +17,7 @@ let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCou
 defer {
 	try! eventLoopGroup.syncShutdownGracefully()
 }
+
 let logger = Logger(label: "jlsftpSimpleSSHServer", factory: { name in
 	var logHandler = StreamLogHandler.standardOutput(label: name)
 	logHandler.logLevel = .debug
