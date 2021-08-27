@@ -51,6 +51,11 @@ let package = Package(
 			.product(name: "NIO", package: "swift-nio"),
 			.product(name: "NIOSSH", package: "swift-nio-ssh"),
 		]),
+		.target(name: "jlsftpSimpleSSHServer", dependencies: [
+			"jlsftp",
+			.product(name: "NIO", package: "swift-nio"),
+			.product(name: "NIOSSH", package: "swift-nio-ssh"),
+		]),
 		.testTarget(
 			name: "jlsftpTests",
 			dependencies: [

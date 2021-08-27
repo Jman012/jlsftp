@@ -18,9 +18,6 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 
 	public init(server: SftpServer) {
 		self.server = server
-		self.server.register(replyHandler: { message in
-			return self.reply(withMessage: message)
-		})
 	}
 
 	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
@@ -53,13 +50,4 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 		context.fireChannelUnregistered()
 	}
 
-	private func reply(withMessage message: SftpMessage) -> EventLoopFuture<Void> {
-		guard let context = context else {
-			precondition(false)
-		}
-
-		let promise = context.eventLoop.makePromise(of: Void.self)
-		context.write(self.wrapOutboundOut(message), promise: promise)
-		return promise.futureResult
-	}
 }

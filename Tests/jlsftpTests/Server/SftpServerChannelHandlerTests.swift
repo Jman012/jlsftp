@@ -5,14 +5,6 @@ import NIO
 
 final class SftpServerChannelHandlerTests: XCTestCase {
 
-	func testInitRegistersReplyHandler() {
-		let server = CustomSftpServer()
-		XCTAssertNil(server.registerReplyHandlerHandler)
-		withExtendedLifetime(SftpServerChannelHandler(server: server)) { _ in
-			XCTAssertNotNil(server.registeredReplyHandler)
-		}
-	}
-
 	func testChannelReadValid() {
 		let channel = EmbeddedChannel()
 		var lastMessage: SftpMessage?
@@ -116,20 +108,13 @@ final class SftpServerChannelHandlerTests: XCTestCase {
 		let packet: Packet = .status(.init(id: 1, path: "a"))
 		let message = SftpMessage(packet: packet, dataLength: 0, shouldReadHandler: { _ in })
 
-		guard let replyHandler = server.registeredReplyHandler else {
-			XCTFail()
-			return
-		}
-
-		let replyFuture = replyHandler(message)
-		channel.flush()
+		let replyFuture = channel.writeAndFlush(message)
 		XCTAssertNoThrow(try replyFuture.wait())
 		let replyMessage = try? channel.readOutbound(as: SftpMessage.self)
 		XCTAssertEqual(replyMessage?.packet, packet)
 	}
 
 	static let allTests = [
-		("testInitRegistersReplyHandler", testInitRegistersReplyHandler),
 		("testChannelReadValid", testChannelReadValid),
 		("testChannelSecondReadValid", testChannelSecondReadValid),
 		("testChannelSecondReadInvalid", testChannelSecondReadInvalid),
