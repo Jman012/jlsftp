@@ -7,8 +7,6 @@ extension BaseSftpServer {
 		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
-		logger.debug("[\(packet.id)] Handling remove packet: \(packet)")
-
 		// Call stat() on the filename to perform sanity checks later.
 		var statResult: stat = stat()
 		do {

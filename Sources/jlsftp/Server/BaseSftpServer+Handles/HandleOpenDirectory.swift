@@ -7,8 +7,6 @@ extension BaseSftpServer {
 		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
-		logger.debug("[\(packet.id)] Handling open directory packet: \(packet)")
-
 		let dir: UnsafeMutablePointer<DIR>!
 		do {
 			dir = try syscall {

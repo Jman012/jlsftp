@@ -7,8 +7,6 @@ extension BaseSftpServer {
 		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
-		logger.debug("[\(packet.id)] Handling real path packet: \(packet)")
-
 		let nameString: String
 		do {
 			let path = try syscall {

@@ -7,8 +7,6 @@ extension BaseSftpServer {
 		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
-		logger.debug("[\(packet.id)] Handling create symbolic link packet: \(packet)")
-
 		do {
 			try syscall {
 				symlink(packet.linkPath, packet.targetPath)

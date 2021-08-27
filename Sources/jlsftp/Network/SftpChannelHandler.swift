@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import NIO
+import Logging
 
 /**
  An NIO channel handler responsible for bridging the incoming data from the NIO
@@ -38,13 +39,14 @@ public class SftpChannelHandler: ChannelDuplexHandler {
 		}
 	}
 
-	private var state: State
+	private let logger: Logger
+
+	private var state: State = .awaitingHeader
 	private var shouldRead: Bool = false
-	internal var context: ChannelHandlerContext?
 	private var replyCancellable: AnyCancellable?
 
-	public init() {
-		self.state = .awaitingHeader
+	public init(logger: Logger) {
+		self.logger = logger
 	}
 
 	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
@@ -96,6 +98,8 @@ public class SftpChannelHandler: ChannelDuplexHandler {
 						self.shouldRead = shouldRead
 				})
 
+				logger.debug("Handling incoming message: \(sftpMessage.packet) with data length \(sftpMessage.totalBodyBytes)")
+
 				if packet.packetType?.hasBody ?? false {
 					state = .processingMessage(sftpMessage)
 				} else {
@@ -143,16 +147,6 @@ public class SftpChannelHandler: ChannelDuplexHandler {
 		}
 	}
 
-	public func channelRegistered(context: ChannelHandlerContext) {
-		self.context = context
-		context.fireChannelRegistered()
-	}
-
-	public func channelUnregistered(context: ChannelHandlerContext) {
-		self.context = nil
-		context.fireChannelUnregistered()
-	}
-
 	/**
 	  From the `SftpServer`, sends an outbound reply to the client via the socket
 	  with the contents of the `SftpMessage` and any body data written to the
@@ -163,6 +157,7 @@ public class SftpChannelHandler: ChannelDuplexHandler {
 	 */
 	public func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
 		let message = self.unwrapOutboundIn(data)
+		logger.debug("Sending outgoing message: \(message.packet) with data length \(message.totalBodyBytes)")
 
 		// First, write the header to the wire.
 		let data = self.wrapOutboundOut(.header(message.packet, message.totalBodyBytes))
@@ -183,7 +178,7 @@ public class SftpChannelHandler: ChannelDuplexHandler {
 					let endFuture = context.write(self.wrapOutboundOut(.end))
 					context.flush()
 					endFuture
-						.fold(bodyFutures, with: { _, _ in self.context!.eventLoop.makeSucceededFuture(()) })
+						.fold(bodyFutures, with: { _, _ in context.eventLoop.makeSucceededFuture(()) })
 						.cascade(to: endPromise)
 				},
 				receiveValue: { buffer in

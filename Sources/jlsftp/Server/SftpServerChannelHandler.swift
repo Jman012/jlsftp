@@ -39,14 +39,4 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 			context.read()
 		}
 	}
-
-	public func channelRegistered(context: ChannelHandlerContext) {
-		self.context = context
-		context.fireChannelRegistered()
-	}
-
-	public func channelUnregistered(context: ChannelHandlerContext) {
-		self.context = nil
-		context.fireChannelUnregistered()
-	}
 }

@@ -15,6 +15,7 @@ public class SftpServerBootstrapper {
 	public let privateKey: NIOSSHPrivateKey
 	public let serverUserAuthDelegate: NIOSSHServerUserAuthenticationDelegate
 	public let eventLoopGroup: EventLoopGroup
+	public let threadPool: NIOThreadPool
 	public let logger: Logger
 
 	public init(host: String,
@@ -22,12 +23,14 @@ public class SftpServerBootstrapper {
 				privateKey: NIOSSHPrivateKey,
 				serverUserAuthDelegate: NIOSSHServerUserAuthenticationDelegate,
 				eventLoopGroup: EventLoopGroup,
+				threadPool: NIOThreadPool,
 				logger: Logger) {
 		self.host = host
 		self.port = port
 		self.privateKey = privateKey
 		self.serverUserAuthDelegate = serverUserAuthDelegate
 		self.eventLoopGroup = eventLoopGroup
+		self.threadPool = threadPool
 		self.logger = logger
 	}
 
@@ -43,7 +46,7 @@ public class SftpServerBootstrapper {
 			guard let server = SftpServerInitialization(
 				logger: self.logger,
 				versionedServers: [
-					.v3: BaseSftpServer(forVersion: .v3, threadPool: NIOThreadPool(numberOfThreads: 1), logger: self.logger),
+					.v3: BaseSftpServer(forVersion: .v3, threadPool: self.threadPool, logger: self.logger),
 				]
 			) else {
 				return channel.eventLoop.makeFailedFuture(ServerError.invalidConfiguration)
@@ -64,7 +67,7 @@ public class SftpServerBootstrapper {
 				// To handle outgoing request encoding
 				MessageToByteHandler(SftpPacketEncoder(serializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3(), allocator: channel.allocator)),
 				// To handle MessagePart <-> SftpMessage conversion
-				SftpChannelHandler(),
+				SftpChannelHandler(logger: self.logger),
 				// To handle the incoming SftpMessages
 				SftpServerChannelHandler(server: server),
 			])

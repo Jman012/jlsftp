@@ -1,6 +1,7 @@
 import Foundation
 import NIO
 import NIOSSH
+import Logging
 
 public class SftpClient {
 
@@ -13,17 +14,20 @@ public class SftpClient {
 	public var userAuthDelegate: NIOSSHClientUserAuthenticationDelegate
 	public var serverAuthDelegate: NIOSSHClientServerAuthenticationDelegate
 	public let eventLoopGroup: EventLoopGroup
+	public var logger: Logger
 
 	public init(host: String = "",
 				port: Int = 22,
 				userAuthDelegate: NIOSSHClientUserAuthenticationDelegate,
 				serverAuthDelegate: NIOSSHClientServerAuthenticationDelegate,
-				eventLoopGroup: EventLoopGroup) {
+				eventLoopGroup: EventLoopGroup,
+				logger: Logger) {
 		self.host = host
 		self.port = port
 		self.userAuthDelegate = userAuthDelegate
 		self.serverAuthDelegate = serverAuthDelegate
 		self.eventLoopGroup = eventLoopGroup
+		self.logger = logger
 	}
 
 	public func connect() -> EventLoopFuture<SftpClientConnection> {
@@ -65,7 +69,7 @@ public class SftpClient {
 							// To handle incoming reply decoding
 							ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
 							// To handle MessagePart <-> SftpMessage conversion
-							SftpChannelHandler(),
+							SftpChannelHandler(logger: self.logger),
 							// To bridge to the SftpClientConnection
 							SftpClientChannelHandler(),
 						])

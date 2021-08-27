@@ -9,7 +9,7 @@ final class FileAttributesTests: XCTestCase {
 		let fileAttributes = FileAttributes(sizeBytes: 1,
 											userId: 2,
 											groupId: 3,
-											permissions: Permissions(user: [.read], group: [], other: [], mode: []),
+											permissions: Permissions(user: [.read], group: [], other: [], mode: [], fileType: .regularFile),
 											accessDate: Date(timeIntervalSince1970: 1),
 											modifyDate: Date(timeIntervalSince1970: 2),
 											linkCount: 4,
@@ -18,7 +18,7 @@ final class FileAttributesTests: XCTestCase {
 		XCTAssertEqual(fileAttributes.sizeBytes, 1)
 		XCTAssertEqual(fileAttributes.userId, 2)
 		XCTAssertEqual(fileAttributes.groupId, 3)
-		XCTAssertEqual(fileAttributes.permissions, Permissions(user: [.read], group: [], other: [], mode: []))
+		XCTAssertEqual(fileAttributes.permissions, Permissions(user: [.read], group: [], other: [], mode: [], fileType: .regularFile))
 		XCTAssertEqual(fileAttributes.accessDate, Date(timeIntervalSince1970: 1))
 		XCTAssertEqual(fileAttributes.modifyDate, Date(timeIntervalSince1970: 2))
 		XCTAssertEqual(fileAttributes.linkCount, 4)
@@ -29,7 +29,7 @@ final class FileAttributesTests: XCTestCase {
 
 	func testInitStat() {
 		let fileAttributes = FileAttributes(stat: .init(st_dev: 0,
-														st_mode: S_IRUSR,
+														st_mode: S_IFREG | S_IRUSR,
 														st_nlink: 4,
 														st_ino: 0,
 														st_uid: 2,
@@ -51,7 +51,7 @@ final class FileAttributesTests: XCTestCase {
 		XCTAssertEqual(fileAttributes.sizeBytes, 1)
 		XCTAssertEqual(fileAttributes.userId, 2)
 		XCTAssertEqual(fileAttributes.groupId, 3)
-		XCTAssertEqual(fileAttributes.permissions, Permissions(user: [.read], group: [], other: [], mode: []))
+		XCTAssertEqual(fileAttributes.permissions, Permissions(user: [.read], group: [], other: [], mode: [], fileType: .regularFile))
 		XCTAssertEqual(fileAttributes.accessDate, Date(timeIntervalSince1970: 1))
 		XCTAssertEqual(fileAttributes.modifyDate, Date(timeIntervalSince1970: 2))
 		XCTAssertEqual(fileAttributes.linkCount, 4)
@@ -67,7 +67,7 @@ final class FileAttributesTests: XCTestCase {
 		let fileAttributes = FileAttributes(sizeBytes: 1,
 											userId: 0,
 											groupId: 0,
-											permissions: .init(user: [.read, .write, .execute], group: [.read, .write, .execute], other: [.read, .write, .execute], mode: []),
+											permissions: .init(user: [.read, .write, .execute], group: [.read, .write, .execute], other: [.read, .write, .execute], mode: [], fileType: .regularFile),
 											accessDate: accessDate,
 											modifyDate: modifyDate,
 											linkCount: 3,

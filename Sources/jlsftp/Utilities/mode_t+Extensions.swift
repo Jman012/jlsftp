@@ -7,7 +7,7 @@ extension mode_t {
 	 needed tranformations.
 	 */
 	init(fromPermissions permissions: Permissions) {
-		let userMode = permissions.user.map { perm -> mode_t in
+		let userMode: [mode_t] = permissions.user.map { perm -> mode_t in
 			switch perm {
 			case .read: return S_IRUSR
 			case .write: return S_IWUSR
@@ -15,7 +15,7 @@ extension mode_t {
 			}
 		}
 
-		let groupMode = permissions.group.map { perm -> mode_t in
+		let groupMode: [mode_t] = permissions.group.map { perm -> mode_t in
 			switch perm {
 			case .read: return S_IRGRP
 			case .write: return S_IWGRP
@@ -23,7 +23,7 @@ extension mode_t {
 			}
 		}
 
-		let otherMode = permissions.other.map { perm -> mode_t in
+		let otherMode: [mode_t] = permissions.other.map { perm -> mode_t in
 			switch perm {
 			case .read: return S_IROTH
 			case .write: return S_IWOTH
@@ -31,7 +31,7 @@ extension mode_t {
 			}
 		}
 
-		let modeMode = permissions.mode.map { perm -> mode_t in
+		let modeMode: [mode_t] = permissions.mode.map { perm -> mode_t in
 			switch perm {
 			case .setUserId: return S_ISUID
 			case .setGroupId: return S_ISGID
@@ -39,7 +39,28 @@ extension mode_t {
 			}
 		}
 
-		let mode = (userMode + groupMode + otherMode + modeMode).reduce(0, |)
+		let fileType: mode_t
+		switch permissions.fileType {
+		case .socket:
+			fileType = S_IFSOCK
+		case .symbolicLink:
+			fileType = S_IFLNK
+		case .regularFile:
+			fileType = S_IFREG
+		case .blockDevice:
+			fileType = S_IFBLK
+		case .directory:
+			fileType = S_IFDIR
+		case .characterDevice:
+			fileType = S_IFCHR
+		case .fifo:
+			fileType = S_IFIFO
+		default:
+			fileType = 0
+		}
+
+		let modeParts: [mode_t] = userMode + groupMode + otherMode + modeMode + [fileType]
+		let mode: mode_t = modeParts.reduce(0, |)
 		self.init(mode)
 	}
 }

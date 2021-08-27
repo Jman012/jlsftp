@@ -6,17 +6,17 @@ import NIO
 final class mode_tExtensionsTests: XCTestCase {
 
 	func testValid() {
-		let data = [
+		let data: [(Permissions, mode_t)] = [
 			(
-				Permissions(user: [], group: [], other: [], mode: []),
+				Permissions(user: [], group: [], other: [], mode: [], fileType: nil),
 				0
 			),
 			(
-				Permissions(user: [.read], group: [.write], other: [.execute], mode: []),
+				Permissions(user: [.read], group: [.write], other: [.execute], mode: [], fileType: nil),
 				S_IRUSR | S_IWGRP | S_IXOTH
 			),
 			(
-				Permissions(user: [.read, .write], group: [.write, .execute], other: [.execute, .read], mode: []),
+				Permissions(user: [.read, .write], group: [.write, .execute], other: [.execute, .read], mode: [], fileType: nil),
 				S_IRUSR | S_IWUSR | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH
 			),
 			(
@@ -24,7 +24,8 @@ final class mode_tExtensionsTests: XCTestCase {
 					user: [.read, .write, .execute],
 					group: [.read, .write, .execute],
 					other: [.read, .write, .execute],
-					mode: []
+					mode: [],
+					fileType: nil
 				),
 				S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH
 			),
@@ -33,7 +34,8 @@ final class mode_tExtensionsTests: XCTestCase {
 					user: [.read],
 					group: [],
 					other: [],
-					mode: []
+					mode: [],
+					fileType: nil
 				),
 				S_IRUSR
 			),
@@ -42,7 +44,8 @@ final class mode_tExtensionsTests: XCTestCase {
 					user: [.write],
 					group: [],
 					other: [],
-					mode: []
+					mode: [],
+					fileType: nil
 				),
 				S_IWUSR
 			),
@@ -51,7 +54,8 @@ final class mode_tExtensionsTests: XCTestCase {
 					user: [.execute],
 					group: [],
 					other: [],
-					mode: []
+					mode: [],
+					fileType: nil
 				),
 				S_IXUSR
 			),
@@ -60,7 +64,8 @@ final class mode_tExtensionsTests: XCTestCase {
 					user: [],
 					group: [.read],
 					other: [],
-					mode: []
+					mode: [],
+					fileType: nil
 				),
 				S_IRGRP
 			),
@@ -69,7 +74,8 @@ final class mode_tExtensionsTests: XCTestCase {
 					user: [],
 					group: [.write],
 					other: [],
-					mode: []
+					mode: [],
+					fileType: nil
 				),
 				S_IWGRP
 			),
@@ -78,7 +84,8 @@ final class mode_tExtensionsTests: XCTestCase {
 					user: [],
 					group: [.execute],
 					other: [],
-					mode: []
+					mode: [],
+					fileType: nil
 				),
 				S_IXGRP
 			),
@@ -87,7 +94,8 @@ final class mode_tExtensionsTests: XCTestCase {
 					user: [],
 					group: [],
 					other: [.read],
-					mode: []
+					mode: [],
+					fileType: nil
 				),
 				S_IROTH
 			),
@@ -96,7 +104,8 @@ final class mode_tExtensionsTests: XCTestCase {
 					user: [],
 					group: [],
 					other: [.write],
-					mode: []
+					mode: [],
+					fileType: nil
 				),
 				S_IWOTH
 			),
@@ -105,25 +114,54 @@ final class mode_tExtensionsTests: XCTestCase {
 					user: [],
 					group: [],
 					other: [.execute],
-					mode: []
+					mode: [],
+					fileType: nil
 				),
 				S_IXOTH
 			),
 			(
-				Permissions(user: [], group: [], other: [], mode: [.setUserId]),
+				Permissions(user: [], group: [], other: [], mode: [.setUserId], fileType: nil),
 				S_ISUID
 			),
 			(
-				Permissions(user: [], group: [], other: [], mode: [.setGroupId]),
+				Permissions(user: [], group: [], other: [], mode: [.setGroupId], fileType: nil),
 				S_ISGID
 			),
 			(
-				Permissions(user: [], group: [], other: [], mode: [.stickyBit]),
+				Permissions(user: [], group: [], other: [], mode: [.stickyBit], fileType: nil),
 				S_ISVTX
 			),
 			(
-				Permissions(user: [], group: [], other: [], mode: [.setUserId, .setGroupId, .stickyBit]),
+				Permissions(user: [], group: [], other: [], mode: [.setUserId, .setGroupId, .stickyBit], fileType: nil),
 				S_ISUID | S_ISGID | S_ISVTX
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [], fileType: .socket),
+				S_IFSOCK
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [], fileType: .symbolicLink),
+				S_IFLNK
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [], fileType: .regularFile),
+				S_IFREG
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [], fileType: .blockDevice),
+				S_IFBLK
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [], fileType: .directory),
+				S_IFDIR
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [], fileType: .characterDevice),
+				S_IFCHR
+			),
+			(
+				Permissions(user: [], group: [], other: [], mode: [], fileType: .fifo),
+				S_IFIFO
 			),
 		]
 

@@ -7,8 +7,6 @@ extension BaseSftpServer {
 		on eventLoop: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
-		logger.debug("[\(packet.id)] Handling open packet: \(packet)")
-
 		// Prepare data
 		let nfio = NonBlockingFileIO(threadPool: threadPool)
 		let nioMode = NIOFileHandle.Mode(fromOpenFlags: packet.pflags)

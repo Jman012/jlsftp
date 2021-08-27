@@ -7,8 +7,6 @@ extension BaseSftpServer {
 		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
-		logger.debug("[\(packet.id)] Handling read link packet: \(packet)")
-
 		let nameString: String
 		do {
 			var nameBuffer: [CChar] = .init(repeating: 0, count: 256)

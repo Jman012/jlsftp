@@ -9,8 +9,6 @@ extension BaseSftpServer {
 		on eventLoop: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
-		logger.debug("[\(packet.id)] Handling write packet: \(packet)")
-
 		guard let sftpHandle = self.sftpFileHandles.getHandle(handleIdentifier: packet.handle) else {
 			logger.warning("[\(packet.id)] The handle identifier '\(packet.handle)' was not found")
 			let errorReply: Packet = .statusReply(.init(id: packet.id, statusCode: .noSuchFile, errorMessage: "The handle being written to is not tracked by the server. Was it already closed?", languageTag: "en-US"))

@@ -58,8 +58,6 @@ extension SftpServerInitialization: SftpServer {
 			preconditionFailure("In order to handle incoming sftp messages, a reply handler must be setup first, or else the server can not reply to the client.")
 		}
 
-		logger.trace("\(Self.Type.self) handling packet: \(message.packet)")
-
 		switch message.packet {
 		case let .initializeV3(initializePacketV3):
 			switch state {
@@ -68,7 +66,7 @@ extension SftpServerInitialization: SftpServer {
 				// Reply with the lowest of Client's and our version.
 				let lowestVersion = min(initializePacketV3.version, maximumSupportedVersion())
 				self.state = .initialized(version: lowestVersion, handler: self.versionedServers[lowestVersion]!)
-				logger.info("Initiated SFTP session at version \(lowestVersion.rawValue) (client=\(initializePacketV3.version.rawValue), server=\(maximumSupportedVersion().rawValue))")
+				logger.info("Initiated SFTP session at version \(lowestVersion.rawValue) (client max=\(initializePacketV3.version.rawValue), server max=\(maximumSupportedVersion().rawValue))")
 				self.bootstrappedServer = versionedServers[lowestVersion]
 				let versionReplyPacket: Packet = .version(VersionPacket(version: lowestVersion, extensionData: []))
 				return replyHandler(SftpMessage(packet: versionReplyPacket, dataLength: 0, shouldReadHandler: { _ in }))

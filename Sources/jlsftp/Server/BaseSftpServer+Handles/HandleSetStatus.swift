@@ -7,8 +7,6 @@ extension BaseSftpServer {
 		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
-		logger.debug("[\(packet.id)] Handling set status packet: \(packet)")
-
 		var statResult: stat = stat()
 		do {
 			try withUnsafeMutablePointer(to: &statResult) { statResultPtr in

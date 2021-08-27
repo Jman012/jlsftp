@@ -23,7 +23,7 @@ final class HandleSetHandleStatusTests: XCTestCase {
 				let fileAttrs = FileAttributes(sizeBytes: nil,
 											   userId: statResult.st_uid,
 											   groupId: statResult.st_gid,
-											   permissions: Permissions(user: [.read, .write, .execute], group: [.read, .write, .execute], other: [.read, .write, .execute], mode: []),
+											   permissions: Permissions(user: [.read, .write, .execute], group: [.read, .write, .execute], other: [.read, .write, .execute], mode: [], fileType: nil),
 											   accessDate: Date(timeIntervalSince1970: 1),
 											   modifyDate: Date(timeIntervalSince1970: 2),
 											   linkCount: nil,

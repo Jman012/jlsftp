@@ -7,8 +7,6 @@ extension BaseSftpServer {
 		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
-		logger.debug("[\(packet.id)] Handling rename packet: \(packet)")
-
 		do {
 			try syscall {
 				rename(packet.oldPath, packet.newPath)

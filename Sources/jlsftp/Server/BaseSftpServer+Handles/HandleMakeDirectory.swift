@@ -7,12 +7,11 @@ extension BaseSftpServer {
 		on _: EventLoop,
 		using replyHandler: @escaping ReplyHandler
 	) -> EventLoopFuture<Void> {
-		logger.debug("[\(packet.id)] Handling make directory packet: \(packet)")
-
 		let defaultPerms = Permissions(user: [.read, .write, .execute],
 									   group: [.read, .execute],
 									   other: [.read, .execute],
-									   mode: [])
+									   mode: [],
+									   fileType: .directory)
 		let perms = packet.fileAttributes.permissions ?? defaultPerms
 		do {
 			try syscall {

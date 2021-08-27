@@ -18,9 +18,15 @@ defer {
 	try! eventLoopGroup.syncShutdownGracefully()
 }
 
+let threadPool = NIOThreadPool(numberOfThreads: 1)
+threadPool.start()
+defer {
+	try! threadPool.syncShutdownGracefully()
+}
+
 let logger = Logger(label: "jlsftpSimpleSSHServer", factory: { name in
 	var logHandler = StreamLogHandler.standardOutput(label: name)
-	logHandler.logLevel = .debug
+	logHandler.logLevel = .trace
 	return logHandler
 })
 let bootstrapper = SftpServerBootstrapper(
@@ -29,6 +35,7 @@ let bootstrapper = SftpServerBootstrapper(
 	privateKey: hostKey,
 	serverUserAuthDelegate: ServerUserAuth(),
 	eventLoopGroup: eventLoopGroup,
+	threadPool: threadPool,
 	logger: logger)
 
 let channel = try bootstrapper.bootstrap().wait()
