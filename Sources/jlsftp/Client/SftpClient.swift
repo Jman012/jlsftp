@@ -69,7 +69,7 @@ public class SftpClient {
 							// To handle incoming reply decoding
 							ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
 							// To handle MessagePart <-> SftpMessage conversion
-							SftpChannelHandler(logger: self.logger),
+							SftpDataChannelHandler(logger: self.logger),
 							// To bridge to the SftpClientConnection
 							SftpClientChannelHandler(),
 						])

@@ -9,7 +9,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 
 	func testValid() {
 		let channel = EmbeddedChannel()
-		let sftpChannelHandler = SftpChannelHandler()
+		let sftpChannelHandler = SftpDataChannelHandler()
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 		// Test a single header-only packet
@@ -58,7 +58,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 
 	func testValidNop() {
 		let channel = EmbeddedChannel()
-		let sftpChannelHandler = SftpChannelHandler()
+		let sftpChannelHandler = SftpDataChannelHandler()
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -74,7 +74,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 
 	func testInvalidUnexpectedHeaderWhileProcessing() {
 		let channel = EmbeddedChannel()
-		let sftpChannelHandler = SftpChannelHandler()
+		let sftpChannelHandler = SftpDataChannelHandler()
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -88,8 +88,8 @@ final class SftpChannelHandlerTests: XCTestCase {
 		// Next, instead of supplying a body, give it an unexpected other header.
 		messagePart = .header(.status(StatusPacket(id: 2, path: "a")), 0)
 		XCTAssertThrowsError(try channel.writeInbound(messagePart)) { error in
-			XCTAssert(error is SftpChannelHandler.HandlerError)
-			switch error as! SftpChannelHandler.HandlerError {
+			XCTAssert(error is SftpDataChannelHandler.HandlerError)
+			switch error as! SftpDataChannelHandler.HandlerError {
 			case .unexpected(messagePart, .processingMessage(_)):
 				break
 			default:
@@ -104,7 +104,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 
 	func testInvalidUnexpectedBodyWhileAwaiting() {
 		let channel = EmbeddedChannel()
-		let sftpChannelHandler = SftpChannelHandler()
+		let sftpChannelHandler = SftpDataChannelHandler()
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -112,8 +112,8 @@ final class SftpChannelHandlerTests: XCTestCase {
 		let messagePart: MessagePart = .body(ByteBuffer(bytes: [0x01]))
 
 		XCTAssertThrowsError(try channel.writeInbound(messagePart)) { error in
-			XCTAssert(error is SftpChannelHandler.HandlerError)
-			switch error as! SftpChannelHandler.HandlerError {
+			XCTAssert(error is SftpDataChannelHandler.HandlerError)
+			switch error as! SftpDataChannelHandler.HandlerError {
 			case .unexpected(messagePart, .awaitingHeader):
 				break
 			default:
@@ -128,7 +128,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 
 	func testInvalidTooManyBodyBytes() {
 		let channel = EmbeddedChannel()
-		let sftpChannelHandler = SftpChannelHandler()
+		let sftpChannelHandler = SftpDataChannelHandler()
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
@@ -168,15 +168,15 @@ final class SftpChannelHandlerTests: XCTestCase {
 
 	func testInvalidUnexpectedEndWhileAwaiting() {
 		let channel = EmbeddedChannel()
-		let sftpChannelHandler = SftpChannelHandler()
+		let sftpChannelHandler = SftpDataChannelHandler()
 
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
 		// Send a Body MessagePart when the channel is expecting a header
 		let messagePart: MessagePart = .end
 		XCTAssertThrowsError(try channel.writeInbound(messagePart)) { error in
-			XCTAssert(error is SftpChannelHandler.HandlerError)
-			switch error as! SftpChannelHandler.HandlerError {
+			XCTAssert(error is SftpDataChannelHandler.HandlerError)
+			switch error as! SftpDataChannelHandler.HandlerError {
 			case .unexpected(messagePart, .awaitingHeader):
 				break
 			default:
@@ -191,7 +191,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 
 	func testValidReplyHeader() {
 		let channel = EmbeddedChannel()
-		let sftpChannelHandler = SftpChannelHandler()
+		let sftpChannelHandler = SftpDataChannelHandler()
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 		XCTAssertNoThrow(try channel.pipeline.register().wait())
 
@@ -206,7 +206,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 
 	func testValidReplyBody() {
 		let channel = EmbeddedChannel()
-		let sftpChannelHandler = SftpChannelHandler()
+		let sftpChannelHandler = SftpDataChannelHandler()
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 		XCTAssertNoThrow(try channel.pipeline.register().wait())
 
@@ -239,7 +239,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 
 	func testValidReplyBodyVariant() {
 		let channel = EmbeddedChannel()
-		let sftpChannelHandler = SftpChannelHandler()
+		let sftpChannelHandler = SftpDataChannelHandler()
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 		XCTAssertNoThrow(try channel.pipeline.register().wait())
 
@@ -271,7 +271,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 	}
 
 	func testErrorMessageCustom() {
-		let data: [SftpChannelHandler.HandlerError] = [
+		let data: [SftpDataChannelHandler.HandlerError] = [
 			//.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .awaitingHeader),
 			.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .processingMessage(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
 
@@ -289,7 +289,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 	}
 
 	func testErrorMessageDefault() {
-		let dataDefault: [SftpChannelHandler.HandlerError] = [
+		let dataDefault: [SftpDataChannelHandler.HandlerError] = [
 			.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .awaitingHeader),
 			//.unexpected(.header(.close(.init(id: 1, handle: "a")), 0), .processingMessage(SftpMessage(packet: .close(.init(id: 1, handle: "a")), dataLength: 0, shouldReadHandler: { _ in }))),
 
@@ -307,7 +307,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 	}
 
 	func testRead() {
-		let sftpChannelHandler = SftpChannelHandler()
+		let sftpChannelHandler = SftpDataChannelHandler()
 		let readEventHitHandler = ReadEventHitHandler()
 		let channel = EmbeddedChannel()
 		XCTAssertNoThrow(try channel.pipeline.addHandlers([readEventHitHandler, sftpChannelHandler]).wait())
