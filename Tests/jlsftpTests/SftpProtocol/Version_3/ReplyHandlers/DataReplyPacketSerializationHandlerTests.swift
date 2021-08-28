@@ -15,12 +15,14 @@ final class DataReplyPacketSerializationHandlerTests: XCTestCase {
 		var buffer = ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
+			// Data Length (UInt32 Network Order: 2)
+			0x00, 0x00, 0x00, 0x02,
 		])
 
 		let result = handler.deserialize(from: &buffer)
 
 		XCTAssertNoThrow(try result.get())
-		let packet = try! result.get()
+		let packet = try? result.get()
 		guard case let .dataReply(dataReplyPacket) = packet else {
 			XCTFail()
 			return
@@ -28,6 +30,7 @@ final class DataReplyPacketSerializationHandlerTests: XCTestCase {
 
 		XCTAssertEqual(0, buffer.readableBytes)
 		XCTAssertEqual(3, dataReplyPacket.id)
+		XCTAssertEqual(2, dataReplyPacket.dataLength)
 	}
 
 	func testDeserializeNotEnoughData() {
@@ -37,6 +40,10 @@ final class DataReplyPacketSerializationHandlerTests: XCTestCase {
 			ByteBuffer(bytes: [0x03]),
 			ByteBuffer(bytes: [0x03, 0x00]),
 			ByteBuffer(bytes: [0x03, 0x00, 0x00]),
+			ByteBuffer(bytes: [0x03, 0x00, 0x00, 0x00]),
+			ByteBuffer(bytes: [0x03, 0x00, 0x00, 0x00, 0x00]),
+			ByteBuffer(bytes: [0x03, 0x00, 0x00, 0x00, 0x00, 0x00]),
+			ByteBuffer(bytes: [0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
 		]
 
 		for var buffer in buffers {
@@ -50,13 +57,15 @@ final class DataReplyPacketSerializationHandlerTests: XCTestCase {
 
 	func testSerializeValid() {
 		let handler = getHandler()
-		let packet = DataReplyPacket(id: 3)
+		let packet = DataReplyPacket(id: 3, dataLength: 4)
 		var buffer = ByteBuffer()
 
 		XCTAssertNil(handler.serialize(packet: .dataReply(packet), to: &buffer))
 		XCTAssertEqual(buffer, ByteBuffer(bytes: [
 			// Id (UInt32 Network Order: 3)
 			0x00, 0x00, 0x00, 0x03,
+			// Data Length (UInt32 Network Order: 4)
+			0x00, 0x00, 0x00, 0x04,
 		]))
 	}
 

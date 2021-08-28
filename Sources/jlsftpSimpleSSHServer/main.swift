@@ -26,7 +26,7 @@ defer {
 
 let logger = Logger(label: "jlsftpSimpleSSHServer", factory: { name in
 	var logHandler = StreamLogHandler.standardOutput(label: name)
-	logHandler.logLevel = .trace
+	logHandler.logLevel = .debug
 	return logHandler
 })
 let bootstrapper = SftpServerBootstrapper(

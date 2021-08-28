@@ -11,7 +11,12 @@ extension jlsftp.SftpProtocol.Version_3 {
 				return .failure(.needMoreData)
 			}
 
-			return .success(.dataReply(DataReplyPacket(id: id)))
+			// Data Length
+			guard let dataLength = buffer.readInteger(endianness: .big, as: UInt32.self) else {
+				return .failure(.needMoreData)
+			}
+
+			return .success(.dataReply(DataReplyPacket(id: id, dataLength: dataLength)))
 		}
 
 		public func serialize(packet: Packet, to buffer: inout ByteBuffer) -> PacketSerializationHandlerError? {
@@ -21,6 +26,9 @@ extension jlsftp.SftpProtocol.Version_3 {
 
 			// Id
 			buffer.writeInteger(dataReplyPacket.id, endianness: .big, as: UInt32.self)
+
+			// Data Length
+			buffer.writeInteger(dataReplyPacket.dataLength, endianness: .big, as: UInt32.self)
 
 			return nil
 		}

@@ -25,21 +25,34 @@ extension BaseSftpServer {
 			// of that which is requested, or a smaller size because we would get EOF.
 			// Note: the downcast from UInt64 to UInt32 should be safe because the min
 			// of UInt32.max and UInt64.max would be UInt32.max.
-			let effectiveReplyLength = UInt32(min(UInt64(packet.length), UInt64(size) - packet.offset))
+			var offset = packet.offset
+			if packet.offset > size {
+				offset = UInt64(size)
+			}
+			let effectiveReplyLength = UInt32(min(UInt64(packet.length), UInt64(size) - offset))
 			if effectiveReplyLength < packet.length {
 				self.logger.notice("[\(packet.id)] Read packet indicated read length of \(packet.length) at offset \(packet.offset), but the file only has \(size) bytes. Read operation will read only \(effectiveReplyLength) bytes instead.")
 			}
+
+			if effectiveReplyLength == 0 {
+				self.logger.debug("[\(packet.id)] Read effective length is 0 bytes. Sending EOF.")
+				let eof: Packet = .statusReply(.init(id: packet.id, statusCode: .endOfFile, errorMessage: "", languageTag: "en-US"))
+				return replyHandler(SftpMessage(packet: eof, dataLength: 0, shouldReadHandler: { _ in }))
+			}
+
 			var shouldWrite = false
 			var lastPromise: EventLoopPromise<Void>?
 			let shouldReadHandler = { (should: Bool) in
+				self.logger.trace("[\(packet.id)] Changed shouldWrite to \(should)")
 				shouldWrite = should
 				// Complete the last promise so that
 				// the NIO reading continues.
 				if let promise = lastPromise, shouldWrite {
+					self.logger.trace("[\(packet.id)] Completing last promise to continue reading data")
 					promise.completeWith(.success(()))
 				}
 			}
-			let successMessage = SftpMessage(packet: .dataReply(.init(id: packet.id)),
+			let successMessage = SftpMessage(packet: .dataReply(.init(id: packet.id, dataLength: effectiveReplyLength)),
 											 dataLength: effectiveReplyLength,
 											 shouldReadHandler: shouldReadHandler)
 			var overallSuccessPromise: EventLoopPromise<Void>!
@@ -60,6 +73,7 @@ extension BaseSftpServer {
 
 										// Begin sending the header on the first call.
 										if isFirstChunkRead {
+											self.logger.trace("[\(packet.id)] This is the first chunk. Sending reply to client.")
 											isFirstChunkRead = false
 											overallSuccessPromise = eventLoop.makePromise()
 											replyHandler(successMessage).cascade(to: overallSuccessPromise)
@@ -71,8 +85,10 @@ extension BaseSftpServer {
 										// after the above call, if needed. If this gets
 										// unset, then don't complete the promise just yet.
 										if shouldWrite {
+											self.logger.trace("[\(packet.id)] Shouldwrite is still true, proceeding with next read operation")
 											return eventLoop.makeSucceededFuture(())
 										} else {
+											self.logger.trace("[\(packet.id)] Shouldwrite is now false, waiting until reading next chunk")
 											// Pause for now, and stop reading data until
 											// this promise is succeeded by the backpressure.
 											let promise: EventLoopPromise<Void> = eventLoop.makePromise()

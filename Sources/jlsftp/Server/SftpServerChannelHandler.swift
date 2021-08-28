@@ -14,23 +14,40 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 	public let server: SftpServer
 
 	private var currentMessage: SftpMessage?
-	private var context: ChannelHandlerContext?
+	private var queuedMessages: [SftpMessage] = []
 
 	public init(server: SftpServer) {
 		self.server = server
 	}
 
 	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-		guard currentMessage == nil else {
-			context.fireErrorCaught(ChannelError.unexpectedInboundMessage)
+		let message = self.unwrapInboundIn(data)
+		guard currentMessage == nil && queuedMessages.isEmpty else {
+//			context.fireErrorCaught(ChannelError.unexpectedInboundMessage)
+			queuedMessages.append(message)
+			print("Currently processing a message. Adding incoming message to queue. Queue size: \(queuedMessages.count)")
 			return
 		}
 
-		let message = self.unwrapInboundIn(data)
 		currentMessage = message
 		let serverHandlerFuture = server.handle(message: message, on: context.eventLoop)
 		serverHandlerFuture.whenComplete { _ in
 			self.currentMessage = nil
+			self.emptyQueue(context: context)
+		}
+	}
+
+	private func emptyQueue(context: ChannelHandlerContext) {
+		guard queuedMessages.first != nil else {
+			return
+		}
+		let next = queuedMessages.removeFirst()
+		print("Finished processing message. Taking next from queue. Queue size: \(queuedMessages.count)")
+		currentMessage = next
+		let serverHandlerFuture = server.handle(message: next, on: context.eventLoop)
+		serverHandlerFuture.whenComplete { _ in
+			self.currentMessage = nil
+			self.emptyQueue(context: context)
 		}
 	}
 

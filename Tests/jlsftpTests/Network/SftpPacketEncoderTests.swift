@@ -93,7 +93,7 @@ final class SftpPacketEncoderTests: XCTestCase {
 		let encoder = SftpPacketEncoder(serializer: mockSerializer, allocator: ByteBufferAllocator())
 		var buffer = ByteBuffer()
 
-		XCTAssertNoThrow(try encoder.encode(data: .header(.dataReply(.init(id: 1)), 10), out: &buffer))
+		XCTAssertNoThrow(try encoder.encode(data: .header(.dataReply(.init(id: 1, dataLength: 10)), 10), out: &buffer))
 		// Ensure that the proper length (1 for packetType, 2 for serialization,
 		// 10 for body = 0x0D) was written, plus the serialized data.
 		XCTAssertEqual(buffer, ByteBuffer(bytes: [0x00, 0x00, 0x00, 0x0D, jlsftp.SftpProtocol.PacketType.dataReply.rawValue, 0x05, 0x06]))

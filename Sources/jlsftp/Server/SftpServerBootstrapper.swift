@@ -70,6 +70,7 @@ public class SftpServerBootstrapper {
 				SftpChannelHandler(logger: self.logger),
 				// To handle the incoming SftpMessages
 				SftpServerChannelHandler(server: server),
+				ErrorChannelHandler(logger: self.logger),
 			])
 		}
 

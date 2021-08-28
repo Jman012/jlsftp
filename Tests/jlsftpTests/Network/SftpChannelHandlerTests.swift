@@ -19,10 +19,10 @@ final class SftpChannelHandlerTests: XCTestCase {
 		XCTAssertEqual(message?.packet, .some(.initializeV3(InitializePacketV3(version: .v3, extensionData: []))))
 
 		// Test a packet with with a body
-		messagePart = .header(.dataReply(.init(id: 1)), 10)
+		messagePart = .header(.dataReply(.init(id: 1, dataLength: 10)), 10)
 		XCTAssertNoThrow(try channel.writeInbound(messagePart))
 		message = try? channel.readInbound(as: SftpMessage.self)
-		XCTAssertEqual(message?.packet, .some(.dataReply(DataReplyPacket(id: 1))))
+		XCTAssertEqual(message?.packet, .some(.dataReply(DataReplyPacket(id: 1, dataLength: 10))))
 		var didComplete = false
 		var lastValue: ByteBuffer?
 
@@ -79,10 +79,10 @@ final class SftpChannelHandlerTests: XCTestCase {
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
 		// First, put in a DataReply with 10 bytes of expected body.
-		var messagePart: MessagePart = .header(.dataReply(DataReplyPacket(id: 1)), 10)
+		var messagePart: MessagePart = .header(.dataReply(DataReplyPacket(id: 1, dataLength: 10)), 10)
 		XCTAssertNoThrow(try channel.writeInbound(messagePart))
 		var message = try? channel.readInbound(as: SftpMessage.self)
-		XCTAssertEqual(message?.packet, .some(.dataReply(DataReplyPacket(id: 1))))
+		XCTAssertEqual(message?.packet, .some(.dataReply(DataReplyPacket(id: 1, dataLength: 10))))
 		XCTAssertNoThrow(try channel.throwIfErrorCaught())
 
 		// Next, instead of supplying a body, give it an unexpected other header.
@@ -133,10 +133,10 @@ final class SftpChannelHandlerTests: XCTestCase {
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 
 		// Send a DataReply with an expected body size of 4 bytes.
-		var messagePart: MessagePart = .header(.dataReply(DataReplyPacket(id: 1)), 4)
+		var messagePart: MessagePart = .header(.dataReply(DataReplyPacket(id: 1, dataLength: 4)), 4)
 		XCTAssertNoThrow(try channel.writeInbound(messagePart))
 		var message = try? channel.readInbound(as: SftpMessage.self)
-		XCTAssertEqual(message?.packet, .some(.dataReply(DataReplyPacket(id: 1))))
+		XCTAssertEqual(message?.packet, .some(.dataReply(DataReplyPacket(id: 1, dataLength: 4))))
 		XCTAssertNoThrow(try channel.throwIfErrorCaught())
 
 		XCTAssertNoThrow(
@@ -210,11 +210,11 @@ final class SftpChannelHandlerTests: XCTestCase {
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 		XCTAssertNoThrow(try channel.pipeline.register().wait())
 
-		let message = SftpMessage(packet: .dataReply(.init(id: 1)), dataLength: 5, shouldReadHandler: { _ in })
+		let message = SftpMessage(packet: .dataReply(.init(id: 1, dataLength: 5)), dataLength: 5, shouldReadHandler: { _ in })
 		let writeFuture = channel.writeAndFlush(message)
 
 		let initHeader: MessagePart? = try! channel.readOutbound()
-		XCTAssertEqual(initHeader, .header(.dataReply(.init(id: 1)), 5))
+		XCTAssertEqual(initHeader, .header(.dataReply(.init(id: 1, dataLength: 5)), 5))
 
 		XCTAssertEqual(message.sendData(ByteBuffer(bytes: [0x00, 0x01])), .success(false))
 		channel.flush()
@@ -243,11 +243,11 @@ final class SftpChannelHandlerTests: XCTestCase {
 		XCTAssertNoThrow(try channel.pipeline.addHandler(sftpChannelHandler).wait())
 		XCTAssertNoThrow(try channel.pipeline.register().wait())
 
-		let message = SftpMessage(packet: .dataReply(.init(id: 1)), dataLength: 5, shouldReadHandler: { _ in })
+		let message = SftpMessage(packet: .dataReply(.init(id: 1, dataLength: 5)), dataLength: 5, shouldReadHandler: { _ in })
 		let writeFuture = channel.writeAndFlush(message)
 
 		let initHeader: MessagePart? = try! channel.readOutbound()
-		XCTAssertEqual(initHeader, .header(.dataReply(.init(id: 1)), 5))
+		XCTAssertEqual(initHeader, .header(.dataReply(.init(id: 1, dataLength: 5)), 5))
 
 		XCTAssertEqual(message.sendData(ByteBuffer(bytes: [0x00, 0x01])), .success(false))
 		channel.flush()
@@ -318,7 +318,7 @@ final class SftpChannelHandlerTests: XCTestCase {
 		XCTAssertEqual(readEventHitHandler.readHitCounter, 1)
 
 		// State = processingHeader and shouldRead = false
-		let messagePart: MessagePart = .header(.dataReply(.init(id: 1)), 3)
+		let messagePart: MessagePart = .header(.dataReply(.init(id: 1, dataLength: 3)), 3)
 		XCTAssertNoThrow(try channel.writeInbound(messagePart))
 		channel.read()
 		XCTAssertEqual(readEventHitHandler.readHitCounter, 1)

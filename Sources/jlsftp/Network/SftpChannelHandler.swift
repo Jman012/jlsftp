@@ -166,25 +166,31 @@ public class SftpChannelHandler: ChannelDuplexHandler {
 		// Next, set up the Combine sink for data to write to the wire, if any.
 		let endPromise = context.eventLoop.makePromise(of: Void.self)
 		if message.totalBodyBytes > 0 {
+			logger.trace("Outgoing message has \(message.totalBodyBytes) data bytes to send")
 			var bodyFutures: [EventLoopFuture<Void>] = []
 
 			let cancellable = message.data.futureSink(
 				maxConcurrent: 10,
 				eventLoop: context.eventLoop,
 				receiveCompletion: { _ in
+					self.logger.trace("Outgoing message has finished sending bytes. Writing end to out and resolving.")
 					// When the sink completed, send a .end, add a new future for
 					// this operation, and succeed the aforementioned promise so
 					// that the fold can complete when endFuture finishes.
-					let endFuture = context.write(self.wrapOutboundOut(.end))
-					context.flush()
+					let endFuture = context.writeAndFlush(self.wrapOutboundOut(.end)).always { _ in
+						self.logger.trace("Outgoing data of message has completed")
+					}
 					endFuture
 						.fold(bodyFutures, with: { _, _ in context.eventLoop.makeSucceededFuture(()) })
 						.cascade(to: endPromise)
 				},
 				receiveValue: { buffer in
+					self.logger.trace("Outgoing message received \(buffer.readableBytes) bytes. Writing data to out.")
 					// When data arrives from the message, send it over the wire
 					// and track the future.
-					let future = context.write(self.wrapOutboundOut(.body(buffer)))
+					let future = context.writeAndFlush(self.wrapOutboundOut(.body(buffer))).always { _ in
+						self.logger.trace("Outgoing data of \(buffer.readableBytes) bytes has completed")
+					}
 					bodyFutures.append(future)
 					return future
 			})
