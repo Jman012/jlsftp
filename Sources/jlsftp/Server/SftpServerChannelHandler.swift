@@ -52,7 +52,7 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 	}
 
 	public func read(context: ChannelHandlerContext) {
-		if currentMessage == nil {
+		if currentMessage == nil && queuedMessages.isEmpty {
 			context.read()
 		}
 	}
