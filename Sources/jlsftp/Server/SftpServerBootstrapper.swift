@@ -61,7 +61,7 @@ public class SftpServerBootstrapper {
 			return channel.pipeline.addHandlers([
 				// To handle SSHChannelData <->ByteBuffer and
 				// and init the sftp subsystem for ssh.
-				SshSftpSubsystemServerHandler(),
+				SshSftpSubsystemServerHandler(logger: self.logger),
 				// To handle incoming reply decoding
 				ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
 				// To handle outgoing request encoding

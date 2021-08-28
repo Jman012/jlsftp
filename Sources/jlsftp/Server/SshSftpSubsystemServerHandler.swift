@@ -1,6 +1,7 @@
 import Foundation
 import NIO
 import NIOSSH
+import Logging
 
 internal class SshSftpSubsystemServerHandler: ChannelDuplexHandler {
 	typealias InboundIn = SSHChannelData
@@ -13,7 +14,13 @@ internal class SshSftpSubsystemServerHandler: ChannelDuplexHandler {
 		case unexpectedDataBeforeInitialized
 	}
 
+	let logger: Logger
+
 	var isSftpSubsystemInitialized = false
+
+	init(logger: Logger) {
+		self.logger = logger
+	}
 
 	func handlerAdded(context: ChannelHandlerContext) {
 		context.channel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true).whenFailure { error in
@@ -26,6 +33,9 @@ internal class SshSftpSubsystemServerHandler: ChannelDuplexHandler {
 		case let subsystemRequest as SSHChannelRequestEvent.SubsystemRequest where subsystemRequest.subsystem == "sftp":
 			isSftpSubsystemInitialized = true
 			context.triggerUserOutboundEvent(ChannelSuccessEvent(), promise: nil)
+		case ChannelEvent.inputClosed:
+			self.logger.info("Client \(String(describing: context.channel.remoteAddress)) disconnected.")
+			context.close(promise: nil)
 		default:
 			context.fireUserInboundEventTriggered(event)
 		}
