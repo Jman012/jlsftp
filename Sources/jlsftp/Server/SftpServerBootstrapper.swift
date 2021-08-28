@@ -90,7 +90,10 @@ public class SftpServerBootstrapper {
 				let sshHandler = NIOSSHHandler(role: .server(serverConfig),
 											   allocator: channel.allocator,
 											   inboundChildChannelInitializer: childChannelInitializer)
-				return channel.pipeline.addHandler(sshHandler)
+				return channel.pipeline.addHandlers([
+					BackPressureHandler(),
+					sshHandler,
+				])
 			}
 			// Enable SO_REUSEADDR for the accepted Channels
 			.childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
