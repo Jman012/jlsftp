@@ -79,6 +79,7 @@ public class SftpServerBootstrapper {
 			// Specify backlog and enable SO_REUSEADDR for the server itself
 			.serverChannelOption(ChannelOptions.backlog, value: 256)
 			.serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+			.serverChannelOption(ChannelOptions.socketOption(.tcp_nodelay), value: 1)
 			.childChannelInitializer { channel in
 				self.logger.info("Client \(String(describing: channel.remoteAddress)) connected")
 				// Use the injected delegates for authorization

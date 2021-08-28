@@ -10,7 +10,8 @@ extension BaseSftpServer {
 		// Prepare data
 		let nfio = NonBlockingFileIO(threadPool: threadPool)
 		let nioMode = NIOFileHandle.Mode(fromOpenFlags: packet.pflags)
-		let nioFlags = NIOFileHandle.Flags.jlsftp(permissions: packet.fileAttributes.permissions, openFlags: packet.pflags)
+		let nioFlagsComps = NIOFileHandle.Flags.jlsftp(permissions: packet.fileAttributes.permissions, openFlags: packet.pflags)
+		let nioFlags = NIOFileHandle.Flags.posix(flags: nioFlagsComps.0, mode: nioFlagsComps.1)
 
 		// Open the file
 		logger.trace("[\(packet.id)] Opening file with mode \(nioMode), flags \(nioFlags)")

@@ -24,11 +24,8 @@ defer {
 	try! threadPool.syncShutdownGracefully()
 }
 
-let logger = Logger(label: "jlsftpSimpleSSHServer", factory: { name in
-	var logHandler = StreamLogHandler.standardOutput(label: name)
-	logHandler.logLevel = .debug
-	return logHandler
-})
+var logger = Logger(label: "jlsftpSimpleSSHServer")
+logger.logLevel = .debug
 let bootstrapper = SftpServerBootstrapper(
 	host: "0.0.0.0",
 	port: 22,

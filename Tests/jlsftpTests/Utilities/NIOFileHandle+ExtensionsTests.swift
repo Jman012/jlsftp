@@ -26,37 +26,37 @@ final class NIOFileHandleExtensionsTests: XCTestCase {
 		// tested in testValidModeFromOpenFlags above mostly. Just ensure it
 		// passes through.
 		// O_NONBLOCK is always added.
-		let data: [(Permissions, OpenFlags, NIOFileHandle.Flags)] = [
+		let data: [(Permissions, OpenFlags, CInt, mode_t)] = [
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK)),
+			 O_NONBLOCK, 0),
 			(Permissions(user: [.read], group: [.write], other: [.execute], mode: [], fileType: nil), [],
-			 NIOFileHandle.Flags(posixMode: S_IRUSR | S_IWGRP | S_IXOTH, posixFlags: O_NONBLOCK)),
+			 O_NONBLOCK, S_IRUSR | S_IWGRP | S_IXOTH),
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [.read],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK | O_RDONLY)),
+			 O_NONBLOCK | O_RDONLY, 0),
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [.write],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK | O_WRONLY)),
+			 O_NONBLOCK | O_WRONLY, 0),
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [.read, .write],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK | O_RDWR)),
+			 O_NONBLOCK | O_RDWR, 0),
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [.append],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK | O_APPEND)),
+			 O_NONBLOCK | O_APPEND, 0),
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [.create],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK | O_CREAT)),
+			 O_NONBLOCK | O_CREAT, 0),
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [.exclusive],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK | O_EXCL)),
+			 O_NONBLOCK | O_EXCL, 0),
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [.truncate],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK | O_TRUNC)),
+			 O_NONBLOCK | O_TRUNC, 0),
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [.read, .write, .append],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK | O_RDWR | O_APPEND)),
+			 O_NONBLOCK | O_RDWR | O_APPEND, 0),
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [.read, .truncate],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK | O_RDONLY | O_TRUNC)),
+			 O_NONBLOCK | O_RDONLY | O_TRUNC, 0),
 			(Permissions(user: [], group: [], other: [], mode: [], fileType: nil), [.read, .write, .append, .create, .exclusive, .truncate],
-			 NIOFileHandle.Flags(posixMode: 0, posixFlags: O_NONBLOCK | O_RDWR | O_APPEND | O_CREAT | O_EXCL | O_TRUNC)),
+			 O_NONBLOCK | O_RDWR | O_APPEND | O_CREAT | O_EXCL | O_TRUNC, 0),
 		]
 
 		for datum in data {
-			let flags = NIOFileHandle.Flags.jlsftp(permissions: datum.0, openFlags: datum.1)
-			XCTAssertEqual(flags.posixFlags, datum.2.posixFlags)
-			XCTAssertEqual(flags.posixMode, datum.2.posixMode)
+			let nioFlagComps = NIOFileHandle.Flags.jlsftp(permissions: datum.0, openFlags: datum.1)
+			XCTAssertEqual(nioFlagComps.0, datum.2)
+			XCTAssertEqual(nioFlagComps.1, datum.3)
 		}
 	}
 

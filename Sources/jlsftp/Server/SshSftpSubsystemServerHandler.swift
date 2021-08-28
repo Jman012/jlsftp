@@ -15,15 +15,19 @@ internal class SshSftpSubsystemServerHandler: ChannelDuplexHandler {
 
 	var isSftpSubsystemInitialized = false
 
+	func handlerAdded(context: ChannelHandlerContext) {
+		context.channel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true).whenFailure { error in
+			context.fireErrorCaught(error)
+		}
+	}
+
 	func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
 		switch event {
-		case let subsystemRequest as SSHChannelRequestEvent.SubsystemRequest:
-			if subsystemRequest.subsystem == "sftp" {
-				isSftpSubsystemInitialized = true
-				context.triggerUserOutboundEvent(ChannelSuccessEvent(), promise: nil)
-			}
+		case let subsystemRequest as SSHChannelRequestEvent.SubsystemRequest where subsystemRequest.subsystem == "sftp":
+			isSftpSubsystemInitialized = true
+			context.triggerUserOutboundEvent(ChannelSuccessEvent(), promise: nil)
 		default:
-			break
+			context.fireUserInboundEventTriggered(event)
 		}
 	}
 

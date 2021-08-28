@@ -26,7 +26,7 @@ extension NIOFileHandle.Flags {
 	 Given both a jlsftp `Permissions` and `OpenFlags`, this creates the
 	 `NIOFileHandle.Flags` struct for NIO to handle file operations.
 	 */
-	static func jlsftp(permissions fileAttrPerms: Permissions?, openFlags: OpenFlags) -> NIOFileHandle.Flags {
+	static func jlsftp(permissions fileAttrPerms: Permissions?, openFlags: OpenFlags) -> (CInt, mode_t) {
 		var flags: CInt = 0
 		var mode: mode_t = 0
 		if let permissions = fileAttrPerms {
@@ -55,6 +55,6 @@ extension NIOFileHandle.Flags {
 
 		flags |= O_NONBLOCK
 
-		return NIOFileHandle.Flags.posix(flags: flags, mode: mode)
+		return (flags, mode)
 	}
 }

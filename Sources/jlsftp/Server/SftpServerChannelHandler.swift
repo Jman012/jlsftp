@@ -11,10 +11,14 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 		case unexpectedInboundMessage
 	}
 
+	private enum State {
+		case awaitingMessage
+		case processingMessage(current: SftpMessage, queue: CircularBuffer<SftpMessage>, shouldRead: Bool)
+	}
+
 	public let server: SftpServer
 
-	private var currentMessage: SftpMessage?
-	private var queuedMessages: [SftpMessage] = []
+	private var state: State = .awaitingMessage
 
 	public init(server: SftpServer) {
 		self.server = server
@@ -22,38 +26,48 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 
 	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
 		let message = self.unwrapInboundIn(data)
-		guard currentMessage == nil && queuedMessages.isEmpty else {
-//			context.fireErrorCaught(ChannelError.unexpectedInboundMessage)
-			queuedMessages.append(message)
-			print("Currently processing a message. Adding incoming message to queue. Queue size: \(queuedMessages.count)")
-			return
-		}
 
-		currentMessage = message
-		let serverHandlerFuture = server.handle(message: message, on: context.eventLoop)
-		serverHandlerFuture.whenComplete { _ in
-			self.currentMessage = nil
-			self.emptyQueue(context: context)
-		}
-	}
-
-	private func emptyQueue(context: ChannelHandlerContext) {
-		guard queuedMessages.first != nil else {
-			return
-		}
-		let next = queuedMessages.removeFirst()
-		print("Finished processing message. Taking next from queue. Queue size: \(queuedMessages.count)")
-		currentMessage = next
-		let serverHandlerFuture = server.handle(message: next, on: context.eventLoop)
-		serverHandlerFuture.whenComplete { _ in
-			self.currentMessage = nil
-			self.emptyQueue(context: context)
+		switch state {
+		case .awaitingMessage:
+			state = .processingMessage(current: message, queue: .init(initialCapacity: 16), shouldRead: false)
+			let serverHandlerFuture = server.handle(message: message, on: context.eventLoop)
+			serverHandlerFuture.whenComplete { _ in
+				self.messageCompleted(context: context)
+			}
+		case .processingMessage(current: let currentMessage, queue: var messageQueue, shouldRead: let shouldRead):
+			messageQueue.append(message)
+			state = .processingMessage(current: currentMessage, queue: messageQueue, shouldRead: shouldRead)
 		}
 	}
 
 	public func read(context: ChannelHandlerContext) {
-		if currentMessage == nil && queuedMessages.isEmpty {
+		switch state {
+		case .awaitingMessage:
 			context.read()
+		case let .processingMessage(current: currentMessage, queue: messageQueue, shouldRead: _):
+			state = .processingMessage(current: currentMessage, queue: messageQueue, shouldRead: true)
+		}
+	}
+
+	private func messageCompleted(context: ChannelHandlerContext) {
+		switch state {
+		case .awaitingMessage:
+			preconditionFailure()
+		case .processingMessage(current: _, queue: var messageQueue, shouldRead: let shouldRead):
+			if messageQueue.isEmpty {
+				state = .awaitingMessage
+				if shouldRead {
+					context.read()
+				}
+			} else {
+				let newMessage = messageQueue.removeFirst()
+				state = .processingMessage(current: newMessage, queue: messageQueue, shouldRead: shouldRead)
+
+				let serverHandlerFuture = server.handle(message: newMessage, on: context.eventLoop)
+				serverHandlerFuture.whenComplete { _ in
+					self.messageCompleted(context: context)
+				}
+			}
 		}
 	}
 }
