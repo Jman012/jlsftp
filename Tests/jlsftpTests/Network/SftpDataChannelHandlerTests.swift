@@ -5,7 +5,7 @@ import NIO
 
 /// Tests that the handler passes on message parts to the server as messages
 /// correctly.
-final class SftpChannelHandlerTests: XCTestCase {
+final class SftpDataChannelHandlerTests: XCTestCase {
 
 	func testValid() {
 		let channel = EmbeddedChannel()
