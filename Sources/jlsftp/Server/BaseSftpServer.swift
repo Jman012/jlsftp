@@ -53,7 +53,7 @@ public class BaseSftpServer: SftpServer {
 		case let .read(packet):
 			return handleRead(packet: packet, on: eventLoop, using: replyHandler)
 		case let .write(packet):
-			return handleWrite(packet: packet, dataPublisher: message.data, on: eventLoop, using: replyHandler)
+			return handleWrite(packet: packet, stream: message.stream, on: eventLoop, using: replyHandler)
 		case let .linkStatus(packet):
 			return handleLinkStatus(packet: packet, on: eventLoop, using: replyHandler)
 		case let .handleStatus(packet):

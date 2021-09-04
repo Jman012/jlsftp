@@ -13,6 +13,8 @@ internal class ErrorChannelHandler: ChannelInboundHandler {
 
 	func errorCaught(context: ChannelHandlerContext, error: Error) {
 		self.logger.error("Error in pipeline: \(error)")
-		context.close(promise: nil)
+		_ = context.close().always {
+			self.logger.info("Disconnected from client \(String(describing: context.channel.remoteAddress)): \($0)")
+		}
 	}
 }

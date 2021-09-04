@@ -25,7 +25,7 @@ defer {
 }
 
 var logger = Logger(label: "jlsftpSimpleSSHServer")
-logger.logLevel = .debug
+logger.logLevel = .trace
 let bootstrapper = SftpServerBootstrapper(
 	host: "0.0.0.0",
 	port: 22,

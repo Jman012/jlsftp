@@ -66,10 +66,11 @@ public class SftpServerBootstrapper {
 				ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
 				// To handle outgoing request encoding
 				MessageToByteHandler(SftpPacketEncoder(serializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3(), allocator: channel.allocator)),
-				// To handle MessagePart <-> SftpMessage conversion
-				SftpDataChannelHandler(logger: self.logger),
-				// To handle the incoming SftpMessages
-				SftpServerChannelHandler(server: server),
+				SftpDataChannelHandler2(server: server, logger: self.logger),
+//				// To handle MessagePart <-> SftpMessage conversion
+//				SftpDataChannelHandler(logger: self.logger),
+//				// To handle the incoming SftpMessages
+//				SftpServerChannelHandler(server: server, logger: self.logger),
 				ErrorChannelHandler(logger: self.logger),
 			])
 		}
