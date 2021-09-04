@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import NIO
+import Logging
 
 /**
  A class that packages together an sftp packet header along with its optional
@@ -21,11 +22,11 @@ public class SftpMessage {
 	private var remainingBytes: UInt32
 //	private var subject: PassthroughSubject<ByteBuffer, Error>
 
-	public init(packet: Packet, dataLength: UInt32, shouldReadHandler: @escaping DemandBridgePublisherDemandHandler) {
+	public init(packet: Packet, dataLength: UInt32, shouldReadHandler: @escaping DemandBridgePublisherDemandHandler, logger: Logger? = nil) {
 		self.packet = packet
 		self.totalBodyBytes = dataLength
 		self.remainingBytes = dataLength
-		self.stream = SftpMessageStream(outstandingFutureLimit: 10, onBackpressure: shouldReadHandler)
+		self.stream = SftpMessageStream(outstandingFutureLimit: 10, onBackpressure: shouldReadHandler, logger: logger ?? Logger(label: "noop", factory: { _ in SwiftLogNoOpLogHandler() }))
 ////		self.subject = DemandBridgeSubject<ByteBuffer, Error>(handler: shouldReadHandler)
 //		self.subject = PassthroughSubject<ByteBuffer, Error>()
 //		self.data = subject

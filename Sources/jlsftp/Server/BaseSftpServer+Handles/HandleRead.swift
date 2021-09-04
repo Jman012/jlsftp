@@ -54,7 +54,8 @@ extension BaseSftpServer {
 			}
 			let successMessage = SftpMessage(packet: .dataReply(.init(id: packet.id, dataLength: effectiveReplyLength)),
 											 dataLength: effectiveReplyLength,
-											 shouldReadHandler: shouldReadHandler)
+											 shouldReadHandler: shouldReadHandler,
+											 logger: self.logger)
 			var overallSuccessPromise: EventLoopPromise<Void>!
 
 			var isFirstChunkRead = true

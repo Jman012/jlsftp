@@ -77,7 +77,7 @@ public class SftpMessageStream {
 			// This needs to be below the above append because if the future is immediately completed,
 			// the future can get stuck in the queue improperly.
 			_ = future.always { _ in
-				logger.trace("processQueue(::): callback: future did complete")
+				self.logger.trace("processQueue(::): callback: future did complete")
 				self.futureCompleted(futureId: futureId, handler: handler, onComplete: onComplete)
 			}
 		}

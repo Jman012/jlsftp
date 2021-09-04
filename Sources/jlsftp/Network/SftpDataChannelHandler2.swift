@@ -71,7 +71,8 @@ public class SftpDataChannelHandler2: ChannelDuplexHandler {
 				default:
 					preconditionFailure() // Todo:
 				}
-			})
+			},
+			logger: logger)
 
 		return sftpMessage
 	}
