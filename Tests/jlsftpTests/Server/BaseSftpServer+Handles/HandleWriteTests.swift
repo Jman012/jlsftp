@@ -45,25 +45,24 @@ final class HandleWriteTests: XCTestCase {
 
 			let replyFuture = server.handle(message: message, on: eventLoop)
 
-			// Write data to message
+			// Write data to message, making sure to do so on the event loop.
 			var index = contentToWrite.utf8.startIndex
 			while index < contentToWrite.utf8.endIndex {
-				if shouldWrite {
-					let result = message.sendData(ByteBuffer(bytes: [contentToWrite.utf8[index]]))
-					index = contentToWrite.utf8.index(index, offsetBy: 1)
-					switch result {
-					case let .success(isComplete):
-						XCTAssertEqual(isComplete, index == contentToWrite.utf8.endIndex)
-					default:
-						XCTFail()
+				let loopPromise = eventLoop.makePromise(of: Void.self)
+				eventLoop.execute {
+					if shouldWrite {
+						let result = message.sendData(ByteBuffer(bytes: [contentToWrite.utf8[index]]))
+						index = contentToWrite.utf8.index(index, offsetBy: 1)
+						switch result {
+						case let .success(isComplete):
+							XCTAssertEqual(isComplete, index == contentToWrite.utf8.endIndex)
+						default:
+							XCTFail()
+						}
 					}
-				} else {
-					let promise = eventLoop.makePromise(of: Void.self)
-					eventLoop.execute {
-						promise.succeed(())
-					}
-					XCTAssertNoThrow(try promise.futureResult.wait())
+					loopPromise.succeed(())
 				}
+				XCTAssertNoThrow(try loopPromise.futureResult.wait())
 			}
 			message.completeData()
 			XCTAssertNoThrow(try replyFuture.wait())
