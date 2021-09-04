@@ -10,13 +10,11 @@ public func allTests() -> [XCTestCaseEntry] {
 		testCase(DemandBridgeSubjectTests.allTests),
 		testCase(FutureSinkTests.allTests),
 		testCase(NetworkingPublisherChainTests.allTests),
-		testCase(SftpDataChannelHandlerTests.allTests),
 		testCase(SftpMessageTests.allTests),
 		testCase(SftpPacketDecoderTests.allTests),
 		testCase(SftpPacketEncoderTests.allTests),
 		// Server
 		testCase(BaseSftpServerTests.allTests),
-		testCase(SftpServerChannelHandlerTests.allTests),
 		testCase(SftpServerInitializationTests.allTests),
 		// Server > BaseSftpServer+Handles
 		testCase(HandleCloseTests.allTests),

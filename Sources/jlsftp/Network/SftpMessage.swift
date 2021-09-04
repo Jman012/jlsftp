@@ -22,7 +22,7 @@ public class SftpMessage {
 	private var remainingBytes: UInt32
 //	private var subject: PassthroughSubject<ByteBuffer, Error>
 
-	public init(packet: Packet, dataLength: UInt32, shouldReadHandler: @escaping DemandBridgePublisherDemandHandler, logger: Logger? = nil) {
+	public init(packet: Packet, dataLength: UInt32, shouldReadHandler: @escaping SftpMessageStream.OnBackpressure, logger: Logger? = nil) {
 		self.packet = packet
 		self.totalBodyBytes = dataLength
 		self.remainingBytes = dataLength

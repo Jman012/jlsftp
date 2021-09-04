@@ -9,7 +9,7 @@ pipeline into an `SftpMessage` object and serving that to the injected
 `SftpServer` handler.
 This also ports the Combine backpressure to the NIO backpressure mechanisms.
 */
-public class SftpDataChannelHandler2: ChannelDuplexHandler {
+public class SftpServerChannelHandler2: ChannelDuplexHandler {
 	public typealias InboundIn = MessagePart
 	public typealias InboundOut = Never
 	public typealias OutboundIn = SftpMessage
@@ -124,57 +124,6 @@ public class SftpDataChannelHandler2: ChannelDuplexHandler {
 				// which will properly advance the state either to the queue or awaitingHeader.
 			}
 		}
-
-//		switch messagePart {
-//		case let .header(packet, bodyLength):
-//			switch state {
-//			case .awaitingHeader:
-//				self.shouldRead = false
-//				let sftpMessage = SftpMessage(
-//					packet: packet,
-//					dataLength: bodyLength,
-//					shouldReadHandler: { shouldRead in
-//						// Connect the Combine publisher to the NIO pipeline to
-//						// use TCP congestion mechanisms to handle large streams
-//						// of data, instead of using memory.
-//						self.shouldRead = shouldRead
-//					})
-//
-//				logger.debug("Handling incoming message: \(sftpMessage.packet) with data length \(sftpMessage.totalBodyBytes)")
-//
-//				if packet.packetType?.hasBody ?? false {
-//					state = .processingMessage(sftpMessage)
-//				} else {
-//					state = .awaitingHeader
-//				}
-//
-//				context.fireChannelRead(self.wrapInboundOut(sftpMessage))
-//			case .processingMessage:
-//				context.fireErrorCaught(HandlerError.unexpected(messagePart, self.state))
-//			}
-//		case let .body(buffer):
-//			switch state {
-//			case .awaitingHeader:
-//				context.fireErrorCaught(HandlerError.unexpected(messagePart, self.state))
-//			case let .processingMessage(sftpMessage):
-//				logger.trace("Received \(buffer.readableBytes) data bytes. Writing to message publisher.")
-//				let sendDataResult = sftpMessage.sendData(buffer)
-//				switch sendDataResult {
-//				case .success:
-//					break
-//				case let .failure(error):
-//					context.fireErrorCaught(error)
-//				}
-//			}
-//		case .end:
-//			switch state {
-//			case .awaitingHeader:
-//				context.fireErrorCaught(HandlerError.unexpected(messagePart, self.state))
-//			case let .processingMessage(sftpMessage):
-//				sftpMessage.completeData()
-//				state = .awaitingHeader
-//			}
-//		}
 	}
 
 	public func read(context: ChannelHandlerContext) {
@@ -251,38 +200,6 @@ public class SftpDataChannelHandler2: ChannelDuplexHandler {
 				bodyFutures.append(future)
 				return future
 			})
-//			let cancellable = message.data.futureSink(
-//				maxConcurrent: 10,
-//				eventLoop: context.eventLoop,
-//				receiveCompletion: { _ in
-//					self.logger.trace("Outgoing message has finished sending bytes. Writing end to out and resolving.")
-//					// When the sink completed, send a .end, add a new future for
-//					// this operation, and succeed the aforementioned promise so
-//					// that the fold can complete when endFuture finishes.
-//					let endFuture = context.writeAndFlush(self.wrapOutboundOut(.end)).always { _ in
-//						self.logger.trace("Outgoing data of message has completed")
-//					}
-//					endFuture
-//						.fold(bodyFutures, with: { _, _ in context.eventLoop.makeSucceededFuture(()) })
-//						.cascade(to: endPromise)
-//				},
-//				receiveValue: { buffer in
-//					guard case .processingMessage = self.state else {
-//						preconditionFailure() // Todo:
-//					}
-//
-//					self.logger.trace("Outgoing message received \(buffer.readableBytes) bytes. Writing data to out.")
-//					// When data arrives from the message, send it over the wire
-//					// and track the future.
-//					// Todo: remove the flush here?
-//					let future = context.writeAndFlush(self.wrapOutboundOut(.body(buffer))).always { _ in
-//						self.logger.trace("Outgoing data of \(buffer.readableBytes) bytes has completed")
-//					}
-//					bodyFutures.append(future)
-//					return future
-//				})
-//			// Store the cancellable so it doesn't self-cancel when this returns
-//			self.replyCancellable = cancellable
 		} else {
 			endPromise.succeed(())
 		}
