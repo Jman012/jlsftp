@@ -9,7 +9,7 @@ pipeline into an `SftpMessage` object and serving that to the injected
 `SftpServer` handler.
 This also ports the Combine backpressure to the NIO backpressure mechanisms.
 */
-public class SftpServerChannelHandler2: ChannelDuplexHandler {
+public class SftpServerChannelHandler: ChannelDuplexHandler {
 	public typealias InboundIn = MessagePart
 	public typealias InboundOut = Never
 	public typealias OutboundIn = SftpMessage
