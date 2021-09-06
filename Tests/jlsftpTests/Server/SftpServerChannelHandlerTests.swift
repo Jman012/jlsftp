@@ -192,6 +192,124 @@ final class SftpServerChannelHandlerTests: XCTestCase {
 
 	// MARK: `read(context:)`
 
+	func testReadAwaiting() {
+		let channel = EmbeddedChannel()
+		let server = CustomSftpServer(handleMessageHandler: { message in
+			return channel.eventLoop.makePromise().futureResult
+		})
+		let handler = SftpServerChannelHandler(server: server, logger: noopLogger)
+		let eventCounterHandlerBegin = EventCounterHandler()
+		XCTAssertNoThrow(try channel.pipeline.addHandlers([eventCounterHandlerBegin, handler]).wait())
+
+		XCTAssertEqual(eventCounterHandlerBegin.readCalls, 0)
+
+		// Already in awaitingHeader state
+
+		channel.read()
+		XCTAssertEqual(eventCounterHandlerBegin.readCalls, 1)
+	}
+
+	func testReadProcessingCanWriteAndQueueIsEmpty() {
+		let channel = EmbeddedChannel()
+		var lastMessage: SftpMessage?
+		let server = CustomSftpServer(handleMessageHandler: { message in
+			lastMessage = message
+			return channel.eventLoop.makePromise().futureResult
+		})
+		let handler = SftpServerChannelHandler(server: server, logger: noopLogger)
+		let eventCounterHandlerBegin = EventCounterHandler()
+		XCTAssertNoThrow(try channel.pipeline.addHandlers([eventCounterHandlerBegin, handler]).wait())
+
+		XCTAssertEqual(eventCounterHandlerBegin.readCalls, 0)
+
+		// Begin processing a message
+		XCTAssertNoThrow(try channel.writeInbound(MessagePart.header(.write(.init(id: 1, handle: "", offset: 0)), 1)))
+		guard let message = lastMessage else {
+			XCTFail()
+			return
+		}
+		// Begin collecting to enable canWriteBody. Queue should be empty.
+		message.stream.collect(onComplete: { }, handler: { _ in channel.eventLoop.makePromise().futureResult })
+
+		channel.read()
+		XCTAssertEqual(eventCounterHandlerBegin.readCalls, 1)
+	}
+
+	func testReadProcessingCantWrite() {
+		let channel = EmbeddedChannel()
+		var lastMessage: SftpMessage?
+		let server = CustomSftpServer(handleMessageHandler: { message in
+			lastMessage = message
+			return channel.eventLoop.makePromise().futureResult
+		})
+		let handler = SftpServerChannelHandler(server: server, logger: noopLogger)
+		let eventCounterHandlerBegin = EventCounterHandler()
+		XCTAssertNoThrow(try channel.pipeline.addHandlers([eventCounterHandlerBegin, handler]).wait())
+
+		XCTAssertEqual(eventCounterHandlerBegin.readCalls, 0)
+
+		// Begin processing a message
+		XCTAssertNoThrow(try channel.writeInbound(MessagePart.header(.write(.init(id: 1, handle: "", offset: 0)), 1)))
+		XCTAssertNotNil(lastMessage)
+		// Don't collect so canWriteBody is false
+		switch handler.state {
+		case .processingMessage(current: _, queue: _, needsContextRead: false, canWriteBody: false):
+			break
+		default:
+			XCTFail()
+		}
+
+		channel.read()
+		XCTAssertEqual(eventCounterHandlerBegin.readCalls, 0)
+		switch handler.state {
+		case .processingMessage(current: _, queue: _, needsContextRead: true, canWriteBody: false):
+			break
+		default:
+			XCTFail()
+		}
+	}
+
+	func testReadProcessingFullQueue() {
+		let channel = EmbeddedChannel()
+		var lastMessage: SftpMessage?
+		let server = CustomSftpServer(handleMessageHandler: { message in
+			lastMessage = message
+			return channel.eventLoop.makePromise().futureResult
+		})
+		let handler = SftpServerChannelHandler(server: server, logger: noopLogger)
+		let eventCounterHandlerBegin = EventCounterHandler()
+		XCTAssertNoThrow(try channel.pipeline.addHandlers([eventCounterHandlerBegin, handler]).wait())
+
+		XCTAssertEqual(eventCounterHandlerBegin.readCalls, 0)
+
+		// Begin processing a message
+		XCTAssertNoThrow(try channel.writeInbound(MessagePart.header(.write(.init(id: 1, handle: "", offset: 0)), 1)))
+		guard let message = lastMessage else {
+			XCTFail()
+			return
+		}
+		// Begin collecting to enable canWriteBody. Queue should be empty.
+		message.stream.collect(onComplete: { }, handler: { _ in channel.eventLoop.makePromise().futureResult })
+
+		// Add to queue
+		XCTAssertNoThrow(try channel.writeInbound(MessagePart.header(.write(.init(id: 1, handle: "", offset: 0)), 1)))
+		switch handler.state {
+		case .processingMessage(current: _, queue: _, needsContextRead: false, canWriteBody: true):
+			break
+		default:
+			XCTFail()
+		}
+
+		channel.read()
+		XCTAssertEqual(eventCounterHandlerBegin.readCalls, 0)
+		switch handler.state {
+		case .processingMessage(current: _, queue: _, needsContextRead: true, canWriteBody: true):
+			break
+		default:
+			XCTFail()
+		}
+	}
+
 	// MARK: `write(context:data:promise:)`
 
 	// MARK: `createMessage`
