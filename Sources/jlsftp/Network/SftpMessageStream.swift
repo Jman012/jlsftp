@@ -12,7 +12,7 @@ public class SftpMessageStream {
 		case collecting(collector: Collector, onComplete: () -> Void)
 	}
 
-	private struct FutureWrapper {
+	internal struct FutureWrapper {
 		let id: Int
 		let future: EventLoopFuture<Void>
 	}
@@ -23,8 +23,8 @@ public class SftpMessageStream {
 
 	private var state: State = .awaitingCollector
 	private var nextFutureWrapperId: Int = 0
-	private var queuedData: CircularBuffer<ByteBuffer> = .init()
-	private var outstandingFutures: [FutureWrapper] = []
+	private(set) var queuedData: CircularBuffer<ByteBuffer> = .init()
+	private(set) var outstandingFutures: [FutureWrapper] = []
 	private var isCompleted = false
 
 	public init(outstandingFutureLimit: UInt, onBackpressure: @escaping OnBackpressure, logger: Logger) {
