@@ -56,21 +56,25 @@ public class SftpServerBootstrapper {
 				return channel.writeAndFlush(message)
 			})
 
-			// Successfully created ssh session. Setup child
-			// channel handlers
-			return channel.pipeline.addHandlers([
-				// To handle SSHChannelData <->ByteBuffer and
-				// and init the sftp subsystem for ssh.
-				SshSftpSubsystemServerHandler(logger: self.logger),
-				// To handle incoming reply decoding
-				ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
-				// To handle outgoing request encoding
-				MessageToByteHandler(SftpPacketEncoder(serializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3(), allocator: channel.allocator)),
-				// To handle MessagePart <-> SftpMessage conversion as well as
-				// handling the messages and their data streams.
-				SftpServerChannelHandler(server: server, logger: self.logger),
-				ErrorChannelHandler(logger: self.logger),
-			])
+			// First set half closure required for SSH.
+			return channel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
+				.flatMap {
+					// Successfully created ssh session. Setup child
+					// channel handlers
+					channel.pipeline.addHandlers([
+						// To handle SSHChannelData <->ByteBuffer and
+						// and init the sftp subsystem for ssh.
+						SshSftpSubsystemServerHandler(logger: self.logger),
+						// To handle incoming reply decoding
+						ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
+						// To handle outgoing request encoding
+						MessageToByteHandler(SftpPacketEncoder(serializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3(), allocator: channel.allocator)),
+						// To handle MessagePart <-> SftpMessage conversion as well as
+						// handling the messages and their data streams.
+						SftpServerChannelHandler(server: server, logger: self.logger),
+						ErrorChannelHandler(logger: self.logger),
+					])
+				}
 		}
 
 		// Configure the bootstrapper for the base ssh connection

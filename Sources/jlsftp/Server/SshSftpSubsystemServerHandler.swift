@@ -22,12 +22,6 @@ internal class SshSftpSubsystemServerHandler: ChannelDuplexHandler {
 		self.logger = logger
 	}
 
-	func handlerAdded(context: ChannelHandlerContext) {
-		context.channel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true).whenFailure { error in
-			context.fireErrorCaught(error)
-		}
-	}
-
 	func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
 		switch event {
 		case let subsystemRequest as SSHChannelRequestEvent.SubsystemRequest where subsystemRequest.subsystem == "sftp":
