@@ -25,7 +25,7 @@ public class SftpMessageStream {
 	private var nextFutureWrapperId: Int = 0
 	private(set) var queuedData: CircularBuffer<ByteBuffer> = .init()
 	private(set) var outstandingFutures: [FutureWrapper] = []
-	private var isCompleted = false
+	private(set) var isCompleted = false
 
 	public init(outstandingFutureLimit: UInt, onBackpressure: @escaping OnBackpressure, logger: Logger) {
 		self.outstandingFutureLimit = outstandingFutureLimit
