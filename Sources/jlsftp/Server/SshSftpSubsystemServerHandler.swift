@@ -61,6 +61,7 @@ internal class SshSftpSubsystemServerHandler: ChannelDuplexHandler {
 
 	func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
 		guard isSftpSubsystemInitialized else {
+			promise?.fail(HandlerError.unexpectedDataBeforeInitialized)
 			context.fireErrorCaught(HandlerError.unexpectedDataBeforeInitialized)
 			return
 		}
