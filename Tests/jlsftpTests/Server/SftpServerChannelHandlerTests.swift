@@ -393,9 +393,165 @@ final class SftpServerChannelHandlerTests: XCTestCase {
 
 	// MARK: `createMessage`
 
+	public func testCreateMessageBackpressure() {
+		let channel = EmbeddedChannel()
+		var lastMessage: SftpMessage?
+		let server = CustomSftpServer(handleMessageHandler: { message in
+			lastMessage = message
+			return channel.eventLoop.makePromise().futureResult
+		})
+		let handler = SftpServerChannelHandler(server: server, logger: noopLogger)
+		handler.outstandingFutureLimit = 1 // Single future to trigger backpressure. Easier for tests.
+		XCTAssertNoThrow(try channel.pipeline.addHandler(handler).wait())
+
+		// Get state into processing a message
+		XCTAssertNoThrow(try channel.writeInbound(MessagePart.header(.write(.init(id: 1, handle: "a", offset: 0)), 5)))
+		guard let message = lastMessage else {
+			XCTFail()
+			return
+		}
+
+		// Ensure starting state
+		switch handler.state {
+		case .processingMessage(current: _, queue: _, needsContextRead: false, canWriteBody: false):
+			break
+		default:
+			XCTFail()
+		}
+
+		// Start collecting
+		var promises: [EventLoopPromise<Void>] = []
+		message.stream.collect(onComplete: { }, handler: { buffer in
+			let newPromise: EventLoopPromise<Void> = channel.eventLoop.makePromise()
+			promises.append(newPromise)
+			return newPromise.futureResult
+		})
+
+		// Ensure starting state after starting collecting
+		switch handler.state {
+		case .processingMessage(current: _, queue: _, needsContextRead: false, canWriteBody: true):
+			break
+		default:
+			XCTFail()
+		}
+
+		// Write first buffer. Should trigger backpressure.
+		XCTAssertNoThrow(try channel.writeInbound(MessagePart.body(ByteBuffer(bytes: [0x01]))))
+		XCTAssertEqual(promises.count, 1)
+		switch handler.state {
+		case .processingMessage(current: _, queue: _, needsContextRead: false, canWriteBody: false):
+			break
+		default:
+			XCTFail()
+		}
+
+		// Add rest of data to queue. Unchanged state.
+		XCTAssertNoThrow(try channel.writeInbound(MessagePart.body(ByteBuffer(bytes: [0x02, 0x03, 0x04, 0x05]))))
+		XCTAssertEqual(promises.count, 1)
+		switch handler.state {
+		case .processingMessage(current: _, queue: _, needsContextRead: false, canWriteBody: false):
+			break
+		default:
+			XCTFail()
+		}
+
+		// Complete
+		XCTAssertNoThrow(try channel.writeInbound(MessagePart.end))
+		XCTAssertEqual(message.stream.isCompleted, true)
+
+		// Request read. Changed state
+		channel.read()
+		switch handler.state {
+		case let .processingMessage(current: _, queue: queue, needsContextRead: true, canWriteBody: false):
+			XCTAssertEqual(queue.count, 0)
+			break
+		default:
+			XCTFail()
+		}
+
+		// Finish first promise. Should negate backpressure, take in next queued
+		// write and go back to backpressure, all without triggering. No change to state yet.
+		XCTAssertEqual(promises.count, 1)
+		promises.removeFirst().succeed(())
+		switch handler.state {
+		case let .processingMessage(current: _, queue: queue, needsContextRead: true, canWriteBody: false):
+			XCTAssertEqual(queue.count, 0)
+			break
+		default:
+			XCTFail()
+		}
+		// Still one because the stream queue immediately dumped.
+		XCTAssertEqual(promises.count, 1)
+
+		// Finish last promise to finally trigger release of backpressure and
+		// perform request read.
+		promises.removeFirst().succeed(())
+		switch handler.state {
+		case let .processingMessage(current: _, queue: queue, needsContextRead: false, canWriteBody: true):
+			XCTAssertEqual(queue.count, 0)
+			break
+		default:
+			XCTFail()
+		}
+
+	}
+
 	// MARK: `messageCompleted`
+
+	func testMessageCompleted() {
+		let channel = EmbeddedChannel()
+		var lastMessage: SftpMessage?
+		var messagePromise: EventLoopPromise<Void>?
+		let server = CustomSftpServer(handleMessageHandler: { message in
+			lastMessage = message
+			let promise = channel.eventLoop.makePromise(of: Void.self)
+			messagePromise = promise
+			return promise.futureResult
+		})
+		let handler = SftpServerChannelHandler(server: server, logger: noopLogger)
+		XCTAssertNoThrow(try channel.pipeline.addHandler(handler).wait())
+
+		// Begin processing first message
+		XCTAssertNoThrow(try channel.writeInbound(MessagePart.header(.status(.init(id: 1, path: "a")), 0)))
+		XCTAssertEqual(lastMessage?.packet, .some(.status(.init(id: 1, path: "a"))))
+
+		// Queue next message
+		XCTAssertNoThrow(try channel.writeInbound(MessagePart.header(.close(.init(id: 2, handle: "b")), 0)))
+		XCTAssertEqual(lastMessage?.packet, .some(.status(.init(id: 1, path: "a"))))
+		switch handler.state {
+		case let .processingMessage(current: _, queue: queue, needsContextRead: _, canWriteBody: _):
+			XCTAssertEqual(queue.count, 1)
+		default:
+			XCTFail()
+		}
+
+		// Complete first message
+		messagePromise?.succeed(())
+
+		// Should be processing next message
+		XCTAssertEqual(lastMessage?.packet, .some(.close(.init(id: 2, handle: "b"))))
+
+		// Complete last
+		messagePromise?.succeed(())
+	}
 
 	static var allTests = [
 		("testHandlerErrorDescription", testHandlerErrorDescription),
+		("testChannelReadAwaitingHeaderHeader", testChannelReadAwaitingHeaderHeader),
+		("testChannelReadAwaitingHeaderBody", testChannelReadAwaitingHeaderBody),
+		("testChannelReadAwaitingHeaderEnd", testChannelReadAwaitingHeaderEnd),
+		("testChannelReadProcessingMessageHeader", testChannelReadProcessingMessageHeader),
+		("testChannelReadProcessingMessageBodyValid", testChannelReadProcessingMessageBodyValid),
+		("testChannelReadProcessingMessageBodyError", testChannelReadProcessingMessageBodyError),
+		("testChannelReadProcessingMessageEnd", testChannelReadProcessingMessageEnd),
+		("testReadAwaiting", testReadAwaiting),
+		("testReadProcessingCanWriteAndQueueIsEmpty", testReadProcessingCanWriteAndQueueIsEmpty),
+		("testReadProcessingCantWrite", testReadProcessingCantWrite),
+		("testReadProcessingFullQueue", testReadProcessingFullQueue),
+		("testWriteUnexpectedWrite", testWriteUnexpectedWrite),
+		("testWriteHeader", testWriteHeader),
+		("testWriteBody", testWriteBody),
+		("testCreateMessageBackpressure", testCreateMessageBackpressure),
+		("testMessageCompleted", testMessageCompleted),
 	]
 }

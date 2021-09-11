@@ -43,6 +43,7 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 
 	public let server: SftpServer
 	private let logger: Logger
+	public var outstandingFutureLimit: UInt = 10
 
 	private(set) var state: State = .awaitingHeader
 	private var replyCancellable: AnyCancellable?
@@ -229,7 +230,7 @@ extension SftpServerChannelHandler {
 				case .processingMessage(current: let currentMessage, queue: let messageQueue, needsContextRead: var needsContextRead, canWriteBody: _):
 					// Set our state's canWriteBody to true if the message has demand.
 					self.state = .processingMessage(current: currentMessage, queue: messageQueue, needsContextRead: needsContextRead, canWriteBody: hasDemand)
-					if messageQueue.isEmpty && needsContextRead {
+					if hasDemand && messageQueue.isEmpty && needsContextRead {
 						self.logger.trace("After enabling canWriteBody, performing context read due to queued read and no queued messages")
 						needsContextRead = false
 						self.state = .processingMessage(current: currentMessage, queue: messageQueue, needsContextRead: needsContextRead, canWriteBody: hasDemand)
@@ -240,7 +241,8 @@ extension SftpServerChannelHandler {
 					preconditionFailure()
 				}
 			},
-			logger: logger)
+			logger: logger,
+			outstandingFutureLimit: outstandingFutureLimit)
 
 		return sftpMessage
 	}

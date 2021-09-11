@@ -20,11 +20,11 @@ public class SftpMessage {
 
 	private var remainingBytes: UInt32
 
-	public init(packet: Packet, dataLength: UInt32, shouldReadHandler: @escaping SftpMessageStream.OnBackpressure, logger: Logger? = nil) {
+	public init(packet: Packet, dataLength: UInt32, shouldReadHandler: @escaping SftpMessageStream.OnBackpressure, logger: Logger? = nil, outstandingFutureLimit: UInt = 10) {
 		self.packet = packet
 		self.totalBodyBytes = dataLength
 		self.remainingBytes = dataLength
-		self.stream = SftpMessageStream(outstandingFutureLimit: 10, onBackpressure: shouldReadHandler, logger: logger ?? Logger(label: "noop", factory: { _ in SwiftLogNoOpLogHandler() }))
+		self.stream = SftpMessageStream(outstandingFutureLimit: outstandingFutureLimit, onBackpressure: shouldReadHandler, logger: logger ?? Logger(label: "noop", factory: { _ in SwiftLogNoOpLogHandler() }))
 	}
 
 	public func sendData(_ buffer: ByteBuffer) -> Result<Bool, SendDataError> {
