@@ -156,6 +156,7 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 			// The server can only respond to a request. If there is no request,
 			// then nothing should be sent.
 			context.fireErrorCaught(HandlerError.unexpectedWrite)
+			promise?.fail(HandlerError.unexpectedWrite)
 			return
 		}
 
