@@ -46,7 +46,6 @@ public class SftpServerChannelHandler: ChannelDuplexHandler {
 	public var outstandingFutureLimit: UInt = 10
 
 	private(set) var state: State = .awaitingHeader
-	private var replyCancellable: AnyCancellable?
 
 	public init(server: SftpServer, logger: Logger) {
 		self.server = server

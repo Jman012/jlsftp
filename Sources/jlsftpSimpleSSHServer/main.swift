@@ -36,4 +36,5 @@ let bootstrapper = SftpServerBootstrapper(
 	logger: logger)
 
 let channel = try bootstrapper.bootstrap().wait()
+logger.info("Bootstrap complete. Waiting for client connections.")
 try channel.closeFuture.wait()

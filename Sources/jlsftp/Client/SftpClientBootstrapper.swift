@@ -3,34 +3,28 @@ import NIO
 import NIOSSH
 import Logging
 
-public class SftpClient {
+public class SftpClientBootstrapper {
 
 	public enum ClientError: Error {
 		case invalidChannelType
 	}
 
-	public var host: String
-	public var port: Int
 	public var userAuthDelegate: NIOSSHClientUserAuthenticationDelegate
 	public var serverAuthDelegate: NIOSSHClientServerAuthenticationDelegate
 	public let eventLoopGroup: EventLoopGroup
 	public var logger: Logger
 
-	public init(host: String = "",
-				port: Int = 22,
-				userAuthDelegate: NIOSSHClientUserAuthenticationDelegate,
+	public init(userAuthDelegate: NIOSSHClientUserAuthenticationDelegate,
 				serverAuthDelegate: NIOSSHClientServerAuthenticationDelegate,
 				eventLoopGroup: EventLoopGroup,
 				logger: Logger) {
-		self.host = host
-		self.port = port
 		self.userAuthDelegate = userAuthDelegate
 		self.serverAuthDelegate = serverAuthDelegate
 		self.eventLoopGroup = eventLoopGroup
 		self.logger = logger
 	}
 
-	public func connect() -> EventLoopFuture<SftpClientConnection> {
+	public func connect(host: String = "", port: Int = 22) -> EventLoopFuture<SftpClientConnection> {
 		// Configure the bootstrapper for the base ssh connection
 		let bootstrap = ClientBootstrap(group: eventLoopGroup)
 			.channelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
@@ -69,9 +63,9 @@ public class SftpClient {
 							// To handle incoming reply decoding
 							ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
 							// To handle MessagePart <-> SftpMessage conversion
-//							SftpDataChannelHandler(logger: self.logger),
 							// To bridge to the SftpClientConnection
-							SftpClientChannelHandler(),
+//							SftpClientChannelHandler(),
+							SftpClientChannelHandler2(logger: self.logger),
 						])
 					}
 

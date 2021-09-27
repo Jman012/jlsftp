@@ -1,26 +1,56 @@
 import Foundation
 import NIO
 
-struct ClientRequest {
+class ClientRequest {
+	enum RequestSendState {
+		case awaiting
+		case sending
+		case sent
+	}
+
 	let message: SftpMessage
-	let promise: EventLoopPromise<SftpMessage>
-	let removeOn: jlsftp.SftpProtocol.PacketType?
+	let requestMessageSentPromise: EventLoopPromise<Void>
+	private let responsePromise: EventLoopPromise<SftpMessage>
 
-	init(message: SftpMessage, eventLoop: EventLoop, removeOn: jlsftp.SftpProtocol.PacketType? = nil) {
-		self.init(message: message, promise: eventLoop.makePromise(), removeOn: removeOn)
+	var requestSendState: RequestSendState = .awaiting
+	private var response: SftpMessage?
+
+	public var responseFuture: EventLoopFuture<SftpMessage> {
+		responsePromise.futureResult
 	}
 
-	init(message: SftpMessage, promise: EventLoopPromise<SftpMessage>, removeOn: jlsftp.SftpProtocol.PacketType? = nil) {
+	convenience init(message: SftpMessage, eventLoop: EventLoop) {
+		self.init(message: message, requestMessageSentPromise: eventLoop.makePromise(), responsePromise: eventLoop.makePromise())
+	}
+
+	private init(message: SftpMessage, requestMessageSentPromise: EventLoopPromise<Void>, responsePromise: EventLoopPromise<SftpMessage>) {
 		self.message = message
-		self.removeOn = removeOn
-		self.promise = promise
+		self.requestMessageSentPromise = requestMessageSentPromise
+		self.responsePromise = responsePromise
 	}
 
-	func shouldRemove(responseMessage: SftpMessage) -> Bool {
-		guard let removeOn = self.removeOn else {
-			return true
+	func respond(message: SftpMessage) {
+		guard response == nil else {
+			preconditionFailure("A ClientRequest can not have more than one response")
 		}
 
-		return removeOn == responseMessage.packet.packetType
+		response = message
+		responsePromise.succeed(message)
+	}
+
+	func writeResponseData(buffer: ByteBuffer) {
+		guard let response = response else {
+			preconditionFailure("No response to write to")
+		}
+
+		_ = response.sendData(buffer)
+	}
+
+	func endResponseData() {
+		guard let response = response else {
+			preconditionFailure("No response to end")
+		}
+
+		response.completeData()
 	}
 }

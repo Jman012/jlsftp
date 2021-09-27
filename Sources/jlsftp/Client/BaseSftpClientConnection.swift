@@ -25,17 +25,27 @@ public class BaseSftpClientConnection: SftpClientConnection {
 		return packetId
 	}
 
-	public func openFile(remotePath: String) -> EventLoopFuture<String> {
-		guard supportedPacketTypes.contains(.open) else {
-			return channel.eventLoop.makeFailedFuture(SftpClientError.unsuported("This operation is unsupported for this server (using sftp version \(self.version))"))
+	private func unsupportedOperation<T>() -> EventLoopFuture<T> {
+		return channel.eventLoop.makeFailedFuture(SftpClientError.unsuported("This operation is unsupported for this server (using sftp version \(self.version))"))
+	}
+
+	public func status(remotePath: String) -> EventLoopFuture<String> {
+		guard supportedPacketTypes.contains(.status) else {
+			return unsupportedOperation()
 		}
 
-		let packet: Packet = .open(.init(id: getNextPacketId(), filename: remotePath, pflags: [.read], fileAttributes: .empty))
+		let packet: Packet = .status(.init(id: getNextPacketId(), path: remotePath))
 		let message = SftpMessage(packet: packet, dataLength: 0, shouldReadHandler: { _ in })
 		let clientRequest = ClientRequest(message: message, eventLoop: channel.eventLoop)
-		channel.writeAndFlush(packet, promise: nil)
-		return clientRequest.promise.futureResult.map { _ in
-			return "test"
+		channel.writeAndFlush(clientRequest, promise: nil)
+
+		return clientRequest.responseFuture.map { responseMessage in
+			switch responseMessage.packet {
+			case let .attributesReply(packet):
+				return packet.fileAttributes.longName(shortName: remotePath)
+			default:
+				return "Error" // TODO:
+			}
 		}
 	}
 }
