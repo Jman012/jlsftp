@@ -63,7 +63,7 @@ class SftpClientChannelHandler2: ChannelDuplexHandler {
 				}
 				logger.debug("Handling incoming response message: \(packet) with data length \(bodyLength)")
 				let newMessage = createMessage(context: context, packet: packet, bodyLength: bodyLength)
-				state = .processingResponse(currentResponse: newMessage, currentRequest: nextRequest, requestQueue: requestQueue, needsContextRead: true, canWriteBody: canWriteBody)
+				state = .processingResponse(currentResponse: newMessage, currentRequest: nextRequest, requestQueue: requestQueue, needsContextRead: true, canWriteBody: true)
 				nextRequest.respond(message: newMessage)
 			case .body, .end:
 				// Should not receive body data when not yet processing a response.
@@ -138,57 +138,7 @@ class SftpClientChannelHandler2: ChannelDuplexHandler {
 			state = .processingResponse(currentResponse: currentResponse, currentRequest: currentRequest, requestQueue: requestQueue, needsContextRead: needsContextRead, canWriteBody: canWriteBody)
 		}
 
-		let message = clientRequest.message
-		logger.debug("Sending outgoing message: \(message.packet) with data length \(message.totalBodyBytes)")
-
-		// First, write the header to the wire.
-		let data = self.wrapOutboundOut(.header(message.packet, message.totalBodyBytes))
-		let headerFuture = context.write(data)
-
-		// Next, set up the stream for data to write to the wire, if any.
-
-		// Normally, an NIO channelWrite's promise would complete once the data
-		// has been immediately pushed to the socket. However, we only want this
-		// promise to succeed once all of the data has also been pushed out.
-		// This endPromise will keep track of this (see the end of the function).
-		let endPromise = context.eventLoop.makePromise(of: Void.self)
-
-		if message.totalBodyBytes > 0 {
-			logger.trace("Outgoing message has \(message.totalBodyBytes) data bytes to send")
-			var bodyFutures: [EventLoopFuture<Void>] = []
-
-			message.stream.collect(onComplete: {
-				self.logger.trace("Outgoing message has finished sending bytes. Writing end to out and resolving.")
-				// When the sink completed, send a .end, add a new future for
-				// this operation, and succeed the aforementioned promise so
-				// that the fold can complete when endFuture finishes.
-				let endFuture = context.writeAndFlush(self.wrapOutboundOut(.end)).always { _ in
-					self.logger.trace("Outgoing data of message has completed")
-				}
-				endFuture
-					.fold(bodyFutures, with: { _, _ in context.eventLoop.makeSucceededFuture(()) })
-					.cascade(to: endPromise)
-			}, handler: { buffer in
-				self.logger.trace("Outgoing message received \(buffer.readableBytes) bytes. Writing data to out.")
-				// When data arrives from the message, send it over the wire
-				// and track the future.
-				let future = context.writeAndFlush(self.wrapOutboundOut(.body(buffer))).always { _ in
-					self.logger.trace("Outgoing data of \(buffer.readableBytes) bytes has completed")
-				}
-				bodyFutures.append(future)
-				return future
-			})
-		} else {
-			endPromise.succeed(())
-		}
-
-		// Send a folded future for when all writes to the context finish.
-		// The headerFuture is from writing the header. The endPromise is from
-		// writing all of the body data and the final end part.
-		headerFuture
-			.and(endPromise.futureResult)
-			.map({ _ in () })
-			.cascade(to: promise)
+		self.processRequestQueue(context: context)
 	}
 }
 
@@ -249,7 +199,10 @@ extension SftpClientChannelHandler2 {
 
 		// First, write the header to the wire.
 		let data = self.wrapOutboundOut(.header(message.packet, message.totalBodyBytes))
-		let headerFuture = context.write(data)
+		let headerFuture = context.writeAndFlush(data)
+		headerFuture.whenComplete { a in
+			self.logger.info("\(a)")
+		}
 
 		// Next, set up the stream for data to write to the wire, if any.
 
@@ -294,7 +247,9 @@ extension SftpClientChannelHandler2 {
 		headerFuture
 			.and(endPromise.futureResult)
 			.map({ _ in () })
-			.always({ _ in nextRequest.requestSendState = .sent })
+			.always({ _ in
+				nextRequest.requestSendState = .sent
+			})
 			.cascade(to: nextRequest.requestMessageSentPromise)
 	}
 

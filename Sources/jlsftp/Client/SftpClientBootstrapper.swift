@@ -11,20 +11,23 @@ public class SftpClientBootstrapper {
 
 	public var userAuthDelegate: NIOSSHClientUserAuthenticationDelegate
 	public var serverAuthDelegate: NIOSSHClientServerAuthenticationDelegate
+	public var clientInitialization: SftpClientInitialization
 	public let eventLoopGroup: EventLoopGroup
 	public var logger: Logger
 
 	public init(userAuthDelegate: NIOSSHClientUserAuthenticationDelegate,
 				serverAuthDelegate: NIOSSHClientServerAuthenticationDelegate,
+				clientInitialization: SftpClientInitialization,
 				eventLoopGroup: EventLoopGroup,
 				logger: Logger) {
 		self.userAuthDelegate = userAuthDelegate
 		self.serverAuthDelegate = serverAuthDelegate
+		self.clientInitialization = clientInitialization
 		self.eventLoopGroup = eventLoopGroup
 		self.logger = logger
 	}
 
-	public func connect(host: String = "", port: Int = 22) -> EventLoopFuture<SftpClientConnection> {
+	public func connect(host: String = "", port: Int = 22) -> EventLoopFuture<Channel> {
 		// Configure the bootstrapper for the base ssh connection
 		let bootstrap = ClientBootstrap(group: eventLoopGroup)
 			.channelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
@@ -64,7 +67,6 @@ public class SftpClientBootstrapper {
 							ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
 							// To handle MessagePart <-> SftpMessage conversion
 							// To bridge to the SftpClientConnection
-//							SftpClientChannelHandler(),
 							SftpClientChannelHandler2(logger: self.logger),
 						])
 					}
@@ -72,10 +74,10 @@ public class SftpClientBootstrapper {
 					// Once the child channel has been created, map it to a
 					// SftpClientConnection and inject the channel into it.
 					// This is what ultimately gets returned to the caller.
-					return promise.futureResult.map { channel in
-						// TODO: Change to init bootstrapper
-						return BaseSftpClientConnection(version: .v3, channel: channel)
-					}
+//					return promise.futureResult.flatMap { channel in
+//						return self.clientInitialization.initialize(channel: channel)
+//					}
+					return promise.futureResult
 				}
 			}
 	}

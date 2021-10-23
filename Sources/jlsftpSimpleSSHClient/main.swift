@@ -66,12 +66,14 @@ logger.logLevel = .trace
 
 let bootstrap = SftpClientBootstrapper(userAuthDelegate: InteractivePasswordPromptDelegate(username: nil, password: nil),
 									   serverAuthDelegate: AcceptAllHostKeysDelegate(),
+									   clientInitialization: SftpClientInitialization(logger: logger, versions: [.v3])!,
 									   eventLoopGroup: group,
 									   logger: logger)
 
 let connection: SftpClientConnection
 do {
-	connection = try bootstrap.connect(host: "127.0.0.1", port: 22).wait()
+	let channel = try bootstrap.connect(host: "127.0.0.1", port: 22).wait()
+	connection = try bootstrap.clientInitialization.initialize(channel: channel).wait()
 } catch {
 	print("Error: \(error)")
 	print("Localized error: \(error.localizedDescription)")
