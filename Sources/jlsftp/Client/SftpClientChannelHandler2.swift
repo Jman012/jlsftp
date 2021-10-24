@@ -63,7 +63,9 @@ class SftpClientChannelHandler2: ChannelDuplexHandler {
 				}
 				logger.debug("Handling incoming response message: \(packet) with data length \(bodyLength)")
 				let newMessage = createMessage(context: context, packet: packet, bodyLength: bodyLength)
-				state = .processingResponse(currentResponse: newMessage, currentRequest: nextRequest, requestQueue: requestQueue, needsContextRead: true, canWriteBody: true)
+				if packet.packetType?.hasBody ?? false {
+					state = .processingResponse(currentResponse: newMessage, currentRequest: nextRequest, requestQueue: requestQueue, needsContextRead: true, canWriteBody: true)
+				}
 				nextRequest.respond(message: newMessage)
 			case .body, .end:
 				// Should not receive body data when not yet processing a response.

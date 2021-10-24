@@ -14,6 +14,11 @@ internal class SshSftpSubsystemClientHandler: ChannelDuplexHandler {
 	}
 
 	var isSftpSubsystemInitialized = false
+	var subsystemInitialized: EventLoopPromise<Void>
+
+	init(subsystemInitialized: EventLoopPromise<Void>) {
+		self.subsystemInitialized = subsystemInitialized
+	}
 
 	func channelActive(context: ChannelHandlerContext) {
 		// When the channel becomes active, activate the "sftp" SSH subsystem
@@ -25,6 +30,7 @@ internal class SshSftpSubsystemClientHandler: ChannelDuplexHandler {
 		switch event {
 		case _ as ChannelSuccessEvent:
 			isSftpSubsystemInitialized = true
+			subsystemInitialized.succeed(())
 		default:
 			break
 		}

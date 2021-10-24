@@ -50,6 +50,8 @@ public class SftpClientBootstrapper {
 			.flatMap { channel in
 				return channel.pipeline.handler(type: NIOSSHHandler.self).flatMap { sshHandler in
 					let promise = channel.eventLoop.makePromise(of: Channel.self)
+					let subsystemInitializedPromise = channel.eventLoop.makePromise(of: Void.self)
+					let subsystemHandler = SshSftpSubsystemClientHandler(subsystemInitialized: subsystemInitializedPromise)
 					sshHandler.createChannel(promise, channelType: .session) { childChannel, channelType in
 						guard channelType == .session else {
 							return channel.eventLoop.makeFailedFuture(ClientError.invalidChannelType)
@@ -60,7 +62,7 @@ public class SftpClientBootstrapper {
 						return childChannel.pipeline.addHandlers([
 							// To handle SSHChannelData <->ByteBuffer and
 							// and init the sftp subsystem for ssh.
-							SshSftpSubsystemClientHandler(),
+							subsystemHandler,
 							// To handle outgoing request encoding
 							MessageToByteHandler(SftpPacketEncoder(serializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3(), allocator: childChannel.allocator)),
 							// To handle incoming reply decoding
@@ -68,6 +70,7 @@ public class SftpClientBootstrapper {
 							// To handle MessagePart <-> SftpMessage conversion
 							// To bridge to the SftpClientConnection
 							SftpClientChannelHandler2(logger: self.logger),
+							ErrorChannelHandler(logger: self.logger),
 						])
 					}
 
@@ -77,7 +80,7 @@ public class SftpClientBootstrapper {
 //					return promise.futureResult.flatMap { channel in
 //						return self.clientInitialization.initialize(channel: channel)
 //					}
-					return promise.futureResult
+					return promise.futureResult.and(subsystemInitializedPromise.futureResult).map({ $0.0 })
 				}
 			}
 	}
