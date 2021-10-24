@@ -65,8 +65,12 @@ class SftpClientChannelHandler2: ChannelDuplexHandler {
 				let newMessage = createMessage(context: context, packet: packet, bodyLength: bodyLength)
 				if packet.packetType?.hasBody ?? false {
 					state = .processingResponse(currentResponse: newMessage, currentRequest: nextRequest, requestQueue: requestQueue, needsContextRead: true, canWriteBody: true)
+					nextRequest.respond(message: newMessage)
+				} else {
+					state = .awaitingRequest(requestQueue: requestQueue, canWriteBody: canWriteBody)
+					nextRequest.respond(message: newMessage)
+					nextRequest.endResponseData()
 				}
-				nextRequest.respond(message: newMessage)
 			case .body, .end:
 				// Should not receive body data when not yet processing a response.
 				context.fireErrorCaught(HandlerError.unexpectedState(messagePart, state))

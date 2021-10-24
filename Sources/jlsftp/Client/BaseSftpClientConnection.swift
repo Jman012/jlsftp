@@ -29,6 +29,12 @@ public class BaseSftpClientConnection: SftpClientConnection {
 		return channel.eventLoop.makeFailedFuture(SftpClientError.unsuported("This operation is unsupported for this server (using sftp version \(self.version))"))
 	}
 
+	public func close() -> EventLoopFuture<Void> {
+		let promise = channel.eventLoop.makePromise(of: Void.self)
+		channel.close(mode: .all, promise: promise)
+		return promise.futureResult
+	}
+
 	public func status(remotePath: String) -> EventLoopFuture<String> {
 		guard supportedPacketTypes.contains(.status) else {
 			return unsupportedOperation()

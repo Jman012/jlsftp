@@ -43,6 +43,10 @@ public class SftpServerBootstrapper {
 				return channel.eventLoop.makeFailedFuture(ServerError.invalidChannelType)
 			}
 
+			channel.closeFuture.whenComplete { _ in
+				self.logger.info("Client \(String(describing: channel.remoteAddress)) has disconnected.")
+			}
+
 			guard let server = SftpServerInitialization(
 				logger: self.logger,
 				versionedServers: [

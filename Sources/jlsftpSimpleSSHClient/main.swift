@@ -61,7 +61,7 @@ defer {
 	try! group.syncShutdownGracefully()
 }
 
-var logger = Logger(label: "jlsftpSimpleSSHServer")
+var logger = Logger(label: "jlsftpSimpleSSHClient")
 logger.logLevel = .trace
 
 let bootstrap = SftpClientBootstrapper(userAuthDelegate: InteractivePasswordPromptDelegate(username: nil, password: nil),
@@ -75,19 +75,21 @@ do {
 	let channel = try bootstrap.connect(host: "127.0.0.1", port: 22).wait()
 	connection = try bootstrap.clientInitialization.initialize(channel: channel).wait()
 } catch {
-	print("Error: \(error)")
-	print("Localized error: \(error.localizedDescription)")
+	logger.error("Error: \(error)")
+	logger.error("Localized error: \(error.localizedDescription)")
 	exit(-1)
 }
 
 _ = try connection.status(remotePath: "/").always {
 	switch $0 {
 	case let .failure(error):
-		print("Error: \(error)")
+		logger.error("Error: \(error)")
 	case let .success(s):
-		print("Success: \(s)")
+		logger.info("Success: \(s)")
 	}
 }.wait()
+
+try! connection.close().wait()
 
 // Wait for the connection to close
 //try childChannel.closeFuture.wait()
