@@ -38,19 +38,21 @@ public class SftpServerBootstrapper {
 		logger.info("Bootstrapping sftp server on \(host):\(port)...")
 
 		let childChannelInitializer: (Channel, SSHChannelType) -> EventLoopFuture<Void> = { channel, channelType in
-			self.logger.debug("The NIOSSHHandler child channel was created. Adding channel handlers.")
+			var logger = self.logger
+			logger[metadataKey: "connection"] = .string(channel.remoteAddress?.description ?? "?")
+			logger.debug("The NIOSSHHandler child channel was created. Adding channel handlers.")
 			guard channelType == .session else {
 				return channel.eventLoop.makeFailedFuture(ServerError.invalidChannelType)
 			}
 
 			channel.closeFuture.whenComplete { _ in
-				self.logger.info("Client \(String(describing: channel.remoteAddress)) has disconnected.")
+				logger.info("Client \(String(describing: channel.remoteAddress)) has disconnected.")
 			}
 
 			guard let server = SftpServerInitialization(
-				logger: self.logger,
+				logger: logger,
 				versionedServers: [
-					.v3: BaseSftpServer(forVersion: .v3, threadPool: self.threadPool, logger: self.logger),
+					.v3: BaseSftpServer(forVersion: .v3, threadPool: self.threadPool, logger: logger),
 				]
 			) else {
 				return channel.eventLoop.makeFailedFuture(ServerError.invalidConfiguration)
@@ -68,15 +70,15 @@ public class SftpServerBootstrapper {
 					channel.pipeline.addHandlers([
 						// To handle SSHChannelData <->ByteBuffer and
 						// and init the sftp subsystem for ssh.
-						SshSftpSubsystemServerHandler(logger: self.logger),
+						SshSftpSubsystemServerHandler(logger: logger),
 						// To handle incoming reply decoding
 						ByteToMessageHandler(SftpPacketDecoder(packetSerializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3())),
 						// To handle outgoing request encoding
 						MessageToByteHandler(SftpPacketEncoder(serializer: jlsftp.SftpProtocol.Version_3.PacketSerializerV3(), allocator: channel.allocator)),
 						// To handle MessagePart <-> SftpMessage conversion as well as
 						// handling the messages and their data streams.
-						SftpServerChannelHandler(server: server, logger: self.logger),
-						ErrorChannelHandler(logger: self.logger),
+						SftpServerChannelHandler(server: server, logger: logger),
+						ErrorChannelHandler(logger: logger),
 					])
 				}
 		}
