@@ -206,9 +206,6 @@ extension SftpClientChannelHandler2 {
 		// First, write the header to the wire.
 		let data = self.wrapOutboundOut(.header(message.packet, message.totalBodyBytes))
 		let headerFuture = context.writeAndFlush(data)
-		headerFuture.whenComplete { a in
-			self.logger.info("\(a)")
-		}
 
 		// Next, set up the stream for data to write to the wire, if any.
 

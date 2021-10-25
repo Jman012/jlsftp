@@ -62,7 +62,7 @@ defer {
 }
 
 var logger = Logger(label: "jlsftpSimpleSSHClient")
-logger.logLevel = .trace
+logger.logLevel = .debug
 
 let bootstrap = SftpClientBootstrapper(userAuthDelegate: InteractivePasswordPromptDelegate(username: nil, password: nil),
 									   serverAuthDelegate: AcceptAllHostKeysDelegate(),

@@ -40,11 +40,13 @@ public class SftpClientInitialization {
 		let initializePacket: Packet = .initializeV3(.init(version: maximumSupportedVersion(), extensionData: []))
 		let message = SftpMessage(packet: initializePacket, dataLength: 0, shouldReadHandler: { _ in })
 		let clientRequest = ClientRequest(message: message, eventLoop: channel.eventLoop)
+		self.logger.info("Initializing sftp connection with server. Sending maximum version of \(maximumSupportedVersion().rawValue).")
 		channel.writeAndFlush(clientRequest, promise: nil)
 
 		return clientRequest.responseFuture.map { response in
 			switch response.packet {
 			case let .version(packet):
+				self.logger.info("Initialized sftp connection at version \(packet.version.rawValue).")
 				return self.connectionFactory.create(version: packet.version, channel: channel)
 			default:
 				// TODO:
