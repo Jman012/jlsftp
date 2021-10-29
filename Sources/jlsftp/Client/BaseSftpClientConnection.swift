@@ -29,11 +29,19 @@ public class BaseSftpClientConnection: SftpClientConnection {
 		return channel.eventLoop.makeFailedFuture(SftpClientError.unsuported("This operation is unsupported for this server (using sftp version \(self.version))"))
 	}
 
-	public func close() -> EventLoopFuture<Void> {
+	public func disconnect() -> EventLoopFuture<Void> {
 		let promise = channel.eventLoop.makePromise(of: Void.self)
 		channel.close(mode: .all, promise: promise)
 		return promise.futureResult
 	}
+
+//	public func open(filename: String, pflags: OpenFlags, fileAttributes: FileAttributes) -> EventLoopFuture<Void> {
+//		guard supportedPacketTypes.contains(.open) else {
+//			return unsupportedOperation()
+//		}
+//
+//		let packet: Packet = .open(.init(id: getNextPacketId(), filename: filename, pflags: pflags, fileAttributes: fileAttributes))
+//	}
 
 	public func status(remotePath: String) -> EventLoopFuture<String> {
 		guard supportedPacketTypes.contains(.status) else {

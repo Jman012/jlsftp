@@ -89,7 +89,7 @@ _ = try connection.status(remotePath: "/").always {
 	}
 }.wait()
 
-try! connection.close().wait()
+try! connection.disconnect().wait()
 
 // Wait for the connection to close
 //try childChannel.closeFuture.wait()
